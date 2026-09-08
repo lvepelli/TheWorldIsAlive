@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useGame, randomSeed } from '@/state/store';
 import { SaveManager } from './screens/SaveManager';
+import { SeedPreview } from './components/SeedPreview';
 
 export function Intro(): React.ReactElement {
   const phase = useGame((s) => s.phase);
@@ -19,7 +20,7 @@ export function Intro(): React.ReactElement {
   return (
     <div className="intro">
       <div className="intro-inner">
-        <div className="orb" aria-hidden />
+        {phase === 'generating' || showSaves ? <div className="orb" aria-hidden /> : <SeedPreview seed={seed || 'the-world-is-alive'} />}
         <h1 className="logo">The World<br />Is Alive<small>A LIVING CIVILIZATION SIMULATOR</small></h1>
         {phase === 'generating' ? (
           <div className="gen-steps" aria-live="polite">
@@ -33,7 +34,7 @@ export function Intro(): React.ReactElement {
             <div className="col" style={{ width: '100%', gap: 10 }}>
               {autosave && <button className="btn primary" style={{ minHeight: 48 }} onClick={() => void loadWorld('autosave')}>▶ Continue — {autosave.name}, {autosave.date}</button>}
               <button className={`btn ${autosave ? '' : 'primary'}`} style={{ minHeight: 48 }} onClick={() => void go()}>✦ Generate new world</button>
-              <div className="row"><input className="input" placeholder="Custom seed (optional)" value={seed} onChange={(e) => setSeed(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void go(seed); }} aria-label="World seed" /><button className="btn" onClick={() => void go(seed || randomSeed())} disabled={!seed.trim()}>Use seed</button></div>
+              <div className="row"><input className="input" placeholder="Custom seed (optional)" value={seed} onChange={(e) => setSeed(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void go(seed); }} aria-label="World seed" /><button className="btn" style={{ whiteSpace: 'nowrap' }} onClick={() => void go(seed || randomSeed())} disabled={!seed.trim()}>Use seed</button></div>
               <div className="row" style={{ justifyContent: 'center' }}><button className="btn ghost" onClick={() => setSeed(randomSeed())}>🎲 Random seed</button><button className="btn ghost" onClick={() => setShowSaves(true)}>💾 Saves & import</button></div>
               {error && <div className="card" style={{ color: 'var(--bad)' }}>{error}</div>}
             </div>

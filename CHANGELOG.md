@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — depth pass
+
+- People now have generated relationships (rivals, allies, mentors, family, funders, leader ties, cross-border friendships) shown in profiles and the network graph.
+- Talk to any character: a local dialogue provider answers in the character's voice from personality, objective, memories, relationships and national mood (LLM prompt ready).
+- New story arcs: space race milestones (up to "first human on Mars") with rival programs; secession movements → referendum → new country or crackdown; succession crises in monarchies/autocracies; corporate espionage → diplomatic tension.
+- Map: animated migration flows, alliance/trade/war link mode toggle (auto / all / none), cinematic zoom-out reveal, smooth biome/elevation texture clipped to land.
+- Live screen shows a generated "Today in the world" summary next to the latest monthly/yearly review.
+- First-launch onboarding card; compact mobile HUD; save/audio moved into the mobile More sheet; modals portal to body.
+- Market gravity (valuation ceilings relative to home GDP, price/sales anchor, growth mean reversion) and smarter event trimming keep 20-year runs sane; new long-run balance test.
+- Intro shows a live preview of the continents the typed seed will generate.
+
 ## 0.1.0 — first complete playable build
 
 - Engine: seeded world generation (geography, countries, cities, people, companies, organizations, outlets, relations, markets); daily tick with weekly/monthly/yearly systems; 24 spontaneous event rules; 40+ consequence rules with causal links; character objectives; markets with event shocks; news with outlet bias; social feed with personalities, replies, virality and trending; deterministic summaries.

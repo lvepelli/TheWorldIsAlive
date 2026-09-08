@@ -2,7 +2,7 @@
 
 Read this first. Everything needed to continue lives in this repository; nothing depends on the original chat session.
 
-## Status (v0.1.0)
+## Status (v0.2.0)
 
 **Playable, complete first version.** Builds, passes unit + browser smoke tests, works on desktop and 360–430 px phones, installs as a PWA, saves to IndexedDB, exports/imports JSON.
 
@@ -27,12 +27,14 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 | God Mode | `engine/godmode/*` | presets, freeform interpreter, executor, intervention log |
 | Persistence | `engine/persistence/storage.ts` | IndexedDB via idb-keyval, memory fallback, validation, export/import |
 | Optional LLM | `engine/ai/llm.ts`, `prompts/` | enhancer + interpreter with fallback; disabled unless `VITE_AI_ENDPOINT` set |
+| Dialogue | `engine/ai/dialogue.ts` | local template provider; UI in person inspector ("Talk to them") |
+| Story arcs | `events/spawn.ts` (space, espionage, secession), `events/consequences.ts` (referendum, succession crisis, space race) | |
 | UI | `src/ui/*` | map renderer, 9 screens, inspector, graph, cinematics, toasts, intro, audio, debug |
 | PWA | `public/manifest.webmanifest`, `public/sw.js`, `src/pwa.ts`, `public/icons` | |
 
 ## Incomplete / simplified (honest list)
 
-- **Character conversations** are not implemented (prompt exists; no UI). Relationships between people (`Person.relationships`) are generated empty and only filled implicitly through shared events; the relationship graph uses shared events + affiliations instead.
+- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated once and are not yet updated by events (a scandal does not turn an ally into an enemy).
 - **Regions** (country → region → city) are collapsed to country → city. `Region` type exists but is unused.
 - **Trade routes on the map** are shown only for the selected country; there is no trade-volume simulation beyond `tradePartners` relation effects.
 - **Weather/migration animation** on the map is not implemented; events are shown as rings, wars as pulsing borders/arcs.
@@ -49,7 +51,6 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 - Very small countries may have overlapping labels at low zoom (labels hide below ~6.5 px).
 - When many severity-3 events occur in a single `advance()` jump, only the top 2–3 are toasted (by design) — the rest are in LIVE.
 - The e2e test taps a grid of map points to find land; on unusual seeds it may need more attempts (it retries 12 times).
-- `Person.relationships` array is never populated by the generator (see above).
 
 ## Architectural decisions you should not casually undo
 
@@ -74,16 +75,16 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Testing status
 
-- `tests/engine.test.ts`: 11 tests — determinism, world richness, 365-day progression (< 20 s, actually ~0.6 s), first-5-days activity, run determinism, save round-trip, corrupted save rejection, every God preset, freeform interpretation + consequences, summaries.
+- `tests/engine.test.ts`: 12 tests — determinism, world richness, 365-day progression (~0.6 s), first-5-days activity, run determinism, save round-trip, corrupted save rejection, every God preset, freeform interpretation + consequences, summaries, 20-year balance (population, GDP, inflation, debt, wars, living people, index bounds, event cap, dialogue).
 - `tests/e2e/smoke.mjs`: desktop 1440×900 and mobile 390×844 (touch): intro → seed → map → advance month → tap select → all screens → event causal chain → freeform God command → preset (meteor, cinematic) → save → reload → continue → interventions persist → fast-forward. Screenshots in `tests/e2e/output/`.
 - Not covered: LLM path, Safari/Firefox (Chromium only), real devices.
 
 ## Next recommended tasks (priority order)
 
-1. **Character dialogue** ("Ask a question" in the person inspector) using `prompts/character_dialogue.md` with a local template fallback.
-2. **Populate `Person.relationships`** at generation (family, mentors, rivals, funders) and let rules use them (e.g. rivals exploit scandals).
-3. **Map layers toggle**: trade routes for all, migration flows (animated particles from source to destination for `migration.wave` events), disaster zones.
-4. **More story arcs**: succession crises in monarchies, secession movements → `createCountry`, corporate espionage, space race milestones ("first human on Mars"), AI-risk arc.
+1. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
+2. **Relationship dynamics**: let events mutate `Person.relationships` (scandal → allies distance themselves; war → generals gain influence; rivals exploit downfalls) and add spawn rules that use them.
+3. **Disaster zones on the map** (area rings decaying over weeks) and weather fronts; trade-volume simulation feeding the trade arcs.
+4. **AI-risk / automation arc** (technology > 85 → unemployment shocks, movements, regulation events) and religious schisms.
 5. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
 6. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
 7. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
