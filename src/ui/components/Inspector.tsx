@@ -15,6 +15,7 @@ import { pctChange } from '@/engine/simulation/markets';
 import { sentimentFor } from '@/engine/simulation/information';
 import { countryPower } from '@/engine/simulation/systems';
 import { countConsequences } from '../screens/HistoryScreen';
+import { localDialogue, SUGGESTED_QUESTIONS } from '@/engine/ai/dialogue';
 
 export function Inspector(): React.ReactElement {
   const selection = useGame((s) => s.selection);
@@ -166,7 +167,9 @@ function PersonView({ p }: { p: Person }): React.ReactElement {
         <>
           <div className="stat-grid"><Stat k="Influence" v={p.influence.toFixed(0)} bar={p.influence} color="var(--cat-political)" /><Stat k="Fame" v={p.fame.toFixed(0)} bar={p.fame} color="var(--cat-cultural)" /><Stat k="Wealth" v={p.wealth >= 1000 ? `$${(p.wealth / 1000).toFixed(1)}B` : `$${p.wealth.toFixed(1)}M`} /><Stat k="Reputation" v={p.reputation.toFixed(0)} bar={(p.reputation + 100) / 2} color={p.reputation < -20 ? 'var(--bad)' : 'var(--ok)'} /><Stat k="Public sentiment" v={`${sentiment >= 0 ? '+' : ''}${(sentiment * 100).toFixed(0)}`} bar={(sentiment + 1) * 50} /><Stat k="Ideology" v={<span style={{ fontSize: 13 }}>{p.ideology}</span>} /></div>
           <Section title="Character"><div className="chips">{p.traits.map((t) => <span key={t} className="chip">{t}</span>)}<span className="chip">ambition {(p.personality.ambition * 100).toFixed(0)}</span><span className="chip">integrity {(p.personality.integrity * 100).toFixed(0)}</span><span className="chip">charisma {(p.personality.charisma * 100).toFixed(0)}</span></div><div className="muted" style={{ fontSize: 13, marginTop: 6 }}>Objective: <b>{p.objective}</b></div></Section>
+          <Dialogue p={p} />
           <Section title="Ties"><div className="list">{country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={isLeader ? 'Leads this nation' : 'Citizen'} />}{city && <EntityRow refx={{ kind: 'city', id: city.id }} name={city.name} sub="Lives here" />}{affil.map((a) => <EntityRow key={a.id} refx={{ kind: a.kind, id: a.id }} name={a.name} sub={a.sub} />)}</div></Section>
+          {p.relationships.length > 0 && <Section title="Relationships"><div className="list">{p.relationships.slice(0, 8).map((r) => { const o = world.people[r.target.id]; if (!o) return null; return <EntityRow key={r.target.id} refx={{ kind: 'person', id: o.id }} name={o.name} sub={`${titleCase(r.type)} · ${o.title ?? titleCase(o.profession)}`} right={<span style={{ color: r.strength < 0 ? 'var(--bad)' : 'var(--ok)' }}>{r.strength > 0 ? '+' : ''}{(r.strength * 100).toFixed(0)}</span>} />; })}</div></Section>}
           <Section title="Divine interventions"><div className="chips"><GodShortcut presetId="scandal" params={{ p: p.id }} label="Scandal" /><GodShortcut presetId="remove-figure" params={{ p: p.id }} label="Remove" />{country && !isLeader && <GodShortcut presetId="figure" params={{ a: country.id }} label="New rival" />}</div></Section>
           {posts.length > 0 && <Section title="Latest posts"><div className="panel-solid" style={{ overflow: 'hidden' }}>{posts.map((s) => <Post key={s.id} post={s} />)}</div></Section>}
           <Section title="Life story"><div className="list">{p.history.slice().reverse().slice(0, 10).map((h, i) => <div key={i} className="row" style={{ fontSize: 13 }}><span className="mono dim" style={{ width: 92, flexShrink: 0 }}>{formatDate(h.day, world.meta.startYear, 'short')}</span><span className={h.eventId ? 'link' : ''} onClick={() => h.eventId && useGame.getState().select({ kind: 'event', id: h.eventId })}>{h.text}</span></div>)}</div></Section>
@@ -286,5 +289,20 @@ function EventView({ ev }: { ev: WorldEvent }): React.ReactElement {
         </>
       )}
     </>
+  );
+}
+
+
+function Dialogue({ p }: { p: Person }): React.ReactElement {
+  const world = useGame((s) => s.world)!;
+  const [log, setLog] = useState<{ q: string; a: string }[]>([]);
+  const [q, setQ] = useState('');
+  const ask = async (question: string) => { if (!question.trim()) return; const a = await localDialogue.answer(world, p, question); setLog((l) => [...l.slice(-5), { q: question, a }]); setQ(''); };
+  return (
+    <Section title="Talk to them">
+      <div className="chips scroll" style={{ marginBottom: 6 }}>{SUGGESTED_QUESTIONS.map((s) => <button key={s} className="chip clickable" onClick={() => void ask(s)}>{s}</button>)}</div>
+      <div className="row"><input className="input" style={{ minHeight: 36 }} placeholder={`Ask ${p.firstName} anything…`} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void ask(q); }} /><button className="btn sm" onClick={() => void ask(q)}>Ask</button></div>
+      {log.length > 0 && <div className="list" style={{ marginTop: 8 }}>{log.slice().reverse().map((x, i) => <div key={i} className="card"><div className="dim" style={{ fontSize: 12 }}>You: {x.q}</div><div style={{ fontSize: 13, marginTop: 3, fontStyle: 'italic' }}>“{x.a}”</div></div>)}</div>}
+    </Section>
   );
 }

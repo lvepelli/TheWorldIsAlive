@@ -66,17 +66,26 @@ export function tickMarkets(world: World, rng: RNG, shocks: MarketShock[]): void
     let move = fundamentals + globalMood + rng.gauss(0, co.volatility * 0.02);
     const sens = SECTOR_COMMODITY[co.sector];
     if (sens) for (const s of sens) move += (commodityMove[s.id] ?? 0) * s.beta;
-    if (country) move += -(country.unrest - 20) / 100 * 0.0015 - (country.atWarWith.length ? 0.002 : 0);
+    if (country) {
+      move += -(country.unrest - 20) / 100 * 0.0015 - (country.atWarWith.length ? 0.002 : 0);
+      // Valuation gravity: a company cannot outgrow its home economy forever.
+      const ceiling = Math.max(5, country.gdp * 0.25);
+      if (co.value > ceiling) move -= Math.log(co.value / ceiling) * 0.02;
+      // Revenue anchor: price/sales far above 12 decays.
+      const ps = co.value / Math.max(0.01, co.revenue);
+      if (ps > 12) move -= Math.log(ps / 12) * 0.002;
+    }
     for (const s of shocks) {
       if (s.companyId && s.companyId === co.id) move += s.pct;
       else if (s.sector && s.sector === co.sector && (!s.countryId || s.countryId === co.countryId)) move += s.pct * (s.countryId ? 1 : 0.6);
       else if (s.countryId && !s.sector && !s.companyId && s.countryId === co.countryId) move += s.pct;
     }
-    move = clamp(move, -0.6, 1.5);
+    move = clamp(move, -0.5, 0.8);
     co.value = Math.max(0.01, co.value * (1 + move));
     pushHistory(co.priceHistory, co.value);
-    // mean reversion of growth expectations
-    co.growth += rng.gauss(0, 0.05) - co.growth * 0.001;
+    // growth expectations mean-revert toward a sector baseline
+    const baseline = co.sector === 'technology' || co.sector === 'biotech' || co.sector === 'aerospace' ? 5 : 2.5;
+    co.growth += rng.gauss(0, 0.05) + (baseline - co.growth) * 0.01;
     const cr = (countryReturn[co.countryId] ??= { sum: 0, w: 0 });
     cr.sum += move * co.value; cr.w += co.value;
   }

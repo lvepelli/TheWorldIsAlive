@@ -61,7 +61,10 @@ export class LocalNarrativeProvider implements NarrativeProvider {
     if (outlet.bias === 'business') headline = tweakBusiness(ev, headline, rng);
     const opener = rng.pick(BODY_OPENERS[outlet.bias]);
     const spin = spinFor(world, ev, outlet, rng, involvesHome);
-    const body = `${opener} ${ev.description} ${spin}`.replace(/\s+/g, ' ').trim();
+    // When the opener ends mid-sentence ("...confirmed that"), continue the sentence in lower case unless it starts with a proper noun.
+    const midSentence = /(that|,)$/.test(opener);
+    const desc = midSentence && /^(The|A|An|After|In|Under|Following|Voters|Armored|Investors|Health|Geologists|Traders|Leaders|Negotiators|Citing|Heavy|Thousands|Hundreds|Crowds|Troops|Live|Emergency|Cargo|Magazine|Rattled|Laid|Former|Building|Despite|Polls|Mass|Construction|Reading|Unable|Officials|Scientists|Engineers|Authorities|Banks|Fuel|Investment|Rescue|Bombings|Ministries|Followers|Licensing|Analysts|Insurance|Damage|Foreign|Unemployment|Austerity)\b/.test(ev.description) ? ev.description.charAt(0).toLowerCase() + ev.description.slice(1) : ev.description;
+    const body = `${opener} ${desc} ${spin}`.replace(/\s+/g, ' ').trim();
     return { headline, body, tone };
   }
 
@@ -141,6 +144,7 @@ export function hashtagsFor(world: World, ev: WorldEvent, rng: RNG): string[] {
 
 function composePost(world: World, ev: WorldEvent, p: Person, stance: number, rng: RNG): string {
   const short = ev.title.length > 80 ? ev.title.slice(0, 77) + '…' : ev.title;
+  const lc = short; // keep proper nouns intact inside sentences
   const country = ev.location.countryId ? world.countries[ev.location.countryId] : undefined;
   const isActor = ev.actors.some((a) => a.kind === 'person' && a.id === p.id);
   if (isActor) return rng.pick([
@@ -149,21 +153,21 @@ function composePost(world: World, ev: WorldEvent, p: Person, stance: number, rn
     `To everyone asking: ${stance > 0 ? 'yes, it\'s real. More soon.' : 'I have nothing to hide. Statement coming.'}`,
   ]);
   const byProfession: Record<string, string[]> = {
-    journalist: [`Confirmed by two sources: ${short}`, `Thread on ${short.toLowerCase()} — what the official statement leaves out. 1/`, `I've covered ${country?.name ?? 'this region'} for years. ${stance < 0 ? 'This is worse than it looks.' : 'This is bigger than it looks.'}`],
+    journalist: [`Confirmed by two sources: ${short}`, `Thread on "${lc}" — what the official statement leaves out. 1/`, `I've covered ${country?.name ?? 'this region'} for years. ${stance < 0 ? 'This is worse than it looks.' : 'This is bigger than it looks.'}`],
     politician: [`${stance > 0 ? 'Welcome news.' : 'Unacceptable.'} ${short}. ${stance > 0 ? 'We will build on it.' : 'Those responsible must be held to account.'}`, `My thoughts are with everyone affected. ${stance < -0.5 ? 'We demand answers.' : 'We stand ready to help.'}`],
-    scientist: [`Reading the reports on ${short.toLowerCase()}. ${stance > 0 ? 'The methodology looks sound.' : 'Extraordinary claims require extraordinary evidence.'}`, `As someone who works in this field: ${stance > 0 ? 'this is genuinely exciting.' : 'please wait for replication.'}`],
-    entrepreneur: [`${short}. ${stance > 0 ? 'Massive opportunity.' : 'Markets will punish this.'}`, `Builders, take note: ${short.toLowerCase()}. ${stance > 0 ? 'The window is open.' : 'Plan for volatility.'}`],
+    scientist: [`Reading the reports: "${lc}". ${stance > 0 ? 'The methodology looks sound.' : 'Extraordinary claims require extraordinary evidence.'}`, `As someone who works in this field: ${stance > 0 ? 'this is genuinely exciting.' : 'please wait for replication.'}`],
+    entrepreneur: [`${short}. ${stance > 0 ? 'Massive opportunity.' : 'Markets will punish this.'}`, `Builders, take note: ${lc}. ${stance > 0 ? 'The window is open.' : 'Plan for volatility.'}`],
     activist: [`${short}. ${stance < 0 ? 'THIS is why we march.' : 'Proof that pressure works.'}`, `They said it couldn't happen. ${short}. Organize.`],
-    celebrity: [`${stance > 0 ? '❤️' : '💔'} ${short}`, `Can't stop thinking about ${short.toLowerCase()}. ${stance < 0 ? 'Sending love to everyone affected.' : 'What a time to be alive.'}`],
+    celebrity: [`${stance > 0 ? '❤️' : '💔'} ${short}`, `Can't stop thinking about this: ${lc}. ${stance < 0 ? 'Sending love to everyone affected.' : 'What a time to be alive.'}`],
     general: [`${short}. ${stance < 0 ? 'Readiness is not optional.' : 'Discipline wins.'}`],
-    criminal: [`Interesting times. ${short.toLowerCase()}. 👀`, `Everything is for sale, especially now.`],
-    executive: [`Statement on ${short.toLowerCase()}: we are monitoring closely and our priority remains our people and customers.`, `${stance > 0 ? 'Bullish.' : 'Bracing.'} ${short}.`],
-    artist: [`${short}. Working on something about this.`, `${stance < 0 ? 'Grief' : 'Hope'} is the only honest response to ${short.toLowerCase()}.`],
-    diplomat: [`Dialogue remains the only path. ${short}.`, `Quiet talks continue despite ${short.toLowerCase()}.`],
+    criminal: [`Interesting times. ${lc}. 👀`, `Everything is for sale, especially now.`],
+    executive: [`Statement regarding "${lc}": we are monitoring closely and our priority remains our people and customers.`, `${stance > 0 ? 'Bullish.' : 'Bracing.'} ${short}.`],
+    artist: [`${short}. Working on something about this.`, `${stance < 0 ? 'Grief' : 'Hope'} is the only honest response. ${lc}.`],
+    diplomat: [`Dialogue remains the only path. ${short}.`, `Quiet talks continue despite everything. ${lc}.`],
     athlete: [`${short}. ${stance > 0 ? 'Let\'s go!' : 'Stay strong everyone.'}`],
-    engineer: [`Technically speaking, ${short.toLowerCase()} is ${stance > 0 ? 'impressive' : 'a mess'}. Details in replies.`],
-    citizen: [`so ${short.toLowerCase()} just happened. ${stance < 0 ? 'cool cool cool. everything is fine.' : 'ok this is actually amazing'}`, `${short}?? ${stance < 0 ? 'what is happening to this country' : 'finally some good news'}`, `my grandmother just called me about ${short.toLowerCase()}. she is ${stance < 0 ? 'furious' : 'crying happy tears'}.`],
-    'religious-leader': [`In times like these — ${short.toLowerCase()} — we return to what endures.`],
+    engineer: [`Technically speaking, this is ${stance > 0 ? 'impressive' : 'a mess'}: ${lc}. Details in replies.`],
+    citizen: [`so this just happened: ${lc}. ${stance < 0 ? 'cool cool cool. everything is fine.' : 'ok this is actually amazing'}`, `${short}?? ${stance < 0 ? 'what is happening to this country' : 'finally some good news'}`, `my grandmother just called me about the news (${lc}). she is ${stance < 0 ? 'furious' : 'crying happy tears'}.`],
+    'religious-leader': [`In times like these we return to what endures. ${lc}.`],
   };
   const pool = byProfession[p.profession] ?? byProfession.citizen;
   let text = rng.pick(pool);

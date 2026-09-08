@@ -3,6 +3,7 @@ import { useGame } from '@/state/store';
 import { EVENT_CATEGORIES, type EventCategory } from '@/engine/types';
 import { EventCard } from '../components/EventCard';
 import { catVar } from '../format';
+import { summarize } from '@/engine/simulation/summary';
 
 export function LiveScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
@@ -12,7 +13,8 @@ export function LiveScreen(): React.ReactElement {
   const [limit, setLimit] = useState(60);
   const events = useMemo(() => world.events.filter((e) => (cat === 'all' || e.category === cat) && e.severity >= minSev).slice(-limit).reverse(), [world, version, cat, minSev, limit]);
   const today = world.events.filter((e) => e.day === world.day).length;
-  const summary = world.summaries[world.summaries.length - 1];
+  const summary = useMemo(() => summarize(world, 'day'), [world, version]);
+  const period = world.summaries[world.summaries.length - 1];
   return (
     <div className="screen">
       <div className="screen-inner">
@@ -20,12 +22,18 @@ export function LiveScreen(): React.ReactElement {
           <div><div className="kicker" style={{ color: 'var(--bad)' }}>● LIVE</div><h2 className="screen-title">Global event stream</h2></div>
           <div className="dim mono">{today} today · {world.events.length} total</div>
         </div>
-        {summary && (
+        <div className="grid-2">
           <div className="panel-solid" style={{ padding: 12 }}>
             <div className="kicker">{summary.title}</div>
             <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--text-2)', fontSize: 13 }}>{summary.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
           </div>
-        )}
+          {period && (
+            <div className="panel-solid" style={{ padding: 12 }}>
+              <div className="kicker">{period.title}</div>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--text-2)', fontSize: 13 }}>{period.lines.slice(0, 6).map((l, i) => <li key={i}>{l}</li>)}</ul>
+            </div>
+          )}
+        </div>
         <div className="chips scroll">
           <button className={`chip clickable ${cat === 'all' ? 'active' : ''}`} onClick={() => setCat('all')}>All</button>
           {EVENT_CATEGORIES.map((c) => <button key={c} className={`chip clickable ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)} style={{ color: cat === c ? undefined : catVar(c) }}>{c}</button>)}

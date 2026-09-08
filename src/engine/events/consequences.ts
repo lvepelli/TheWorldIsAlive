@@ -421,6 +421,39 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
   },
 };
 
+Object.assign(CONSEQUENCE_RULES, {
+  'secession.referendum': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    const org = src.actors.find((a) => a.kind === 'organization'); const o = org ? w.organizations[org.id] : undefined;
+    if (!c || !o || !o.alive) return null;
+    if (o.support < 30 || c.stability > 60) { if (rng.bool(0.5)) schedule(w, 'secession.referendum', src.id, rng.int(120, 300)); return null; }
+    if (rng.bool(0.5)) return A.createCountry(w, rng, c, src.id, false);
+    return createEvent(w, { category: 'political', type: 'referendum.blocked', severity: 3, causedBy: src.id, title: `${c.name} bans independence referendum`, description: `The ${c.adjective} government declared the separatist vote illegal and deployed police to polling stations. ${o.name} vowed to continue.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('organization', o.id)], effects: [fx('country', c.id, 'unrest', 10), fx('country', c.id, 'freedom', -5), fx('organization', o.id, 'support', 8)], tags: ['secession', c.code] });
+  },
+  'succession.crisis': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c || !['monarchy', 'autocracy', 'oligarchy', 'theocracy'].includes(c.government)) return null;
+    const claimants = A.peopleOf(w, c.id).filter((p) => p.id !== c.leaderId && (p.profession === 'politician' || p.profession === 'general'));
+    if (!claimants.length) return null;
+    const rival = rng.pickWeighted(claimants, (p) => p.influence + p.personality.ambition * 40);
+    if (rng.next() < 0.35 + rival.personality.ambition * 0.3) return A.changeLeader(w, rng, c, rival.profession === 'general' ? 'coup' : 'succession', src.id, false, rival);
+    return createEvent(w, { category: 'political', type: 'succession.dispute', severity: 3, causedBy: src.id, title: `Succession dispute shakes ${c.name}`, description: `${rival.name} refused to recognize the new ${w.people[c.leaderId]?.title ?? 'ruler'} of ${c.name}, claiming a stronger right to rule. Factions are forming.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('person', rival.id), ref('person', c.leaderId)], effects: [fx('country', c.id, 'stability', -8), fx('country', c.id, 'polarization', 8), fx('person', rival.id, 'influence', 8)], tags: ['succession', c.code] });
+  },
+  'space.race': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c) return null;
+    const rivals = Object.values(w.countries).filter((x) => x.id !== c.id && x.technology > 60);
+    if (!rivals.length) return null;
+    const r = rng.pickWeighted(rivals, (x) => x.technology + Math.max(0, -(c.relations[x.id] ?? 0)));
+    return createEvent(w, { category: 'technological', type: 'space.program', severity: 3, causedBy: src.id, title: `${r.name} announces crash space program to answer ${c.name}`, description: `Stung by ${c.adjective} success, ${r.name} pledged a decade of funding for its own deep-space ambitions. "We will not be spectators," said ${w.people[r.leaderId]?.name ?? 'the leader'}.`, location: { countryId: r.id }, actors: [ref('country', r.id), ref('country', c.id)], effects: [fx('country', r.id, 'technology', 2), fx('country', r.id, 'debt', 3), fx('country', r.id, 'approval', 2)], tags: ['space', r.code, c.code], data: { shocks: [{ sector: 'aerospace', countryId: r.id, pct: 0.1 }] } });
+  },
+  'espionage.tension': (w: World, rng: RNG, src: WorldEvent) => {
+    const [a, b] = src.actors.filter((x) => x.kind === 'country').map((x) => w.countries[x.id]);
+    if (!a || !b) return null;
+    return A.shiftTension(w, rng, a, b, rng.float(10, 25), src.id, false, 'The corporate espionage affair');
+  },
+});
+
 interface Trigger { match: (e: WorldEvent) => boolean; rule: string; delay: [number, number]; p: number; }
 
 const TRIGGERS: Trigger[] = [
@@ -460,6 +493,10 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'country.founded', rule: 'independence.recognition', delay: [10, 90], p: 1 },
   { match: (e) => e.type === 'migration.wave' && e.severity >= 3, rule: 'migration.politics', delay: [20, 90], p: 0.8 },
   { match: (e) => e.type === 'resource.discovery', rule: 'resource.investment', delay: [20, 90], p: 0.9 },
+  { match: (e) => e.type === 'movement.founded' && e.title.includes('independence'), rule: 'secession.referendum', delay: [120, 400], p: 1 },
+  { match: (e) => e.type === 'leader.succession', rule: 'succession.crisis', delay: [10, 60], p: 0.7 },
+  { match: (e) => e.type === 'space.milestone', rule: 'space.race', delay: [20, 120], p: 0.8 },
+  { match: (e) => e.type === 'espionage', rule: 'espionage.tension', delay: [5, 30], p: 0.6 },
 ];
 
 /** Schedule follow-ups for a freshly created event. */

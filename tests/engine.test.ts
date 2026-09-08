@@ -7,6 +7,7 @@ import { localGodInterpreter } from '../src/engine/godmode/interpreter';
 import { executePlan } from '../src/engine/godmode/execute';
 import { GOD_PRESETS } from '../src/engine/godmode/presets';
 import { summarize } from '../src/engine/simulation/summary';
+import { localDialogue } from '../src/engine/ai/dialogue';
 
 describe('world generation', () => {
   it('is deterministic for a seed', () => {
@@ -134,5 +135,37 @@ describe('summaries', () => {
     for (let i = 0; i < 40; i++) tickDay(w, rng);
     const s = summarize(w, 'month');
     expect(s.lines.length).toBeGreaterThan(2);
+  });
+});
+
+describe('long-run balance', () => {
+  it('stays within bounds over 20 years', { timeout: 60000 }, () => {
+    const w = generateWorld({ seed: 'balance' });
+    const rng = RNG.fromState(w.rngState);
+    const pop0 = Object.values(w.countries).reduce((a, c) => a + c.population, 0);
+    for (let i = 0; i < 365 * 20; i++) tickDay(w, rng);
+    const cs = Object.values(w.countries);
+    const pop1 = cs.reduce((a, c) => a + c.population, 0);
+    const cos = Object.values(w.companies).filter((c) => c.alive).sort((a, b) => b.value - a.value);
+    console.log(`20y: pop ${(pop0 / 1e9).toFixed(2)}B→${(pop1 / 1e9).toFixed(2)}B · gdp ${cs.reduce((a, c) => a + c.gdp, 0).toFixed(0)}B · index ${w.indexes.global.value.toFixed(0)} · top co ${cos[0]?.name} $${cos[0]?.value.toFixed(0)}B · companies ${cos.length} · events ${w.events.length} · wars ${cs.reduce((a, c) => a + c.atWarWith.length, 0) / 2} · inflation max ${Math.max(...cs.map((c) => c.inflation)).toFixed(0)} · living ${Object.values(w.people).filter((p) => p.alive).length}`);
+    expect(pop1 / pop0).toBeGreaterThan(0.5);
+    expect(pop1 / pop0).toBeLessThan(3);
+    for (const c of cs) {
+      expect(Number.isFinite(c.gdp) && c.gdp > 0).toBe(true);
+      expect(c.inflation).toBeLessThan(200);
+      expect(c.debt).toBeLessThanOrEqual(400);
+      expect(w.people[c.leaderId]?.alive).toBe(true);
+    }
+    const wars = cs.reduce((a, c) => a + c.atWarWith.length, 0) / 2;
+    expect(wars).toBeLessThan(cs.length / 2);
+    const living = Object.values(w.people).filter((p) => p.alive).length;
+    expect(living).toBeGreaterThan(80);
+    const g = w.indexes.global.value;
+    expect(g).toBeGreaterThan(50);
+    expect(g).toBeLessThan(200000);
+    expect(w.events.length).toBeLessThanOrEqual(4000);
+    expect(w.pending.length).toBeLessThan(2000);
+    const dialogue = localDialogue.answer(w, Object.values(w.people).find((p) => p.alive)!, 'What do you want?');
+    expect(dialogue.length).toBeGreaterThan(10);
   });
 });

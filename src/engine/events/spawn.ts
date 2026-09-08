@@ -344,6 +344,65 @@ export const SPAWN_RULES: SpawnRule[] = [
   },
 ];
 
+SPAWN_RULES.push(
+  {
+    id: 'space.milestone',
+    weight: (w) => countries(w).reduce((s, c) => s + (c.technology > 70 ? 0.06 : 0), 0) + liveCompanies(w).filter((c) => c.sector === 'aerospace' && c.value > 20).length * 0.04,
+    run: (w, rng) => {
+      const aero = liveCompanies(w).filter((c) => c.sector === 'aerospace' && c.value > 20);
+      const co = aero.length && rng.bool(0.6) ? rng.pickWeighted(aero, (c) => c.value) : null;
+      const c = co ? w.countries[co.countryId] : pickCountry(w, rng, (x) => Math.max(0, x.technology - 60) ** 2);
+      const done = new Set(w.events.filter((e) => e.type === 'space.milestone').map((e) => String(e.data?.milestone)));
+      const ladder = ['first reusable orbital station module', 'first crewed lunar base', 'first asteroid mining sample return', 'first human on Mars', 'first permanent Mars settlement'];
+      const milestone = ladder.find((m) => !done.has(m)) ?? 'a new deep-space mission';
+      const sev = milestone.includes('Mars') ? 5 : 4;
+      return createEvent(w, {
+        category: 'scientific', type: 'space.milestone', severity: sev as 4 | 5,
+        title: `${co ? co.name : c.name} achieves ${milestone}`,
+        description: `${co ? `${co.name}'s` : `The ${c.adjective}`} mission succeeded: ${milestone}. Crowds watched the broadcast in ${A.capitalOf(w, c).name}; ${rng.pick(['rival programs vowed to catch up', 'the crew radioed a message for "all of humanity"', 'engineers wept on the live feed'])}.`,
+        location: co ? { cityId: co.cityId } : { countryId: c.id }, actors: [...(co ? [ref('company', co.id), ref('person', co.ceoId)] : []), ref('country', c.id)],
+        effects: [fx('country', c.id, 'approval', 6), fx('country', c.id, 'happiness', 4), fx('country', c.id, 'technology', 2), ...(co ? [fx('company', co.id, 'value%', 20), fx('person', co.ceoId, 'fame', 20)] : [])],
+        tags: ['space', 'science', c.code], historic: true, data: { milestone, shocks: [{ sector: 'aerospace', pct: 0.08 }] },
+      });
+    },
+  },
+  {
+    id: 'espionage',
+    weight: (w) => 0.15 + liveCompanies(w).filter((c) => c.value > 100).length * 0.01,
+    run: (w, rng) => {
+      const big = liveCompanies(w).filter((c) => c.value > 50);
+      if (big.length < 2) return null;
+      const victim = rng.pickWeighted(big, (c) => c.value);
+      const thieves = big.filter((c) => c.sector === victim.sector && c.id !== victim.id && c.countryId !== victim.countryId);
+      if (!thieves.length) return null;
+      const thief = rng.pick(thieves);
+      const a = w.countries[victim.countryId], b = w.countries[thief.countryId];
+      A.setRelation(w, a, b, -10);
+      return createEvent(w, {
+        category: 'corporate', type: 'espionage', severity: 3,
+        title: `${thief.name} accused of stealing ${victim.name} secrets`,
+        description: `Prosecutors in ${a.name} charged engineers linked to ${thief.name} with exfiltrating ${rng.pick(['chip designs', 'drug formulas', 'battery chemistry', 'source code', 'reactor blueprints'])} from ${victim.name}. ${b.name} called the charges "economic warfare".`,
+        location: { cityId: victim.cityId }, actors: [ref('company', victim.id), ref('company', thief.id), ref('country', a.id), ref('country', b.id)],
+        effects: [fx('company', victim.id, 'value%', -6), fx('company', thief.id, 'value%', 4), fx('company', thief.id, 'reputation', -15), fx('country', a.id, 'stability', -1)], tags: ['espionage', 'corporate', a.code, b.code],
+      });
+    },
+  },
+  {
+    id: 'secession.movement',
+    weight: (w) => countries(w).reduce((s, c) => s + (c.polarization > 60 && c.stability < 50 && c.cityIds.length >= 3 && !c.movements.some((m) => w.organizations[m]?.agenda === 'independence') ? 0.08 : 0), 0),
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => (x.polarization > 60 && x.stability < 50 && x.cityIds.length >= 3 ? x.polarization : 0));
+      if (c.cityIds.length < 3) return null;
+      const city = w.cities[c.cityIds[c.cityIds.length - 1]];
+      const ev = A.createMovement(w, rng, c, 'simulation', false, 'nationalist', `${city.name} Independence Front`, 'independence');
+      ev.title = `${city.name} independence movement rises in ${c.name}`;
+      ev.description = `Separatists in ${city.name} say the ${c.adjective} state no longer represents them. ${rng.pick(['A referendum is demanded.', 'Regional flags are appearing everywhere.', 'The capital calls them extremists.'])}`;
+      ev.data = { cityId: city.id };
+      return ev;
+    },
+  },
+);
+
 function leaderAgg(w: World, c: Country): number { return w.people[c.leaderId]?.personality.aggression ?? 0.5; }
 
 /** Roll for spontaneous events for this day. */

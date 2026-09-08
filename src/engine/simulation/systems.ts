@@ -58,7 +58,7 @@ export function weeklyTick(world: World, rng: RNG): void {
   // Companies: revenue & employees track value slowly, reputation decays toward zero
   for (const co of Object.values(world.companies)) {
     if (!co.alive) continue;
-    co.revenue += (co.value * 0.4 - co.revenue) * 0.02;
+    co.revenue = Math.max(0.01, co.revenue * (1 + (co.growth / 100) * (7 / DAYS_PER_YEAR)) + (co.value * 0.25 - co.revenue) * 0.003);
     co.employees = Math.max(5, Math.round(co.employees + (co.value * 1500 - co.employees) * 0.01));
     co.reputation += -co.reputation * 0.01;
   }

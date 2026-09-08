@@ -60,12 +60,17 @@ export function createEvent(world: World, draft: EventDraft): WorldEvent {
   world.events.push(ev);
   world.stats.eventsGenerated++;
   if (world.events.length > MAX_EVENTS) {
-    // Keep historic events forever; trim the oldest minor ones.
+    // Keep historic events forever; drop the oldest non-historic ones (minor first) down to 90% of the cap.
+    const target = Math.floor(MAX_EVENTS * 0.9);
+    let toRemove = world.events.length - target;
     const keep: WorldEvent[] = [];
-    let removed = 0;
-    for (const e of world.events) {
-      if (removed < 500 && !e.historic && e.severity <= 2 && world.day - e.day > 365) { removed++; continue; }
-      keep.push(e);
+    for (let pass = 0; pass < 2 && toRemove > 0; pass++) {
+      const src = pass === 0 ? world.events : keep.splice(0);
+      for (const e of src) {
+        const droppable = !e.historic && world.day - e.day > 180 && (pass === 0 ? e.severity <= 2 : e.severity <= 3);
+        if (toRemove > 0 && droppable) { toRemove--; continue; }
+        keep.push(e);
+      }
     }
     world.events = keep;
   }
@@ -120,7 +125,13 @@ export function applyEffect(world: World, e: EffectDelta, ev?: WorldEvent): void
   const field = pctMode ? e.field.slice(0, -1) : e.field;
   const cur = ent[field];
   if (typeof cur !== 'number' || !isFinite(cur)) return;
-  let next = pctMode ? cur * (1 + e.delta / 100) : cur + e.delta;
+  let delta = e.delta;
+  // Diminishing returns for valuation boosts on companies that already dwarf their home economy.
+  if (pctMode && field === 'value' && delta > 0 && e.target.kind === 'company') {
+    const co = world.companies[e.target.id]; const c = co ? world.countries[co.countryId] : undefined;
+    if (co && c) { const ceiling = Math.max(5, c.gdp * 0.2); if (co.value > ceiling) delta /= 1 + Math.log(co.value / ceiling) * 3; }
+  }
+  let next = pctMode ? cur * (1 + delta / 100) : cur + delta;
   const b = BOUNDS[field];
   if (b) next = clamp(next, b[0], b[1]);
   if (field === 'value' || field === 'wealth' || field === 'gdp' || field === 'population' || field === 'revenue') next = Math.max(field === 'population' ? 1000 : 0.01, next);

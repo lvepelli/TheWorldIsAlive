@@ -9,7 +9,8 @@ import type { MapOverlay } from '@/state/store';
 import { clamp } from '@/engine/rng';
 
 export interface Camera { x: number; y: number; scale: number; }
-export interface RenderOptions { overlay: MapOverlay; selection: EntityRef | null; hover: EntityRef | null; now: number; reducedMotion: boolean; }
+export type LinkMode = 'auto' | 'all' | 'none';
+export interface RenderOptions { overlay: MapOverlay; selection: EntityRef | null; hover: EntityRef | null; now: number; reducedMotion: boolean; links: LinkMode; }
 
 export const CATEGORY_COLORS: Record<string, string> = {
   political: '#a78bfa', economic: '#2dd4bf', corporate: '#60a5fa', scientific: '#6ee7b7', technological: '#22d3ee', military: '#f87171', environmental: '#4ade80',
@@ -242,7 +243,8 @@ export class MapRenderer {
     g.restore();
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     // Links: alliances (faint gold), trade for selected, wars (red)
-    this.drawLinks(world, offsets, t, selCountry, opts.reducedMotion);
+    if (opts.links !== 'none') this.drawLinks(world, offsets, t, selCountry, opts.reducedMotion, opts.links === 'all');
+    this.drawFlows(world, offsets, t, opts.reducedMotion);
     // Cities
     this.drawCities(world, offsets, t, opts);
     // Events
@@ -265,7 +267,7 @@ export class MapRenderer {
     g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(cx, cy, tx, ty);
   }
 
-  private drawLinks(world: World, offsets: number[], t: number, sel: ID | null | undefined, reduced: boolean): void {
+  private drawLinks(world: World, offsets: number[], t: number, sel: ID | null | undefined, reduced: boolean, all: boolean): void {
     const g = this.ctx; const countries = Object.values(world.countries);
     g.save(); g.lineCap = 'round';
     for (const ox of offsets) {
@@ -274,11 +276,38 @@ export class MapRenderer {
       const drawn = new Set<string>();
       for (const c of countries) {
         for (const a of c.alliances) { const key = c.id < a ? c.id + a : a + c.id; if (drawn.has(key)) continue; drawn.add(key); const o = world.countries[a]; if (!o) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); const hot = sel === c.id || sel === a; g.strokeStyle = hot ? 'rgba(255,210,122,0.85)' : 'rgba(240,179,90,0.16)'; g.lineWidth = hot ? 1.6 : 0.9; g.stroke(); }
-        if (sel === c.id) for (const tp of c.tradePartners) { const o = world.countries[tp]; if (!o || c.alliances.includes(tp)) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); g.strokeStyle = 'rgba(143,211,255,0.45)'; g.lineWidth = 1; g.setLineDash([4, 6]); g.lineDashOffset = reduced ? 0 : -t * 20; g.stroke(); g.setLineDash([]); }
+        if (sel === c.id || all) for (const tp of c.tradePartners) { if (all && c.id > tp) continue; const o = world.countries[tp]; if (!o || c.alliances.includes(tp)) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); g.strokeStyle = sel === c.id ? 'rgba(143,211,255,0.45)' : 'rgba(143,211,255,0.14)'; g.lineWidth = 1; g.setLineDash([4, 6]); g.lineDashOffset = reduced ? 0 : -t * 20; g.stroke(); g.setLineDash([]); }
         for (const w of c.atWarWith) { if (c.id > w) continue; const o = world.countries[w]; if (!o) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); g.strokeStyle = `rgba(255,77,77,${0.5 + 0.3 * Math.sin(t * 4)})`; g.lineWidth = 2; g.setLineDash([6, 5]); g.lineDashOffset = reduced ? 0 : -t * 30; g.stroke(); g.setLineDash([]); }
       }
     }
     g.restore();
+  }
+
+  /** Animated particle flows for migration waves (last 40 days). */
+  private drawFlows(world: World, offsets: number[], t: number, reduced: boolean): void {
+    const g = this.ctx;
+    const flows = world.events.filter((e) => e.type === 'migration.wave' && world.day - e.day <= 40).slice(-6);
+    if (!flows.length) return;
+    for (const ev of flows) {
+      const [fromRef, toRef] = ev.actors;
+      const from = fromRef && world.countries[fromRef.id], to = toRef && world.countries[toRef.id];
+      if (!from || !to) continue;
+      const age = 1 - (world.day - ev.day) / 40;
+      const [ax, ay] = this.capitalPos(world, from); const [bx, by] = this.capitalPos(world, to);
+      let dx = bx - ax; const W = this.W; if (dx > W / 2) dx -= W; if (dx < -W / 2) dx += W;
+      const n = 14;
+      for (const ox of offsets) {
+        for (let i = 0; i < n; i++) {
+          const phase = reduced ? i / n : ((t * 0.25 + i / n + ev.location.x * 0.01) % 1);
+          const wob = Math.sin(phase * Math.PI) * 3 * (i % 2 ? 1 : -1);
+          const px = ax + ox + dx * phase, py = ay + (by - ay) * phase + wob * 0.3;
+          const [sx, sy] = this.worldToScreen(px, py);
+          if (sx < -10 || sx > this.width + 10) continue;
+          g.fillStyle = `rgba(251,146,60,${(0.25 + 0.6 * Math.sin(phase * Math.PI)) * age})`;
+          g.beginPath(); g.arc(sx, sy, 1.6, 0, Math.PI * 2); g.fill();
+        }
+      }
+    }
   }
 
   private sprite(kind: 'city' | 'capital', r: number, warm: number): HTMLCanvasElement {

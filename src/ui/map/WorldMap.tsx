@@ -18,8 +18,9 @@ export function WorldMap(): React.ReactElement {
   const selection = useGame((s) => s.selection);
   const focus = useGame((s) => s.focus);
   const select = useGame((s) => s.select);
-  const stateRef = useRef({ overlay, selection, version });
-  stateRef.current = { overlay, selection, version };
+  const links = useGame((s) => s.links);
+  const stateRef = useRef({ overlay, selection, version, links });
+  stateRef.current = { overlay, selection, version, links };
   const target = useRef<{ x: number; y: number; scale: number } | null>(null);
   const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -46,7 +47,7 @@ export function WorldMap(): React.ReactElement {
           c.x += dx * 0.1; c.y += (tg.y - c.y) * 0.1; c.scale += (tg.scale - c.scale) * 0.08;
           if (Math.abs(dx) < 0.05 && Math.abs(tg.y - c.y) < 0.05 && Math.abs(tg.scale - c.scale) < 0.01) target.current = null;
         }
-        r.render({ overlay: stateRef.current.overlay, selection: stateRef.current.selection, hover: hoverRef.current, now, reducedMotion: reduced });
+        r.render({ overlay: stateRef.current.overlay, selection: stateRef.current.selection, hover: hoverRef.current, now, reducedMotion: reduced, links: stateRef.current.links });
       }
     };
     raf = requestAnimationFrame(loop);

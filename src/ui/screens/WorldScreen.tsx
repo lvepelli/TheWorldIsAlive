@@ -64,9 +64,25 @@ function HudTop(): React.ReactElement {
   );
 }
 
+function Onboarding(): React.ReactElement | null {
+  const onboarded = useGame((s) => s.onboarded);
+  const setOnboarded = useGame((s) => s.setOnboarded);
+  const setScreen = useGame((s) => s.setScreen);
+  if (onboarded) return null;
+  return (
+    <div className="panel" style={{ padding: '10px 12px', borderColor: 'rgba(240,179,90,0.4)', maxWidth: 520, alignSelf: 'flex-start' }} role="note">
+      <div className="kicker" style={{ color: 'var(--accent)' }}>Welcome, observer</div>
+      <div style={{ fontSize: 13, marginTop: 4 }}>Tap a glowing city or a nation to inspect it. Time runs at the top. When you are ready to make history, open <b>✦ God Mode</b>.</div>
+      <div className="row" style={{ marginTop: 8 }}><button className="btn sm primary" onClick={() => { setOnboarded(); setScreen('god'); }}>Open God Mode</button><button className="btn sm ghost" onClick={setOnboarded}>Got it</button></div>
+    </div>
+  );
+}
+
 function HudBottom(): React.ReactElement {
   const overlay = useGame((s) => s.overlay);
   const setOverlay = useGame((s) => s.setOverlay);
+  const links = useGame((s) => s.links);
+  const setLinks = useGame((s) => s.setLinks);
   const last = useGame((s) => s.lastDayEvents);
   const select = useGame((s) => s.select);
   const world = useGame((s) => s.world)!;
@@ -75,9 +91,12 @@ function HudBottom(): React.ReactElement {
   const wars = Object.values(world.countries).reduce((s, c) => s + c.atWarWith.length, 0) / 2;
   return (
     <div className="hud-bottom">
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <Onboarding />
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', gap: 6 }}>
         <div className="panel overlay-picker" role="tablist" aria-label="Map overlay" style={{ overflowX: 'auto', maxWidth: '100%' }}>
           {OVERLAYS.map((o) => <button key={o.id} className={overlay === o.id ? 'active' : ''} onClick={() => setOverlay(o.id)} role="tab" aria-selected={overlay === o.id}>{o.label}</button>)}
+          <span style={{ width: 1, background: 'var(--line)', margin: '0 2px' }} />
+          <button className={links !== 'none' ? 'active' : ''} title="Toggle alliance/trade/war links" onClick={() => setLinks(links === 'auto' ? 'all' : links === 'all' ? 'none' : 'auto')} aria-label="Links mode">{links === 'auto' ? 'Links' : links === 'all' ? 'All links' : 'No links'}</button>
         </div>
         <div className="panel map-legend hide-mobile">
           <span>{Object.keys(world.countries).length} nations</span><span>·</span><span>{wars} war{wars === 1 ? '' : 's'}</span><span>·</span><span>{world.events.length} events</span>

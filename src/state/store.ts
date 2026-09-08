@@ -17,6 +17,7 @@ import { audio } from '@/ui/audio';
 export type Screen = 'world' | 'live' | 'news' | 'social' | 'markets' | 'people' | 'orgs' | 'history' | 'god';
 export type Speed = 0 | 1 | 5 | 20 | 100;
 export type MapOverlay = 'political' | 'stability' | 'economy' | 'tension' | 'happiness' | 'tech';
+export type LinkMode = 'auto' | 'all' | 'none';
 export type Phase = 'intro' | 'generating' | 'playing';
 
 export interface Toast { id: string; event: WorldEvent; at: number; }
@@ -36,6 +37,8 @@ interface GameState {
   lastCinematicAt: number;
   toasts: Toast[];
   overlay: MapOverlay;
+  links: LinkMode;
+  onboarded: boolean;
   focus: { x: number; y: number; zoom?: number; nonce: number } | null;
   settings: Settings;
   saves: SaveMeta[];
@@ -53,6 +56,8 @@ interface GameState {
   select: (ref: EntityRef | null, push?: boolean) => void;
   back: () => void;
   setOverlay: (o: MapOverlay) => void;
+  setLinks: (l: LinkMode) => void;
+  setOnboarded: () => void;
   focusOn: (x: number, y: number, zoom?: number) => void;
   dismissCinematic: () => void;
   dismissToast: (id: string) => void;
@@ -82,7 +87,7 @@ let toastSeq = 0;
 
 export const useGame = create<GameState>((set, get) => ({
   phase: 'intro', world: null, rng: null, version: 0, speed: 0, screen: 'world', selection: null, selectionStack: [], cinematic: null, cinematicQueue: [], lastCinematicAt: 0,
-  toasts: [], overlay: 'political', focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null,
+  toasts: [], overlay: 'political', links: 'auto', onboarded: (() => { try { return localStorage.getItem('twia:onboarded') === '1'; } catch { return false; } })(), focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null,
 
   async newWorld(seed, name) {
     const s = seed?.trim() || randomSeed();
@@ -121,6 +126,8 @@ export const useGame = create<GameState>((set, get) => ({
   },
   back() { const st = get().selectionStack; if (!st.length) { set({ selection: null }); return; } set({ selection: st[st.length - 1], selectionStack: st.slice(0, -1) }); },
   setOverlay(overlay) { set({ overlay }); },
+  setLinks(links) { set({ links }); },
+  setOnboarded() { set({ onboarded: true }); try { localStorage.setItem('twia:onboarded', '1'); } catch { /* ignore */ } },
   focusOn(x, y, zoom) { set((s) => ({ focus: { x, y, zoom, nonce: (s.focus?.nonce ?? 0) + 1 } })); },
   dismissCinematic() {
     const q = get().cinematicQueue;

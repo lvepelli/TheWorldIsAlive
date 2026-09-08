@@ -5,7 +5,7 @@ import { catVar } from './format';
 const KICKERS: Record<string, string> = {
   'war.declared': 'WAR DECLARED', 'war.ended': 'PEACE', 'government.collapse': 'GOVERNMENT COLLAPSED', 'leader.coup': 'COUP D\'ÉTAT', 'leader.revolution': 'REVOLUTION', 'economy.crash': 'MARKET CRASH', 'economy.crisis': 'ECONOMIC CRISIS',
   'economy.boom': 'ECONOMIC BOOM', 'economy.energy-crisis': 'ENERGY CRISIS', 'disaster.meteor': 'IMPACT EVENT', 'health.pandemic': 'GLOBAL PANDEMIC', 'tech.breakthrough': 'BREAKTHROUGH', 'country.founded': 'A NATION IS BORN', 'death.assassination': 'ASSASSINATION',
-  'region.destabilized': 'REGION IN CHAOS', 'tech.acceleration': 'GOLDEN AGE', discovery: 'DISCOVERY', vaccine: 'THE CURE', 'government.reform': 'NEW ORDER',
+  'region.destabilized': 'REGION IN CHAOS', 'tech.acceleration': 'GOLDEN AGE', discovery: 'DISCOVERY', 'space.milestone': 'A GIANT LEAP', vaccine: 'THE CURE', 'government.reform': 'NEW ORDER',
 };
 
 export function Cinematic(): React.ReactElement | null {

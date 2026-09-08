@@ -256,6 +256,41 @@ export function generateWorld(opts: GenerateOptions): World {
   const tab = makeOutlet(world, mediaRng, N.familyById('anglo'), null, 'sensational');
   tab.name = mediaRng.pick(['The Daily Flash', 'Planet Pulse', 'Global Shock', 'Hyperwire']);
 
+  // ---- Relationships between people ---------------------------------------------
+  const relRng2 = rng.fork('people-relations');
+  const allPeople = Object.values(world.people);
+  const byCountry = new Map<ID, Person[]>();
+  for (const p of allPeople) { const arr = byCountry.get(p.countryId) ?? []; arr.push(p); byCountry.set(p.countryId, arr); }
+  const link = (a: Person, b: Person, type: import('../types').Relationship['type'], strength: number, mutualType = type) => {
+    if (a.id === b.id || a.relationships.some((r) => r.target.id === b.id)) return;
+    a.relationships.push({ target: { kind: 'person', id: b.id }, type, strength, since: world.day - relRng2.int(1, 20) * DAYS_PER_YEAR });
+    b.relationships.push({ target: { kind: 'person', id: a.id }, type: mutualType, strength, since: a.relationships[a.relationships.length - 1].since });
+  };
+  for (const [cid, people] of byCountry) {
+    const c = world.countries[cid];
+    const leader = world.people[c.leaderId];
+    for (const p of people) {
+      // Rivals: same profession, similar influence
+      const rivals = people.filter((o) => o.id !== p.id && o.profession === p.profession);
+      if (rivals.length && relRng2.bool(0.5)) link(p, relRng2.pick(rivals), 'rival', -relRng2.float(0.3, 0.9));
+      // Allies / friends across professions
+      if (relRng2.bool(0.6)) link(p, relRng2.pick(people), relRng2.bool(0.5) ? 'ally' : 'friend', relRng2.float(0.3, 0.9));
+      // Mentors: older person of related profession
+      const elders = people.filter((o) => o.id !== p.id && o.birthDay < p.birthDay - 15 * DAYS_PER_YEAR);
+      if (elders.length && relRng2.bool(0.35)) link(p, relRng2.pick(elders), 'mentor', relRng2.float(0.4, 0.9), 'friend');
+      // Family: share a last name occasionally
+      const fam = people.filter((o) => o.id !== p.id && o.lastName === p.lastName);
+      for (const f of fam) link(p, f, 'family', relRng2.float(0.2, 0.9));
+      // Leader ties: politicians are allies or enemies of the leader
+      if (leader && p.profession === 'politician' && p.id !== leader.id) link(p, leader, p.ideology === leader.ideology ? 'ally' : 'enemy', p.ideology === leader.ideology ? relRng2.float(0.3, 0.8) : -relRng2.float(0.3, 0.9));
+      // Funders: entrepreneurs funded by executives
+      if (p.profession === 'entrepreneur') { const ex = people.filter((o) => o.profession === 'executive'); if (ex.length && relRng2.bool(0.5)) link(p, relRng2.pick(ex), 'funder', relRng2.float(0.3, 0.8), 'partner'); }
+    }
+  }
+  // A few cross-border ties among the famous
+  const famous = allPeople.filter((p) => p.fame > 50);
+  for (let i = 0; i < famous.length / 3; i++) { const a = relRng2.pick(famous), b = relRng2.pick(famous); if (a.countryId !== b.countryId) link(a, b, relRng2.bool(0.6) ? 'friend' : 'rival', relRng2.float(-0.8, 0.8)); }
+
   // ---- Markets ------------------------------------------------------------------
   fillMarkets(world, rng.fork('markets'));
 
