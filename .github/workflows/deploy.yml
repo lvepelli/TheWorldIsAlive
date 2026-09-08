@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -30,27 +28,19 @@ jobs:
         run: npm test
       - name: Build (sub-path for GitHub Pages)
         run: BASE_PATH=/${{ github.event.repository.name }}/ npm run build
-      - uses: actions/configure-pages@v5
+      - name: Stamp build id (lets QA wait for the new deploy)
+        run: echo "${GITHUB_SHA}" > dist/build-id.txt && touch dist/.nojekyll
+      - name: Publish to gh-pages branch (GitHub Pages)
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Deploy ${{ github.sha }}"
 
   qa:
-    needs: deploy
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,9 +52,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Wait for GitHub Pages to serve this build
+        env:
+          DEPLOY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          for i in $(seq 1 60); do
+            got=$(curl -fsSL "${DEPLOY_URL}build-id.txt" 2>/dev/null || true)
+            if [ "$got" = "${GITHUB_SHA}" ]; then echo "live: $got"; exit 0; fi
+            echo "waiting ($i): $got"; sleep 10
+          done
+          echo "::error::GitHub Pages did not serve build ${GITHUB_SHA} within 10 minutes. If this is the first deploy, enable Pages: Settings → Pages → Source: Deploy from a branch → gh-pages / (root)."
+          exit 1
       - name: QA against the deployed site
         env:
-          DEPLOY_URL: ${{ needs.deploy.outputs.page_url }}
+          DEPLOY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: node tests/e2e/deployed.mjs
       - name: Commit QA report
         run: |

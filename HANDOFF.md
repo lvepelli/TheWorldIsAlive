@@ -99,6 +99,16 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 Per year: ~900 events, 1–7 wars declared, 0–2 coups, 1–6 revolutions, 0–10 elections, ~50–70 breakthroughs (after tuning), 8–20 severity-5 and 60–100 severity-4 events, 35–90 protests, 7–16 disasters; average unrest 8–15, stability 55–62; pending consequences hover around 70–95. Use the throwaway diagnostic pattern from git history (`tests/_diag.test.ts`) if you retune: count with `world.stats.eventsGenerated` and `e.day`, not array slices (the event cap trims the array).
 
+## Deployment & testing status
+
+- **Live URL:** https://lvepelli.github.io/TheWorldIsAlive/ (GitHub Pages, HTTPS, static).
+- **Pipeline:** `.github/workflows/deploy.yml` — on push: `npm ci` → `npm test` → `BASE_PATH=/TheWorldIsAlive/ npm run build` → `actions/configure-pages` (enablement on) → `upload-pages-artifact` → `deploy-pages` → `qa` job runs `tests/e2e/deployed.mjs` against the live URL (360×800, 390×844, 430×932 portrait + 1440×900) and commits `docs/qa/*.png` + `docs/qa/REPORT.md` with `[skip ci]`.
+- **Manual redeploy:** Actions → *Deploy & QA* → *Run workflow*.
+- **Base path:** `vite.config.ts` reads `BASE_PATH`; `index.html`, `manifest.webmanifest` and `sw.js` use relative/scope-relative paths so the same build works at `/` or under a sub-path. `src/pwa.ts` registers `${BASE_URL}sw.js`.
+- **Netlify:** a site `the-world-is-alive` exists on the connected Netlify account (id `e8531fa1-f3f5-4308-b3e0-505741cc3410`) with `netlify.toml` in the repo, but the development sandbox could not reach Netlify hosts, so it has no deploy yet. Connecting the GitHub repo in the Netlify UI (build `npm run build`, publish `dist`) would give a second URL at the domain root.
+- **Vercel:** requires the connector to be authorized; not used.
+- **Stable checkpoints:** v0.3.0 = commit `915980f` (tag `v0.3.0` exists locally; the remote refused tag pushes from this environment — create it with `git tag v0.3.0 915980f && git push origin v0.3.0` from a machine with tag permission). Deployment pipeline = `c6819eb`.
+
 ## Build & deploy
 
 - Static hosting: `npm run build` → upload `dist/` (all paths absolute from `/`; set `base` in `vite.config.ts` for sub-path hosting and adjust `sw.js` paths).

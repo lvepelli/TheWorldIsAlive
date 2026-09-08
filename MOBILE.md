@@ -1,5 +1,14 @@
 # Mobile
 
+## Test from a phone right now
+
+1. Open **https://lvepelli.github.io/TheWorldIsAlive/** in the phone browser (HTTPS, no server on your PC needed).
+2. Generate a world. Use the bottom navigation; tap countries/cities; pinch to zoom; drag to pan.
+3. Install as an app: iOS Safari → Share → *Add to Home Screen*; Android Chrome → menu → *Add to Home screen* (or the install prompt). The installed app runs standalone (no browser chrome), keeps saves in IndexedDB, and works offline after the first load.
+4. Share a specific world: `?seed=<seed>` in the URL (the 🔗 button in the desktop HUD copies it).
+
+Deployment: GitHub Pages via `.github/workflows/deploy.yml` on every push (build with `BASE_PATH=/TheWorldIsAlive/`). The workflow's `qa` job runs `tests/e2e/deployed.mjs` against the live URL on three phone viewports and desktop and commits screenshots and `docs/qa/REPORT.md`. Netlify/Vercel can host the same static `dist/` (see `netlify.toml`); when hosting at the domain root, build without `BASE_PATH`.
+
 ## Responsive architecture
 
 - Breakpoint at **900 px**: below it the app uses a bottom navigation (World, Live, News, God, More), a compact HUD (date + speed buttons; world name hidden; save/audio moved into *More*), and the inspector becomes a **bottom sheet** (max 72% height, grabber to close). Above it: a 68 px side rail and a 400 px right inspector.

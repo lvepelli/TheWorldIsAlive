@@ -24,6 +24,14 @@ Mobile: [world map](docs/screenshots/world-mobile.png) · [God Mode cinematic](d
 
 Share a world: append `?seed=your-seed` to the URL (the 🔗 button copies it).
 
+## Play it now (mobile-friendly)
+
+**Live build:** https://lvepelli.github.io/TheWorldIsAlive/
+
+Open that URL in Safari (iPhone) or Chrome (Android). It is a static site over HTTPS, works offline after the first load, and can be installed to the home screen (Share → *Add to Home Screen* on iOS; the install banner or menu → *Add to Home screen* on Android). Deep links work: `https://lvepelli.github.io/TheWorldIsAlive/?seed=amber-tide-1234`.
+
+Deployment is automatic: every push to the main development branch runs `.github/workflows/deploy.yml`, which tests, builds (`BASE_PATH=/TheWorldIsAlive/`), publishes to GitHub Pages, then runs a Playwright QA pass against the live URL on 360×800, 390×844, 430×932 and desktop viewports and commits the screenshots + `docs/qa/REPORT.md` back to the repo. To redeploy manually: *Actions → Deploy & QA → Run workflow*. A `netlify.toml` is included as well, so the repo can be connected to Netlify with one click if a second host is wanted.
+
 ## Quick start
 
 ```bash
@@ -38,6 +46,8 @@ npm run build      # typecheck + production build into dist/
 npm run preview    # serve the production build
 npm test           # engine unit tests (vitest)
 npm run e2e        # headless browser smoke test on desktop + mobile viewports (requires `npm run build` first)
+DEPLOY_URL=https://lvepelli.github.io/TheWorldIsAlive/ node tests/e2e/deployed.mjs   # QA a deployed site (writes docs/qa)
+node tests/e2e/serve.mjs 4173                                                         # serve dist/ locally with SPA fallback
 npm run package    # zip the whole project (without node_modules/dist) → the-world-is-alive.zip
 node scripts/icons.mjs   # regenerate PNG icons from public/icons/icon.svg
 ```
