@@ -9,7 +9,7 @@ export function EventCard({ ev, compact = false }: { ev: WorldEvent; compact?: b
   const world = useGame((s) => s.world)!;
   const country = ev.location.countryId ? world.countries[ev.location.countryId] : undefined;
   return (
-    <div className={`event-card sev-${ev.severity} ${ev.playerIntervention ? 'player' : ''}`} style={{ ['--c' as string]: catVar(ev.category) }} onClick={() => select({ kind: 'event', id: ev.id })} role="button" tabIndex={0}>
+    <div className={`event-card sev-${ev.severity} ${ev.playerIntervention ? 'player' : ''}`} style={{ ['--c' as string]: catVar(ev.category) }} onClick={() => select({ kind: 'event', id: ev.id })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select({ kind: 'event', id: ev.id }); } }} role="button" tabIndex={0}>
       <div className="rail" />
       <div className="grow">
         <div className="meta">

@@ -17,7 +17,7 @@ export function EntityRow({ refx, name, sub, right, icon }: { refx: EntityRef; n
     else if (refx.kind === 'outlet') lead = <span className="avatar" style={{ background: world.outlets[refx.id]?.color ?? '#888', color: '#111', fontFamily: 'var(--font-serif)' }}>N</span>;
   }
   return (
-    <div className="entity-row" onClick={() => select(refx)} role="button" tabIndex={0}>
+    <div className="entity-row" onClick={() => select(refx)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(refx); } }} role="button" tabIndex={0}>
       {lead}
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="name ellipsis">{name}</div>
