@@ -51,7 +51,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
         return A.foundCompany(world, rng, c, sector, 'simulation', false, p);
       }
       const co = p.affiliations.map((id) => world.companies[id]).find((x) => x?.alive);
-      if (co && rng.bool(0.3)) return A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5);
+      if (co && rng.bool(0.15)) return A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5);
       return null;
     }
     case 'politician': {

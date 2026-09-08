@@ -94,6 +94,10 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 9. **Accessibility**: focus management for sheets/modals, reduced-motion audit, ARIA for canvas selections (announce selection via live region).
 10. **Capacitor packaging** (see MOBILE.md) + native file export.
 
+## Balance snapshot (seed `diag`, 15 years)
+
+Per year: ~900 events, 1–7 wars declared, 0–2 coups, 1–6 revolutions, 0–10 elections, ~50–70 breakthroughs (after tuning), 8–20 severity-5 and 60–100 severity-4 events, 35–90 protests, 7–16 disasters; average unrest 8–15, stability 55–62; pending consequences hover around 70–95. Use the throwaway diagnostic pattern from git history (`tests/_diag.test.ts`) if you retune: count with `world.stats.eventsGenerated` and `e.day`, not array slices (the event cap trims the array).
+
 ## Build & deploy
 
 - Static hosting: `npm run build` → upload `dist/` (all paths absolute from `/`; set `base` in `vite.config.ts` for sub-path hosting and adjust `sw.js` paths).

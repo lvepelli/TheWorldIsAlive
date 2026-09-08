@@ -55,7 +55,7 @@ export const SPAWN_RULES: SpawnRule[] = [
   },
   {
     id: 'tech.breakthrough',
-    weight: (w) => 0.35 + countries(w).reduce((s, c) => s + c.technology / 900, 0),
+    weight: (w) => 0.22 + countries(w).reduce((s, c) => s + c.technology / 1400, 0),
     run: (w, rng) => {
       const c = pickCountry(w, rng, (x) => x.technology ** 2 / 100);
       const cos = A.companiesOf(w, c.id).filter((x) => ['technology', 'biotech', 'energy', 'aerospace', 'health'].includes(x.sector));
