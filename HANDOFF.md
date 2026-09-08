@@ -2,7 +2,7 @@
 
 Read this first. Everything needed to continue lives in this repository; nothing depends on the original chat session.
 
-## Status (v0.2.0)
+## Status (v0.3.0)
 
 **Playable, complete first version.** Builds, passes unit + browser smoke tests, works on desktop and 360–430 px phones, installs as a PWA, saves to IndexedDB, exports/imports JSON.
 
@@ -37,7 +37,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 - **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes and feuds (`simulation/relations.ts`); more event types could use `shiftRelationships`/`relate`.
 - **Regions** (country → region → city) are collapsed to country → city. `Region` type exists but is unused.
 - **Trade routes on the map** are shown only for the selected country; there is no trade-volume simulation beyond `tradePartners` relation effects.
-- **Weather/migration animation** on the map is not implemented; events are shown as rings, wars as pulsing borders/arcs.
+- **Weather** is not simulated; disasters/epidemics/battles show as decaying zones, migrations as particle flows, wars as pulsing borders/arcs.
 - **Country creation** splits by distance from the capital; borders of the new state can look arbitrary. Recomputes neighbors; relations copied at half strength.
 - **LLM path is tested only against a mocked endpoint** (`tests/llm.test.ts`); no live provider was available during development. `chat()` parsing supports OpenAI and Anthropic shapes.
 - **Audio** is a small synthesized set; no ambient music assets.
@@ -85,8 +85,8 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 1. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
 2. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
-3. **Disaster zones on the map** (area rings decaying over weeks) and weather fronts; trade-volume simulation feeding the trade arcs.
-4. **AI-risk / automation arc** (technology > 85 → unemployment shocks, movements, regulation events) and religious schisms.
+3. **Weather fronts / climate visualization** on the map and a trade-volume simulation feeding the trade arcs.
+4. **Religious schisms**, corporate succession fights, and sports/cultural championships as recurring calendar events.
 5. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
 6. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
 7. **Cloud saves**: implement `SaveStore` against a backend; add user identity.

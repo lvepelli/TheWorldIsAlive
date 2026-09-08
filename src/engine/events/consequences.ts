@@ -447,6 +447,14 @@ Object.assign(CONSEQUENCE_RULES, {
     const r = rng.pickWeighted(rivals, (x) => x.technology + Math.max(0, -(c.relations[x.id] ?? 0)));
     return createEvent(w, { category: 'technological', type: 'space.program', severity: 3, causedBy: src.id, title: `${r.name} announces crash space program to answer ${c.name}`, description: `Stung by ${c.adjective} success, ${r.name} pledged a decade of funding for its own deep-space ambitions. "We will not be spectators," said ${w.people[r.leaderId]?.name ?? 'the leader'}.`, location: { countryId: r.id }, actors: [ref('country', r.id), ref('country', c.id)], effects: [fx('country', r.id, 'technology', 2), fx('country', r.id, 'debt', 3), fx('country', r.id, 'approval', 2)], tags: ['space', r.code, c.code], data: { shocks: [{ sector: 'aerospace', countryId: r.id, pct: 0.1 }] } });
   },
+  'automation.politics': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c) return null;
+    const roll = rng.next();
+    if (roll < 0.35) return A.createMovement(w, rng, c, src.id, false, 'socialist', undefined, 'tax the machines and share the gains');
+    if (roll < 0.7) return createEvent(w, { category: 'political', type: 'policy', severity: 2, causedBy: src.id, title: `${c.name} introduces universal basic dividend`, description: `Facing automation-driven unemployment, ${A.leaderOf(w, c)?.name ?? 'the government'} signed a universal dividend funded by a levy on autonomous systems. Tech firms threatened to relocate.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'happiness', 6), fx('country', c.id, 'unrest', -5), fx('country', c.id, 'debt', 6), fx('country', c.id, 'polarization', -3)], tags: ['policy', 'automation', c.code], data: { policy: 'universal dividend', shocks: [{ sector: 'technology', countryId: c.id, pct: -0.05 }] } });
+    return createEvent(w, { category: 'political', type: 'regulation', severity: 3, causedBy: src.id, title: `${c.name} passes sweeping AI regulation`, description: `Parliament in ${c.name} imposed licensing, audits and liability on autonomous systems after the automation shock. Startups called it a death sentence; unions celebrated.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'technology', -2), fx('country', c.id, 'unrest', -4), fx('country', c.id, 'approval', 3)], tags: ['regulation', 'ai', c.code], data: { shocks: [{ sector: 'technology', countryId: c.id, pct: -0.08 }] } });
+  },
   'espionage.tension': (w: World, rng: RNG, src: WorldEvent) => {
     const [a, b] = src.actors.filter((x) => x.kind === 'country').map((x) => w.countries[x.id]);
     if (!a || !b) return null;
@@ -497,6 +505,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'leader.succession', rule: 'succession.crisis', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'space.milestone', rule: 'space.race', delay: [20, 120], p: 0.8 },
   { match: (e) => e.type === 'espionage', rule: 'espionage.tension', delay: [5, 30], p: 0.6 },
+  { match: (e) => e.type === 'automation.shock', rule: 'automation.politics', delay: [20, 120], p: 0.9 },
 ];
 
 /** Schedule follow-ups for a freshly created event. */

@@ -404,6 +404,26 @@ SPAWN_RULES.push(
 );
 
 SPAWN_RULES.push({
+  id: 'automation.shock',
+  weight: (w) => countries(w).reduce((s, c) => s + (c.technology > 78 ? (c.technology - 78) / 120 : 0), 0),
+  run: (w, rng) => {
+    const c = pickCountry(w, rng, (x) => Math.max(0, x.technology - 78));
+    if (c.technology <= 78) return null;
+    const cos = A.companiesOf(w, c.id).filter((x) => x.sector === 'technology');
+    const co = cos.length ? rng.pickWeighted(cos, (x) => x.value) : null;
+    const sector = rng.pick(['transport', 'retail', 'manufacturing', 'finance', 'media'] as const);
+    return createEvent(w, {
+      category: 'technological', type: 'automation.shock', severity: 3,
+      title: `Automation wave wipes out ${sector} jobs in ${c.name}`,
+      description: `${co ? `${co.name}'s` : 'A new generation of'} autonomous systems replaced an estimated ${rng.int(2, 9)}% of the ${c.adjective} ${sector} workforce in a single year. Productivity soared; so did anger.`,
+      location: { countryId: c.id }, actors: [ref('country', c.id), ...(co ? [ref('company', co.id)] : [])],
+      effects: [fx('country', c.id, 'unemployment', rng.float(1.5, 4)), fx('country', c.id, 'gdpGrowth', 1), fx('country', c.id, 'polarization', 5), fx('country', c.id, 'unrest', 5), ...(co ? [fx('company', co.id, 'value%', 8), fx('company', co.id, 'reputation', -10)] : [])],
+      tags: ['automation', 'ai', sector, c.code], data: { sector, shocks: [{ sector, countryId: c.id, pct: -0.04 }, { sector: 'technology', countryId: c.id, pct: 0.03 }] },
+    });
+  },
+});
+
+SPAWN_RULES.push({
   id: 'feud',
   weight: (w) => 0.25,
   run: (w, rng) => {

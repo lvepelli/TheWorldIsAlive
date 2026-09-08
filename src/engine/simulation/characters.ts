@@ -7,6 +7,7 @@ import type { World, Person, WorldEvent, Sector } from '../types';
 import { DAYS_PER_YEAR, SECTORS } from '../types';
 import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
+import { relate } from './relations';
 
 export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
   const out: WorldEvent[] = [];
@@ -31,6 +32,24 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
     p.fame = clamp(p.fame - 0.4 + p.socialActivity * 0.3 + rng.gauss(0, 0.8), 0, 100);
     p.reputation = clamp(p.reputation - p.reputation * 0.02 + rng.gauss(0, 1), -100, 100);
     p.wealth = Math.max(0.01, p.wealth * (1 + (p.influence / 100 * 0.01 + (c.gdpGrowth / 100) / 12) + rng.gauss(0, 0.01)));
+    // Personal life: partnerships and children (rare, low severity, but they make people feel real)
+    const partner = p.relationships.find((r) => r.type === 'partner' && world.people[r.target.id]?.alive);
+    if (!partner && age > 24 && age < 60 && rng.next() < 0.006) {
+      const cands = Object.values(world.people).filter((o) => o.alive && o.id !== p.id && o.countryId === p.countryId && Math.abs(o.birthDay - p.birthDay) < 15 * DAYS_PER_YEAR && !o.relationships.some((r) => r.type === 'partner'));
+      if (cands.length) {
+        const o = rng.pickWeighted(cands, (x) => 1 + (p.relationships.some((r) => r.target.id === x.id && r.strength > 0.3) ? 4 : 0) + x.fame / 50);
+        relate(world, p, o, 'partner', 0.8);
+        const famous = p.fame > 55 || o.fame > 55;
+        p.history.push({ day: world.day, text: `Began a partnership with ${o.name}.` }); o.history.push({ day: world.day, text: `Began a partnership with ${p.name}.` });
+        out.push(createEvent(world, { category: 'personal', type: 'partnership', severity: famous ? 2 : 1, title: `${p.name} and ${o.name} ${rng.pick(['marry', 'go public as a couple', 'announce their engagement'])}`, description: `${famous ? 'Gossip columns exploded when' : 'Friends confirmed that'} ${p.name} (${p.profession.replace('-', ' ')}) and ${o.name} (${o.profession.replace('-', ' ')}) ${rng.pick(['tied the knot in a private ceremony', 'were seen together in ' + (world.cities[p.cityId]?.name ?? 'the capital'), 'made it official'])}.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('person', o.id)], effects: [fx('person', p.id, 'fame', famous ? 4 : 1), fx('person', o.id, 'fame', famous ? 4 : 1)], tags: ['personal', c.code] }));
+        continue;
+      }
+    } else if (partner && age < 50 && rng.next() < 0.004) {
+      const o = world.people[partner.target.id];
+      p.history.push({ day: world.day, text: `Welcomed a child with ${o.name}.` });
+      out.push(createEvent(world, { category: 'personal', type: 'birth', severity: p.fame > 60 ? 2 : 1, title: `${p.name} and ${o.name} welcome a child`, description: `${p.name} announced the birth of a ${rng.pick(['daughter', 'son'])}, ${rng.pick(['taking a rare break from public life', 'promising "a quieter year"', 'sharing a single photo that broke the feed'])}.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('person', o.id)], effects: [fx('person', p.id, 'reputation', 3)], tags: ['personal', c.code] }));
+      continue;
+    }
     // Tier-1 characters pursue objectives; tier-2 do so rarely
     const drive = (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition);
     if (rng.next() > drive) continue;

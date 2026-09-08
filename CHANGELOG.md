@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 — living details
+
+- Map: decaying impact zones for disasters, epidemics (pandemics span wider), battles and crackdowns.
+- Automation/AI arc: high-tech nations suffer automation shocks that raise unemployment and polarization, followed by machine-tax movements, universal dividends or sweeping AI regulation with market effects.
+- Personal life: partnerships, engagements and births between characters (with relationship links and life-story entries).
+- Breakthrough frequency tuned down; balance snapshot documented in HANDOFF.md.
+
 ## 0.2.0 — depth pass
 
 - People now have generated relationships (rivals, allies, mentors, family, funders, leader ties, cross-border friendships) shown in profiles and the network graph.

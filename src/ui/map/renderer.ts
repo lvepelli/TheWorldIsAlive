@@ -244,6 +244,7 @@ export class MapRenderer {
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     // Links: alliances (faint gold), trade for selected, wars (red)
     if (opts.links !== 'none') this.drawLinks(world, offsets, t, selCountry, opts.reducedMotion, opts.links === 'all');
+    this.drawZones(world, offsets, t, opts.reducedMotion);
     this.drawFlows(world, offsets, t, opts.reducedMotion);
     // Cities
     this.drawCities(world, offsets, t, opts);
@@ -281,6 +282,27 @@ export class MapRenderer {
       }
     }
     g.restore();
+  }
+
+  /** Decaying impact zones for disasters, epidemics and battles (last 60 days). */
+  private drawZones(world: World, offsets: number[], t: number, reduced: boolean): void {
+    const g = this.ctx; const cam = this.camera;
+    const zones = world.events.filter((e) => world.day - e.day <= 60 && (e.type.startsWith('disaster.') || e.type.startsWith('health.') || e.type === 'battle' || e.type === 'crackdown')).slice(-24);
+    for (const ev of zones) {
+      const life = 1 - (world.day - ev.day) / 60;
+      const kind = ev.type.startsWith('health.') ? 'health' : ev.type === 'battle' || ev.type === 'crackdown' ? 'war' : 'disaster';
+      const col = kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : ev.type === 'disaster.drought' || ev.type === 'disaster.wildfire' ? '245,166,35' : '74,222,128';
+      const radius = (3 + ev.severity * 2.2) * (kind === 'health' && ev.data?.pandemic ? 3 : 1) * cam.scale;
+      for (const ox of offsets) {
+        const [sx, sy] = this.worldToScreen(ev.location.x + ox, ev.location.y);
+        if (sx < -radius || sx > this.width + radius || sy < -radius || sy > this.height + radius) continue;
+        const pulse = reduced ? 1 : 0.9 + 0.1 * Math.sin(t * 2 + ev.location.y);
+        const grad = g.createRadialGradient(sx, sy, 0, sx, sy, radius * pulse);
+        grad.addColorStop(0, `rgba(${col},${0.28 * life})`); grad.addColorStop(0.6, `rgba(${col},${0.12 * life})`); grad.addColorStop(1, `rgba(${col},0)`);
+        g.fillStyle = grad; g.beginPath(); g.arc(sx, sy, radius * pulse, 0, Math.PI * 2); g.fill();
+        if (kind === 'disaster' && ev.severity >= 4) { g.strokeStyle = `rgba(${col},${0.35 * life})`; g.lineWidth = 1; g.setLineDash([3, 5]); g.beginPath(); g.arc(sx, sy, radius * 0.7, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+      }
+    }
   }
 
   /** Animated particle flows for migration waves (last 40 days). */
