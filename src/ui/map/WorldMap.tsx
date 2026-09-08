@@ -29,7 +29,7 @@ export function WorldMap(): React.ReactElement {
     const canvas = canvasRef.current!;
     const r = new MapRenderer(canvas);
     rendererRef.current = r;
-    const resize = () => { const rect = canvas.parentElement!.getBoundingClientRect(); r.resize(rect.width, rect.height, window.devicePixelRatio || 1); if (!initialized.current && world) { r.camera = { x: r.W / 2, y: r.H / 2, scale: r.fitScale() }; } };
+    const resize = () => { const rect = canvas.parentElement!.getBoundingClientRect(); r.resize(rect.width, rect.height, window.devicePixelRatio || 1); if (!initialized.current && world) { const h = r.homeCenter(); r.camera = { x: h.x, y: h.y, scale: r.fitScale() }; } };
     const initialized = { current: false };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(canvas.parentElement!);
@@ -39,7 +39,7 @@ export function WorldMap(): React.ReactElement {
       const st = useGame.getState();
       if (st.world) {
         r.setWorld(st.world, st.version);
-        if (!initialized.current) { r.camera = { x: r.W / 2, y: r.H / 2, scale: r.fitScale() * 2.4 }; target.current = { x: r.W / 2, y: r.H / 2, scale: r.fitScale() }; initialized.current = true; }
+        if (!initialized.current) { const h = r.homeCenter(); r.camera = { x: h.x, y: h.y, scale: r.fitScale() * 2.4 }; target.current = { x: h.x, y: h.y, scale: r.fitScale() }; initialized.current = true; }
         // camera easing toward target
         const tg = target.current;
         if (tg) {

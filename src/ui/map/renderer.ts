@@ -40,6 +40,16 @@ export class MapRenderer {
     this.ctx = canvas.getContext('2d', { alpha: false })!;
   }
 
+  /** Population-weighted center of the inhabited world (circular mean on x so it respects the wrap). */
+  homeCenter(): { x: number; y: number } {
+    const w = this.world; if (!w) return { x: 120, y: 60 };
+    let sx = 0, cx = 0, sy = 0, tot = 0;
+    for (const c of Object.values(w.cities)) { const a = (c.x / this.W) * Math.PI * 2; sx += Math.sin(a) * c.population; cx += Math.cos(a) * c.population; sy += c.y * c.population; tot += c.population; }
+    if (!tot) return { x: this.W / 2, y: this.H / 2 };
+    let ang = Math.atan2(sx / tot, cx / tot); if (ang < 0) ang += Math.PI * 2;
+    return { x: (ang / (Math.PI * 2)) * this.W, y: sy / tot };
+  }
+
   get W(): number { return this.world?.geography.width ?? 240; }
   get H(): number { return this.world?.geography.height ?? 120; }
 

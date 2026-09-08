@@ -3,6 +3,6 @@ export function registerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return;
   if (!import.meta.env.PROD) return;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW registration failed', e));
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((e) => console.warn('SW registration failed', e));
   });
 }

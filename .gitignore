@@ -6,3 +6,4 @@ dist
 .DS_Store
 tests/e2e/output
 the-world-is-alive.zip
+.netlify
