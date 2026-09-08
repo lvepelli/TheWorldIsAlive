@@ -10,6 +10,8 @@
 - First-launch onboarding card; compact mobile HUD; save/audio moved into the mobile More sheet; modals portal to body.
 - Market gravity (valuation ceilings relative to home GDP, price/sales anchor, growth mean reversion) and smarter event trimming keep 20-year runs sane; new long-run balance test.
 - Intro shows a live preview of the continents the typed seed will generate.
+- Relationship dynamics: scandals, coups, revolutions and elections shift ties (allies distance themselves, deposed leaders and usurpers become enemies, journalists who expose someone become enemies); public feuds between enemies are a new event; dialogue references betrayals.
+- Tests: mocked OpenAI-compatible endpoint validates the LLM God interpreter, fallback, article enhancer budget and Anthropic-style parsing; robustness fuzz test runs six years of random freeform commands and presets and checks world invariants and save round-trip.
 
 ## 0.1.0 — first complete playable build
 

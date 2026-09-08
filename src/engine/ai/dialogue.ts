@@ -42,6 +42,8 @@ export class LocalDialogueProvider implements DialogueProvider {
       const rels = p.relationships.map((r) => ({ r, o: world.people[r.target.id] })).filter((x) => x.o);
       const friends = rels.filter((x) => x.r.strength > 0.3).map((x) => x.o.name);
       const enemies = rels.filter((x) => x.r.strength < -0.3).map((x) => x.o.name);
+      const betrayed = rels.filter((x) => x.r.type === 'enemy' && x.r.since < world.day - 30 && x.r.strength < -0.4 && x.o.profession === p.profession).map((x) => x.o.name);
+      if (betrayed.length && rng.bool(0.5)) return prefix + `${betrayed[0]} and I used to be on the same side. ${rng.pick(['Not anymore.', 'That ended badly.', 'I will not make that mistake twice.'])}`;
       return prefix + voice([`${friends.length ? `I trust ${friends.slice(0, 2).join(' and ')}.` : 'I trust no one completely.'} ${enemies.length ? `${enemies[0]} would love to see me fail.` : 'Enemies? Give it time.'}`, `${p.personality.caution > 0.5 ? 'Trust is expensive.' : 'Trust is easy, verifying is hard.'} ${friends.length ? `${friends[0]} has never let me down.` : ''} ${enemies.length ? `Keep ${enemies[0]} away from me.` : ''}`.trim()]);
     }
     if (/afraid|fear|worry|scare|risk/.test(q)) return prefix + voice([`${c?.atWarWith.length ? 'The war.' : c && c.unrest > 50 ? 'That the streets will decide what parliament could not.' : 'Irrelevance.'} ${p.personality.caution > 0.5 ? 'I plan for the worst.' : 'But fear is a poor advisor.'}`, `${p.wealth > 100 ? 'Losing everything I built.' : 'Never being able to build anything at all.'} And ${p.personality.integrity < 0.4 ? 'certain files becoming public' : 'letting people down'}.`]);

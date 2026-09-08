@@ -403,6 +403,29 @@ SPAWN_RULES.push(
   },
 );
 
+SPAWN_RULES.push({
+  id: 'feud',
+  weight: (w) => 0.25,
+  run: (w, rng) => {
+    const pool = livePeople(w).filter((p) => p.fame > 35 && p.relationships.some((r) => r.strength < -0.5 && w.people[r.target.id]?.alive));
+    if (!pool.length) return null;
+    const a = rng.pickWeighted(pool, (p) => p.fame + p.personality.aggression * 30);
+    const rel = rng.pick(a.relationships.filter((r) => r.strength < -0.5 && w.people[r.target.id]?.alive));
+    const b = w.people[rel.target.id];
+    const c = w.countries[a.countryId];
+    const what = rng.pick(['a televised shouting match', 'a leaked voice message', 'dueling op-eds', 'a lawsuit', 'a public accusation of betrayal', 'a boycott campaign']);
+    rel.strength = Math.max(-1, rel.strength - 0.1);
+    return createEvent(w, {
+      category: 'personal', type: 'feud', severity: a.fame > 70 && b.fame > 70 ? 3 : 2,
+      title: `${a.name} and ${b.name} feud goes public`,
+      description: `The long-running enmity between ${a.name} and ${b.name} erupted into ${what}. ${rng.pick(['Neither is backing down.', 'Allies are being forced to pick sides.', `${c?.adjective ?? 'The'} public cannot look away.`])}`,
+      location: { cityId: a.cityId }, actors: [ref('person', a.id), ref('person', b.id)],
+      effects: [fx('person', a.id, 'fame', 6), fx('person', b.id, 'fame', 6), fx('person', a.id, 'reputation', -4), fx('person', b.id, 'reputation', -4), ...(c ? [fx('country', c.id, 'polarization', 1)] : [])],
+      tags: ['feud', 'people', ...(c ? [c.code] : [])],
+    });
+  },
+});
+
 function leaderAgg(w: World, c: Country): number { return w.people[c.leaderId]?.personality.aggression ?? 0.5; }
 
 /** Roll for spontaneous events for this day. */

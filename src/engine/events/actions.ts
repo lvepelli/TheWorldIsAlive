@@ -10,6 +10,7 @@ import { createEvent, fx, ref, type EventDraft } from './engine';
 import { makePerson, makeCompany, makeOrg, leaderTitle } from '../generator/world';
 import * as N from '../names';
 import { yearOf } from '../time';
+import { shiftRelationships, relate } from '../simulation/relations';
 
 type Cause = ID | 'simulation' | 'player';
 const IDEOS: Ideology[] = ['liberal', 'conservative', 'socialist', 'nationalist', 'technocratic', 'green', 'libertarian', 'populist', 'traditionalist', 'progressive'];
@@ -148,6 +149,9 @@ export function changeLeader(world: World, rng: RNG, c: Country, how: 'election'
   if (how === 'coup') { c.government = 'military-junta'; c.freedom = clamp(c.freedom - 25, 0, 100); c.electionEvery = 0; }
   if (how === 'revolution') { c.government = rng.pick(['republic', 'democracy', 'council', 'autocracy']); c.electionEvery = c.government === 'autocracy' ? 0 : 5; c.nextElectionYear = yearOf(world.day, world.meta.startYear) + c.electionEvery; }
   const wasActivist = next.profession === 'activist';
+  if (old) shiftRelationships(world, old.id, how === 'coup' || how === 'revolution' ? -0.3 : -0.1, (r) => r.type !== 'family');
+  shiftRelationships(world, next.id, 0.2, (r) => r.strength > 0);
+  if (old && (how === 'coup' || how === 'revolution')) relate(world, old, next, 'enemy', -0.8);
   next.profession = 'politician';
   next.title = leaderTitle(c.government);
   next.influence = clamp(Math.max(next.influence, 55) + 10, 0, 98);
@@ -430,6 +434,8 @@ export function scandal(world: World, rng: RNG, p: Person, cause: Cause = 'simul
   const isLeader = Object.values(world.countries).some((c) => c.leaderId === p.id);
   const sev = isLeader ? 4 : p.fame > 60 ? 3 : 2;
   const c = world.countries[p.countryId];
+  shiftRelationships(world, p.id, -0.25, (r) => r.type !== 'family');
+  if (j) relate(world, p, j, 'enemy', -0.6);
   const effects = [fx('person', p.id, 'reputation', -35), fx('person', p.id, 'influence', -12), fx('person', p.id, 'fame', 10)];
   if (isLeader && c) effects.push(fx('country', c.id, 'approval', -12), fx('country', c.id, 'unrest', 4), fx('country', c.id, 'corruption', 3));
   if (j) effects.push(fx('person', j.id, 'fame', 12), fx('person', j.id, 'influence', 6));

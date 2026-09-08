@@ -34,12 +34,12 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Incomplete / simplified (honest list)
 
-- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated once and are not yet updated by events (a scandal does not turn an ally into an enemy).
+- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes and feuds (`simulation/relations.ts`); more event types could use `shiftRelationships`/`relate`.
 - **Regions** (country → region → city) are collapsed to country → city. `Region` type exists but is unused.
 - **Trade routes on the map** are shown only for the selected country; there is no trade-volume simulation beyond `tradePartners` relation effects.
 - **Weather/migration animation** on the map is not implemented; events are shown as rings, wars as pulsing borders/arcs.
 - **Country creation** splits by distance from the capital; borders of the new state can look arbitrary. Recomputes neighbors; relations copied at half strength.
-- **LLM path is untested against a live endpoint** (no key available during development). `chat()` parsing supports OpenAI and Anthropic shapes.
+- **LLM path is tested only against a mocked endpoint** (`tests/llm.test.ts`); no live provider was available during development. `chat()` parsing supports OpenAI and Anthropic shapes.
 - **Audio** is a small synthesized set; no ambient music assets.
 - **Service worker** caches the shell only; hashed assets are cached on first fetch (cache-first). Bump `CACHE` in `sw.js` when you need to force refresh.
 - **Save size** grows with events (cap 4000) — ~1–4 MB JSON. Fine for IndexedDB; consider compression for cloud sync.
@@ -75,6 +75,8 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Testing status
 
+- `tests/robustness.test.ts`: six simulated years with ~240 random freeform commands and presets, invariants checked yearly (capitals, living leaders, city ownership, symmetric wars/alliances, finite numbers, geography consistency), save round-trip after chaos; junk-input interpreter test.
+- `tests/llm.test.ts`: mocked endpoint tests for God interpretation, fallback, enhancer budget, Anthropic-style parsing.
 - `tests/engine.test.ts`: 12 tests — determinism, world richness, 365-day progression (~0.6 s), first-5-days activity, run determinism, save round-trip, corrupted save rejection, every God preset, freeform interpretation + consequences, summaries, 20-year balance (population, GDP, inflation, debt, wars, living people, index bounds, event cap, dialogue).
 - `tests/e2e/smoke.mjs`: desktop 1440×900 and mobile 390×844 (touch): intro → seed → map → advance month → tap select → all screens → event causal chain → freeform God command → preset (meteor, cinematic) → save → reload → continue → interventions persist → fast-forward. Screenshots in `tests/e2e/output/`.
 - Not covered: LLM path, Safari/Firefox (Chromium only), real devices.
@@ -82,7 +84,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Next recommended tasks (priority order)
 
 1. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
-2. **Relationship dynamics**: let events mutate `Person.relationships` (scandal → allies distance themselves; war → generals gain influence; rivals exploit downfalls) and add spawn rules that use them.
+2. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
 3. **Disaster zones on the map** (area rings decaying over weeks) and weather fronts; trade-volume simulation feeding the trade arcs.
 4. **AI-risk / automation arc** (technology > 85 → unemployment shocks, movements, regulation events) and religious schisms.
 5. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
