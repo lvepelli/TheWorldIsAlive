@@ -41,7 +41,7 @@ export function App(): React.ReactElement {
       if (e.key === '1') st.setSpeed(1); if (e.key === '2') st.setSpeed(5); if (e.key === '3') st.setSpeed(20); if (e.key === '4') st.setSpeed(100);
       if (e.key === 'Escape') { if (st.cinematic) st.dismissCinematic(); else st.select(null); }
       if (e.key === 'g') st.setScreen('god'); if (e.key === 'w') st.setScreen('world'); if (e.key === 'l') st.setScreen('live');
-      if (e.key === 'd' && e.shiftKey) st.setSetting('debug', !st.settings.debug);
+      if (e.key.toLowerCase() === 'd' && e.shiftKey) st.setSetting('debug', !st.settings.debug);
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   }, []);

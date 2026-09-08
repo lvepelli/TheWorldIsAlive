@@ -6,6 +6,8 @@
 - Automation/AI arc: high-tech nations suffer automation shocks that raise unemployment and polarization, followed by machine-tax movements, universal dividends or sweeping AI regulation with market effects.
 - Personal life: partnerships, engagements and births between characters (with relationship links and life-story entries).
 - Breakthrough frequency tuned down; balance snapshot documented in HANDOFF.md.
+- Shareable worlds: `?seed=` deep link and a 🔗 copy-link button in the HUD.
+- Contour-tracing unit tests; README screenshots under `docs/screenshots`.
 
 ## 0.2.0 — depth pass
 

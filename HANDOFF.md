@@ -77,6 +77,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 - `tests/robustness.test.ts`: six simulated years with ~240 random freeform commands and presets, invariants checked yearly (capitals, living leaders, city ownership, symmetric wars/alliances, finite numbers, geography consistency), save round-trip after chaos; junk-input interpreter test.
 - `tests/llm.test.ts`: mocked endpoint tests for God interpretation, fallback, enhancer budget, Anthropic-style parsing.
+- `tests/contours.test.ts`: polygon coverage vs. cell area for every country; single-cell island edge case.
 - `tests/engine.test.ts`: 12 tests — determinism, world richness, 365-day progression (~0.6 s), first-5-days activity, run determinism, save round-trip, corrupted save rejection, every God preset, freeform interpretation + consequences, summaries, 20-year balance (population, GDP, inflation, debt, wars, living people, index bounds, event cap, dialogue).
 - `tests/e2e/smoke.mjs`: desktop 1440×900 and mobile 390×844 (touch): intro → seed → map → advance month → tap select → all screens → event causal chain → freeform God command → preset (meteor, cinematic) → save → reload → continue → interventions persist → fast-forward. Screenshots in `tests/e2e/output/`.
 - Not covered: LLM path, Safari/Firefox (Chromium only), real devices.
@@ -102,4 +103,5 @@ Per year: ~900 events, 1–7 wars declared, 0–2 coups, 1–6 revolutions, 0–
 
 - Static hosting: `npm run build` → upload `dist/` (all paths absolute from `/`; set `base` in `vite.config.ts` for sub-path hosting and adjust `sw.js` paths).
 - Environment: `.env` (never committed); `.env.example` documents keys.
+- Sharing: `/?seed=<seed>` generates that world on load (guarded by `sessionStorage` so a reload does not regenerate). The seed itself is displayed in History and the debug overlay.
 - Packaging: `npm run package` → `the-world-is-alive.zip` (sources + docs + tests, no node_modules/dist).
