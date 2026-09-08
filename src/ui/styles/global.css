@@ -359,6 +359,8 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
   .hud-bottom { padding: 12px; }
   .debug { bottom: 8px; left: calc(var(--nav-w) + 8px); }
   .with-inspector .hud-top, .with-inspector .hud-bottom { right: var(--inspector-w); }
+  .with-inspector .toasts { right: calc(var(--inspector-w) + 12px); }
+  .with-inspector .screen { padding-right: calc(var(--inspector-w) + 24px); }
   .graph { height: 420px; }
 }
 @media (prefers-reduced-motion: reduce) {

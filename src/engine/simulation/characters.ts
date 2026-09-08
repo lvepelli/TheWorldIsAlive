@@ -27,7 +27,7 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
     }
     if (p.retired) continue;
     // Drift: influence follows fame & reputation; fame decays; wealth grows with influence
-    p.influence = clamp(p.influence + (p.fame * 0.5 + p.reputation * 0.15 + (c.leaderId === p.id ? 40 : 0) - p.influence) * 0.05 + rng.gauss(0, 1), 0, 100);
+    p.influence = clamp(p.influence + (p.fame * 0.45 + p.reputation * 0.15 + (c.leaderId === p.id ? 20 + c.stability * 0.15 + (c.gdp > 1000 ? 8 : 0) : 0) - p.influence) * 0.05 + rng.gauss(0, 1), 0, 100);
     p.fame = clamp(p.fame - 0.4 + p.socialActivity * 0.3 + rng.gauss(0, 0.8), 0, 100);
     p.reputation = clamp(p.reputation - p.reputation * 0.02 + rng.gauss(0, 1), -100, 100);
     p.wealth = Math.max(0.01, p.wealth * (1 + (p.influence / 100 * 0.01 + (c.gdpGrowth / 100) / 12) + rng.gauss(0, 0.01)));
