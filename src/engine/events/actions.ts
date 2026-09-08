@@ -507,7 +507,7 @@ export function migrationWave(world: World, rng: RNG, from: Country, to: Country
   from.population = Math.max(1000, from.population - n); to.population += n;
   return createEvent(world, {
     category: 'social', type: 'migration.wave', severity: n > 2_000_000 ? 4 : n > 300_000 ? 3 : 2, ...base(cause, player),
-    title: `${(n / 1000).toFixed(0)}k people flee ${from.name} for ${to.name}`,
+    title: `${n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M' : (n / 1000).toFixed(0) + 'k'} people flee ${from.name} for ${to.name}`,
     description: `A mass movement of people is underway from ${from.name} into ${to.name}. Border towns are overwhelmed and ${to.adjective} politics is polarizing over the response.`,
     location: { countryId: to.id }, actors: [ref('country', from.id), ref('country', to.id)],
     effects: [fx('country', to.id, 'polarization', 6), fx('country', to.id, 'unrest', 3), fx('country', from.id, 'gdpGrowth', -0.5), fx('country', to.id, 'gdpGrowth', 0.3)], tags: ['migration', from.code, to.code], data: { size: n },

@@ -20,3 +20,21 @@ await shot('review-world-mobile', { width: 390, height: 844 }, true, async (page
 await shot('review-person-desktop', { width: 1440, height: 900 }, false, async (page, n) => { await seedAndPlay(page); await page.click('.side-nav button[aria-label="People"]'); await page.waitForTimeout(300); await page.locator('.entity-row').first().click(); await page.waitForTimeout(400); await page.locator('.chip:has-text("What do you want?")').click(); await page.locator('.chip:has-text("Who do you trust?")').click(); await page.waitForTimeout(300); await page.screenshot({ path: `${OUT}/${n}.png` }); });
 await shot('review-event-mobile', { width: 390, height: 844 }, true, async (page, n) => { await seedAndPlay(page); await page.click('text=Got it'); await page.click('.bottom-nav button[aria-label="Live"]'); await page.waitForTimeout(300); await page.locator('.event-card').first().click(); await page.waitForTimeout(500); await page.screenshot({ path: `${OUT}/${n}.png` }); });
 await browser.close(); server.close(); console.log('done');
+// Re-open a browser for an additional disaster-zone shot (appended; kept simple)
+{
+  const browser2 = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  const server2 = createServer(async (req, res) => { let p = join(DIST, decodeURIComponent(req.url.split('?')[0])); try { const s = await stat(p); if (s.isDirectory()) p = join(p, 'index.html'); } catch { p = join(DIST, 'index.html'); } try { const d = await readFile(p); res.writeHead(200, { 'content-type': MIME[extname(p)] ?? 'application/octet-stream' }); res.end(d); } catch { res.writeHead(404); res.end(); } });
+  await new Promise((r) => server2.listen(4176, r));
+  const ctx = await browser2.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage(); await page.goto('http://localhost:4176'); await page.waitForSelector('.logo');
+  await page.fill('input[aria-label="World seed"]', 'showcase-42'); await page.click('text=Use seed'); await page.waitForSelector('.map-canvas', { timeout: 20000 }); await page.waitForTimeout(2500);
+  await page.click('.clock .speeds button:nth-child(1)'); await page.click('text=Got it');
+  await page.click('.side-nav button[aria-label="God"]'); await page.click('.preset:has-text("Meteor Strike")'); await page.click('text=✦ Execute'); await page.waitForTimeout(600);
+  if (await page.locator('.cinematic').count()) await page.click('.cinematic');
+  await page.click('.preset:has-text("Global Pandemic")'); await page.click('text=✦ Execute'); await page.waitForTimeout(600);
+  if (await page.locator('.cinematic').count()) await page.click('.cinematic');
+  await page.click('.preset:has-text("Migration Wave")'); await page.click('text=✦ Execute'); await page.waitForTimeout(400);
+  await page.click('.side-nav button[aria-label="World"]'); await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${OUT}/review-zones-desktop.png` });
+  await ctx.close(); await browser2.close(); server2.close(); console.log('zones shot done');
+}

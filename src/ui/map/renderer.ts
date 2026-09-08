@@ -291,7 +291,7 @@ export class MapRenderer {
     for (const ev of zones) {
       const life = 1 - (world.day - ev.day) / 60;
       const kind = ev.type.startsWith('health.') ? 'health' : ev.type === 'battle' || ev.type === 'crackdown' ? 'war' : 'disaster';
-      const col = kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : ev.type === 'disaster.drought' || ev.type === 'disaster.wildfire' ? '245,166,35' : '74,222,128';
+      const col = kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : /meteor|volcano|wildfire|drought/.test(ev.type) ? '255,140,60' : '96,180,255';
       const radius = (3 + ev.severity * 2.2) * (kind === 'health' && ev.data?.pandemic ? 3 : 1) * cam.scale;
       for (const ox of offsets) {
         const [sx, sy] = this.worldToScreen(ev.location.x + ox, ev.location.y);
