@@ -1,0 +1,370 @@
+/**
+ * Spontaneous event spawning. Each rule declares a weight that depends on the
+ * current state of the world, so unstable countries riot, rich countries
+ * innovate, and rivals clash. Events are produced through shared actions.
+ */
+import { RNG, clamp } from '../rng';
+import type { World, Country, WorldEvent, Sector } from '../types';
+import { SECTORS } from '../types';
+import * as A from './actions';
+import { createEvent, fx, ref } from './engine';
+
+export interface SpawnRule {
+  id: string;
+  weight: (w: World, rng: RNG) => number;
+  run: (w: World, rng: RNG) => WorldEvent | null;
+}
+
+const countries = (w: World) => Object.values(w.countries);
+const pickCountry = (w: World, rng: RNG, weight: (c: Country) => number) => rng.pickWeighted(countries(w), weight);
+const livePeople = (w: World) => Object.values(w.people).filter((p) => p.alive && !p.retired);
+const liveCompanies = (w: World) => Object.values(w.companies).filter((c) => c.alive);
+
+const TECH_FIELDS = ['battery', 'fusion', 'quantum computing', 'gene editing', 'artificial intelligence', 'room-temperature superconductor', 'carbon capture', 'desalination', 'neural interface', 'orbital manufacturing', 'synthetic fuel', 'longevity', 'robotics', 'photonic chip'];
+
+export const SPAWN_RULES: SpawnRule[] = [
+  {
+    id: 'protest',
+    weight: (w) => countries(w).reduce((s, c) => s + Math.max(0, c.unrest - 25) / 60, 0.3),
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => Math.max(0.05, x.unrest - 15));
+      const city = A.pickCity(w, rng, c);
+      const big = c.unrest > 55;
+      const mv = c.movements.map((id) => w.organizations[id]).filter((o) => o?.alive);
+      const org = mv.length ? rng.pick(mv) : undefined;
+      const cause = rng.pick(['soaring food prices', 'a disputed election', 'police brutality', 'corruption in the cabinet', 'unpaid wages', 'a controversial new law', 'water shortages', 'youth unemployment']);
+      return createEvent(w, {
+        category: 'social', type: big ? 'protest.mass' : 'protest', severity: big ? 3 : 2,
+        title: big ? `Hundreds of thousands march in ${city.name}` : `Protests erupt in ${city.name} over ${cause}`,
+        description: `${big ? 'The largest demonstration in a generation' : 'Crowds'} filled the streets of ${city.name} demanding action on ${cause}. ${org ? `${org.name} called for the rallies.` : ''} ${rng.pick(['Police used tear gas.', 'The march stayed peaceful.', 'Several ministers cancelled travel.', 'Shops closed early across the city.'])}`,
+        location: { cityId: city.id }, actors: [ref('country', c.id), ref('city', city.id), ...(org ? [ref('organization', org.id)] : [])],
+        effects: [fx('country', c.id, 'approval', big ? -5 : -2), fx('country', c.id, 'stability', big ? -4 : -1), fx('city', city.id, 'unrest', 5), ...(org ? [fx('organization', org.id, 'support', 4), fx('organization', org.id, 'influence', 3)] : [])],
+        tags: ['protest', 'unrest', c.code], data: { cause },
+      });
+    },
+  },
+  {
+    id: 'scandal',
+    weight: (w) => 0.5 + countries(w).reduce((s, c) => s + c.corruption / 400, 0),
+    run: (w, rng) => {
+      const pool = livePeople(w).filter((p) => p.fame > 25);
+      if (!pool.length) return null;
+      const p = rng.pickWeighted(pool, (x) => x.fame * (1.2 - x.personality.integrity) * (w.countries[x.countryId]?.freedom ?? 50) / 50);
+      return A.scandal(w, rng, p);
+    },
+  },
+  {
+    id: 'tech.breakthrough',
+    weight: (w) => 0.35 + countries(w).reduce((s, c) => s + c.technology / 900, 0),
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.technology ** 2 / 100);
+      const cos = A.companiesOf(w, c.id).filter((x) => ['technology', 'biotech', 'energy', 'aerospace', 'health'].includes(x.sector));
+      const co = cos.length && rng.bool(0.7) ? rng.pick(cos) : null;
+      const mag = rng.next() < 0.08 ? 2 : rng.next() < 0.4 ? 1 : 0.5;
+      return A.techBreakthrough(w, rng, co, c, rng.pick(TECH_FIELDS), 'simulation', false, mag);
+    },
+  },
+  {
+    id: 'company.founded',
+    weight: (w) => 0.6,
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.gdp ** 0.7 * (x.freedom / 50));
+      return A.foundCompany(w, rng, c, rng.pick(SECTORS));
+    },
+  },
+  {
+    id: 'company.bankrupt',
+    weight: (w) => 0.15 + countries(w).filter((c) => c.gdpGrowth < -1).length * 0.1,
+    run: (w, rng) => {
+      const pool = liveCompanies(w).filter((c) => c.growth < 0 || c.value < c.priceHistory[0] * 0.5);
+      if (!pool.length) return null;
+      return A.bankruptCompany(w, rng, rng.pickWeighted(pool, (c) => 1 + Math.max(0, -c.growth)));
+    },
+  },
+  {
+    id: 'corporate.launch',
+    weight: () => 0.7,
+    run: (w, rng) => {
+      const pool = liveCompanies(w).filter((c) => c.value > 1);
+      if (!pool.length) return null;
+      const co = rng.pickWeighted(pool, (c) => Math.sqrt(c.value));
+      const c = w.countries[co.countryId];
+      const good = rng.bool(0.6);
+      const products: Record<Sector, string[]> = {
+        energy: ['a modular reactor', 'a home battery', 'a hydrogen turbine'], technology: ['a new AI assistant', 'a foldable device', 'a satellite internet service'], finance: ['a digital currency', 'a credit platform', 'a sovereign wealth fund partnership'],
+        manufacturing: ['a humanoid factory robot', 'an electric truck', 'a 3D-printed housing system'], agriculture: ['a drought-proof grain', 'a lab-grown meat line', 'an automated vertical farm'], defense: ['a drone swarm', 'a hypersonic interceptor', 'an autonomous submarine'],
+        media: ['a streaming service', 'an immersive news format', 'an AI-generated series'], health: ['a cancer screening test', 'a robotic surgeon', 'a telehealth network'], transport: ['an autonomous taxi fleet', 'a maglev line', 'an electric cargo ship'],
+        retail: ['drone delivery', 'a subscription marketplace', 'cashierless megastores'], mining: ['a deep-sea harvester', 'a lithium refinery', 'an asteroid survey mission'], biotech: ['a gene therapy', 'a longevity drug', 'a universal vaccine candidate'],
+        aerospace: ['a reusable heavy rocket', 'a lunar cargo lander', 'a supersonic airliner'], construction: ['a self-healing concrete', 'a floating city module', 'a hyper-fast tunneling machine'],
+      };
+      const prod = rng.pick(products[co.sector]);
+      return createEvent(w, {
+        category: 'corporate', type: good ? 'product.launch' : 'product.failure', severity: co.value > 100 ? 3 : 2,
+        title: good ? `${co.name} unveils ${prod}` : `${co.name}'s ${prod.replace(/^(a|an) /, '')} flops`,
+        description: good ? `${co.name} revealed ${prod} at a packed event in ${w.cities[co.cityId]?.name}. Pre-orders ${rng.pick(['crashed the website', 'exceeded projections', 'came in strong'])}.` : `${co.name}'s much-hyped ${prod} suffered ${rng.pick(['a public demo failure', 'a recall', 'devastating reviews', 'a safety investigation'])}. Analysts are cutting targets.`,
+        location: { cityId: co.cityId }, actors: [ref('company', co.id), ref('person', co.ceoId), ref('country', c.id)],
+        effects: [fx('company', co.id, 'value%', good ? rng.float(4, 15) : rng.float(-18, -5)), fx('company', co.id, 'reputation', good ? 5 : -8), fx('person', co.ceoId, 'fame', good ? 3 : 2)],
+        tags: ['corporate', co.sector, c.code], data: { product: prod, good },
+      });
+    },
+  },
+  {
+    id: 'disaster',
+    weight: (w) => 0.25 + countries(w).reduce((s, c) => s + c.climateRisk / 3000, 0),
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.climateRisk + 10);
+      const kind = rng.pickWeighted(['earthquake', 'flood', 'hurricane', 'drought', 'wildfire', 'volcano', 'tsunami'] as const, (k) => ({ earthquake: 2, flood: 3, hurricane: 2.5, drought: 2, wildfire: 2, volcano: 0.5, tsunami: 0.6 })[k]);
+      return A.disaster(w, rng, c, kind, 'simulation', false, rng.next() < 0.1 ? 1.6 : rng.float(0.6, 1.2));
+    },
+  },
+  {
+    id: 'border.clash',
+    weight: (w) => countries(w).reduce((s, c) => s + c.neighbors.filter((n) => (c.relations[n] ?? 0) < -40 && !c.atWarWith.includes(n)).length * 0.12, 0),
+    run: (w, rng) => {
+      const pairs = countries(w).flatMap((c) => c.neighbors.filter((n) => c.id < n && (c.relations[n] ?? 0) < -40 && !c.atWarWith.includes(n)).map((n) => [c, w.countries[n]] as const));
+      if (!pairs.length) return null;
+      const [a, b] = rng.pick(pairs);
+      A.setRelation(w, a, b, -10);
+      return createEvent(w, {
+        category: 'military', type: 'border.clash', severity: 3,
+        title: `Deadly border clash between ${a.name} and ${b.name}`,
+        description: `Troops exchanged fire along the ${a.name}–${b.name} frontier, leaving ${rng.int(3, 60)} dead. Each side blames the other. ${rng.pick(['Reservists have been called up.', 'An emergency session of the alliance council was requested.', 'Both capitals recalled their ambassadors.'])}`,
+        location: { countryId: a.id }, actors: [ref('country', a.id), ref('country', b.id)],
+        effects: [fx('country', a.id, 'stability', -2), fx('country', b.id, 'stability', -2), fx('country', a.id, 'military', 1), fx('country', b.id, 'military', 1)], tags: ['conflict', 'tension', a.code, b.code],
+      });
+    },
+  },
+  {
+    id: 'war.declared',
+    weight: (w) => countries(w).reduce((s, c) => s + c.neighbors.filter((n) => (c.relations[n] ?? 0) < -70 && !c.atWarWith.includes(n)).length * 0.04 * (c.government === 'military-junta' || c.government === 'autocracy' ? 2 : 1), 0),
+    run: (w, rng) => {
+      const pairs = countries(w).flatMap((c) => c.neighbors.filter((n) => (c.relations[n] ?? 0) < -70 && !c.atWarWith.includes(n)).map((n) => [c, w.countries[n]] as const));
+      if (!pairs.length) return null;
+      const [a, b] = rng.pickWeighted(pairs, ([x]) => x.military + (leaderAgg(w, x) * 40));
+      return A.declareWar(w, rng, a, b);
+    },
+  },
+  {
+    id: 'battle',
+    weight: (w) => countries(w).reduce((s, c) => s + c.atWarWith.length, 0) * 0.35,
+    run: (w, rng) => {
+      const wars = countries(w).flatMap((c) => c.atWarWith.filter((n) => c.id < n).map((n) => [c, w.countries[n]] as const));
+      if (!wars.length) return null;
+      const [a, b] = rng.pick(wars);
+      const aWin = rng.next() < a.military / (a.military + b.military);
+      const win = aWin ? a : b, lose = aWin ? b : a;
+      const city = A.pickCity(w, rng, lose);
+      return createEvent(w, {
+        category: 'military', type: 'battle', severity: 3,
+        title: `${win.adjective} forces ${rng.pick(['break through', 'seize ground', 'win a bloody battle'])} near ${city.name}`,
+        description: `Heavy fighting around ${city.name} ended with ${win.name} in control of ${rng.pick(['the highway junction', 'the river crossing', 'the industrial zone', 'the airfield'])}. Casualty estimates run into the ${rng.pick(['hundreds', 'thousands'])}.`,
+        location: { cityId: city.id }, actors: [ref('country', a.id), ref('country', b.id), ref('city', city.id)],
+        effects: [fx('country', lose.id, 'stability', -4), fx('country', lose.id, 'military', -3), fx('country', win.id, 'military', -1), fx('country', lose.id, 'approval', -3), fx('country', win.id, 'approval', 2), fx('city', city.id, 'prosperity', -8), fx('city', city.id, 'population%', -rng.float(0.5, 3))],
+        tags: ['war', 'battle', a.code, b.code], data: { winner: win.id, loser: lose.id },
+      });
+    },
+  },
+  {
+    id: 'war.ended',
+    weight: (w) => countries(w).reduce((s, c) => s + c.atWarWith.length, 0) * 0.03,
+    run: (w, rng) => {
+      const wars = countries(w).flatMap((c) => c.atWarWith.filter((n) => c.id < n).map((n) => [c, w.countries[n]] as const));
+      if (!wars.length) return null;
+      const [a, b] = rng.pick(wars);
+      return A.endWar(w, rng, a, b);
+    },
+  },
+  {
+    id: 'diplomacy',
+    weight: () => 0.6,
+    run: (w, rng) => {
+      const a = pickCountry(w, rng, (x) => x.gdp ** 0.5);
+      const others = countries(w).filter((x) => x.id !== a.id && !a.atWarWith.includes(x.id));
+      if (!others.length) return null;
+      const b = rng.pickWeighted(others, (x) => 1 + (a.neighbors.includes(x.id) ? 3 : 0));
+      const rel = a.relations[b.id] ?? 0;
+      if (rel > 50 && !a.alliances.includes(b.id) && rng.bool(0.4)) return A.formAlliance(w, rng, a, b);
+      if (rel < -20 && a.alliances.includes(b.id) && rng.bool(0.5)) return A.breakAlliance(w, rng, a, b);
+      const worsening = rng.next() < 0.5 + (a.ideology !== b.ideology ? 0.15 : -0.15) + A.leaderOf(w, a)!.personality.aggression * 0.2 - 0.1;
+      return A.shiftTension(w, rng, a, b, worsening ? rng.float(8, 30) : -rng.float(8, 30));
+    },
+  },
+  {
+    id: 'cyberattack',
+    weight: (w) => 0.3 + countries(w).reduce((s, c) => s + c.technology / 1500, 0),
+    run: (w, rng) => {
+      const target = pickCountry(w, rng, (x) => x.technology + x.gdp / 20);
+      const suspects = countries(w).filter((x) => x.id !== target.id && (target.relations[x.id] ?? 0) < 0);
+      const suspect = suspects.length && rng.bool(0.7) ? rng.pick(suspects) : null;
+      const crim = Object.values(w.organizations).filter((o) => o.alive && o.type === 'criminal');
+      const org = !suspect && crim.length ? rng.pick(crim) : null;
+      const what = rng.pick(['the power grid', 'the central bank', 'hospital networks', 'the election commission', 'a major port', 'the tax authority', 'satellite communications']);
+      if (suspect) A.setRelation(w, target, suspect, -12);
+      return createEvent(w, {
+        category: 'technological', type: 'cyberattack', severity: what === 'the power grid' || what === 'the central bank' ? 3 : 2,
+        title: `Cyberattack cripples ${what} in ${target.name}`,
+        description: `${what.charAt(0).toUpperCase() + what.slice(1)} went dark for hours across ${target.name}. Investigators ${suspect ? `point to ${suspect.adjective} state hackers` : org ? `blame the ${org.name}` : 'have no leads'}. ${rng.pick(['Backup systems held.', 'Losses are estimated in the billions.', 'Officials call it an act of war.'])}`,
+        location: { countryId: target.id }, actors: [ref('country', target.id), ...(suspect ? [ref('country', suspect.id)] : []), ...(org ? [ref('organization', org.id)] : [])],
+        effects: [fx('country', target.id, 'stability', -3), fx('country', target.id, 'gdpGrowth', -0.4), ...(org ? [fx('organization', org.id, 'influence', 5)] : [])], tags: ['cyber', 'security', target.code], data: { suspect: suspect?.id },
+      });
+    },
+  },
+  {
+    id: 'discovery',
+    weight: () => 0.35,
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.technology);
+      const sci = A.peopleOf(w, c.id, 'scientist')[0];
+      if (!sci) return null;
+      const options = ['a biosignature on an icy moon', 'a new class of antibiotic', 'a 12,000-year-old sunken city', 'a fifth fundamental force candidate', 'a reversible aging mechanism in mice', 'a habitable exoplanet 40 light-years away', 'a way to read dreams from brain scans', 'a new form of matter', 'an ancient library beneath a desert', 'a bacterium that eats plastic in hours', 'a lost species of hominin, still alive', 'a mathematical proof that took 300 years', 'a room-temperature quantum memory', 'evidence of a ninth planet', 'a coral that survives boiling seas'];
+      const recent = w.events.slice(-150).filter((e) => e.type === 'discovery').map((e) => e.data?.what);
+      const fresh = options.filter((o) => !recent.includes(o));
+      const what = rng.pick(fresh.length ? fresh : options);
+      const sev = what.includes('biosignature') || what.includes('fundamental') || what.includes('aging') ? 4 : 3;
+      return createEvent(w, {
+        category: 'scientific', type: 'discovery', severity: sev as 3 | 4,
+        title: `${c.adjective} scientists discover ${what.split(' ').slice(0, 5).join(' ')}`,
+        description: `A team led by ${sci.name} announced the discovery of ${what}. ${rng.pick(['Peer review is pending, but the data looks solid.', 'The finding was published simultaneously in three journals.', 'Skeptics urge caution; supporters say it rewrites textbooks.'])}`,
+        location: { cityId: sci.cityId }, actors: [ref('person', sci.id), ref('country', c.id)],
+        effects: [fx('person', sci.id, 'fame', 20), fx('person', sci.id, 'influence', 8), fx('country', c.id, 'technology', 1.5)], tags: ['science', 'discovery', c.code], historic: sev >= 4, data: { what },
+      });
+    },
+  },
+  {
+    id: 'culture',
+    weight: () => 0.6,
+    run: (w, rng) => {
+      const pool = livePeople(w).filter((p) => ['artist', 'celebrity', 'athlete'].includes(p.profession));
+      if (!pool.length) return null;
+      const p = rng.pickWeighted(pool, (x) => x.fame + 10);
+      const c = w.countries[p.countryId];
+      const what = { artist: rng.pick(['premieres a film that sells out worldwide', 'unveils an installation that divides critics', 'releases an album that tops every chart', 'burns their own work in protest']), celebrity: rng.pick(['announces a run for office', 'launches a fashion empire', 'is booed off stage after political remarks', 'hosts a charity gala raising record sums']), athlete: rng.pick(['wins the world championship', 'breaks a decades-old record', 'is stripped of a title for doping', 'retires in tears after a final victory']) }[p.profession as 'artist' | 'celebrity' | 'athlete'];
+      const negative = /booed|stripped|burns/.test(what);
+      return createEvent(w, {
+        category: 'cultural', type: 'culture.moment', severity: p.fame > 70 ? 3 : 2,
+        title: `${p.name} ${what}`,
+        description: `${p.name}, the ${c.adjective} ${p.profession}, ${what}. ${rng.pick(['Social media exploded.', 'The moment was watched by hundreds of millions.', 'Sponsors reacted within hours.', 'Fans gathered in the streets of ' + (w.cities[p.cityId]?.name ?? 'the capital') + '.'])}`,
+        location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('country', c.id)],
+        effects: [fx('person', p.id, 'fame', 8), fx('person', p.id, 'reputation', negative ? -15 : 8), fx('person', p.id, 'wealth%', negative ? -10 : 15), fx('country', c.id, 'happiness', negative ? 0 : 1)], tags: ['culture', p.profession, c.code],
+      });
+    },
+  },
+  {
+    id: 'crime',
+    weight: (w) => 0.3 + Object.values(w.organizations).filter((o) => o.alive && o.type === 'criminal').length * 0.15,
+    run: (w, rng) => {
+      const crim = Object.values(w.organizations).filter((o) => o.alive && o.type === 'criminal');
+      if (!crim.length) return null;
+      const org = rng.pick(crim);
+      const c = w.countries[org.countryId ?? ''];
+      if (!c) return null;
+      const city = A.pickCity(w, rng, c);
+      const what = rng.pick(['a $400M gold heist', 'the assassination of a prosecutor', 'a ransomware hit on the port', 'a shootout with police', 'a corruption ring reaching the cabinet', 'a mass jailbreak']);
+      return createEvent(w, {
+        category: 'criminal', type: 'crime.major', severity: what.includes('cabinet') ? 3 : 2,
+        title: `${org.name} linked to ${what} in ${city.name}`,
+        description: `Authorities in ${c.name} tied ${what} to the ${org.name}. ${rng.pick(['Arrests are expected.', 'The syndicate denies involvement.', 'Witnesses have gone into hiding.', 'A reward has been offered.'])}`,
+        location: { cityId: city.id }, actors: [ref('organization', org.id), ref('country', c.id), ref('city', city.id)],
+        effects: [fx('organization', org.id, 'influence', 4), fx('country', c.id, 'stability', -1.5), fx('country', c.id, 'corruption', 1.5), fx('city', city.id, 'unrest', 3)], tags: ['crime', c.code],
+      });
+    },
+  },
+  {
+    id: 'movement.founded',
+    weight: (w) => 0.2 + countries(w).reduce((s, c) => s + (c.unrest > 35 || c.polarization > 60 ? 0.1 : 0), 0),
+    run: (w, rng) => A.createMovement(w, rng, pickCountry(w, rng, (x) => x.unrest + x.polarization / 2)),
+  },
+  {
+    id: 'epidemic',
+    weight: () => 0.12,
+    run: (w, rng) => A.epidemic(w, rng, pickCountry(w, rng, (x) => 110 - x.technology)),
+  },
+  {
+    id: 'resource.discovery',
+    weight: () => 0.15,
+    run: (w, rng) => A.resourceDiscovery(w, rng, pickCountry(w, rng, () => 1), rng.pick(['oil', 'minerals', 'rareEarth', 'water'])),
+  },
+  {
+    id: 'economy.shock',
+    weight: (w) => 0.15,
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.gdp ** 0.5);
+      const kind: 'boom' | 'crash' | 'crisis' = c.gdpGrowth > 3 && rng.bool(0.5) ? 'boom' : c.debt > 120 || c.inflation > 12 ? 'crisis' : rng.pick(['boom', 'crash', 'crisis'] as const);
+      return A.economicShock(w, rng, c, kind);
+    },
+  },
+  {
+    id: 'person.rise',
+    weight: () => 0.4,
+    run: (w, rng) => A.createPublicFigure(w, rng, pickCountry(w, rng, (x) => x.population ** 0.5), rng.pick(['entrepreneur', 'activist', 'artist', 'scientist', 'celebrity', 'journalist', 'politician'])),
+  },
+  {
+    id: 'summit',
+    weight: () => 0.25,
+    run: (w, rng) => {
+      const host = pickCountry(w, rng, (x) => x.gdp);
+      const guests = rng.sample(countries(w).filter((x) => x.id !== host.id && !host.atWarWith.includes(x.id)), 3);
+      if (guests.length < 2) return null;
+      for (const g of guests) A.setRelation(w, host, g, 6);
+      const topic = rng.pick(['climate finance', 'AI safety', 'trade tariffs', 'nuclear non-proliferation', 'migration', 'a regional security framework', 'debt relief']);
+      return createEvent(w, {
+        category: 'diplomatic', type: 'summit', severity: 2,
+        title: `${host.name} hosts summit on ${topic}`,
+        description: `Leaders of ${guests.map((g) => g.name).join(', ')} met in ${A.capitalOf(w, host).name} for talks on ${topic}. ${rng.pick(['A joint declaration was signed.', 'Talks ended without agreement.', 'A working group was formed.', 'One delegation walked out.'])}`,
+        location: { countryId: host.id }, actors: [ref('country', host.id), ...guests.map((g) => ref('country', g.id))], effects: [fx('country', host.id, 'approval', 2)], tags: ['diplomacy', 'summit', host.code],
+      });
+    },
+  },
+  {
+    id: 'strike',
+    weight: (w) => 0.2 + countries(w).filter((c) => c.inflation > 8 || c.unemployment > 12).length * 0.1,
+    run: (w, rng) => {
+      const c = pickCountry(w, rng, (x) => x.inflation + x.unemployment);
+      const unions = Object.values(w.organizations).filter((o) => o.alive && o.type === 'union' && o.countryId === c.id);
+      const u = unions[0];
+      const sector = rng.pick(['transport', 'health', 'energy', 'manufacturing'] as Sector[]);
+      return createEvent(w, {
+        category: 'economic', type: 'strike', severity: 2,
+        title: `Nationwide ${sector} strike paralyzes ${c.name}`,
+        description: `${u ? `${u.name} called` : 'Workers called'} a general strike across the ${sector} sector demanding wage increases to match ${c.inflation.toFixed(0)}% inflation. ${rng.pick(['Trains stopped.', 'Hospitals ran on skeleton crews.', 'The government threatened emergency laws.'])}`,
+        location: { countryId: c.id }, actors: [ref('country', c.id), ...(u ? [ref('organization', u.id)] : [])],
+        effects: [fx('country', c.id, 'gdpGrowth', -0.4), fx('country', c.id, 'unrest', 3), fx('country', c.id, 'approval', -2), ...(u ? [fx('organization', u.id, 'influence', 4)] : [])], tags: ['strike', 'labor', sector, c.code],
+      });
+    },
+  },
+  {
+    id: 'assassination',
+    weight: (w) => 0.03 + countries(w).reduce((s, c) => s + (c.stability < 35 ? 0.03 : 0) + c.atWarWith.length * 0.01, 0),
+    run: (w, rng) => {
+      const pool = livePeople(w).filter((p) => p.fame > 40 && (p.profession === 'politician' || p.profession === 'journalist' || p.profession === 'activist'));
+      if (!pool.length) return null;
+      const p = rng.pickWeighted(pool, (x) => 100 - (w.countries[x.countryId]?.stability ?? 50) + x.influence / 3);
+      return A.killPerson(w, rng, p, 'assassination');
+    },
+  },
+];
+
+function leaderAgg(w: World, c: Country): number { return w.people[c.leaderId]?.personality.aggression ?? 0.5; }
+
+/** Roll for spontaneous events for this day. */
+export function spawnDailyEvents(world: World, rng: RNG): WorldEvent[] {
+  const out: WorldEvent[] = [];
+  const nCountries = Object.keys(world.countries).length;
+  // Expected events per day scales gently with world size; early days are richer so the first minutes feel alive.
+  const boost = world.day < 20 ? 1.8 : 1;
+  let expected = (0.55 + nCountries / 60) * boost;
+  const weights = SPAWN_RULES.map((r) => Math.max(0, r.weight(world, rng)));
+  while (expected > 0) {
+    if (rng.next() < Math.min(1, expected)) {
+      const rule = rng.pickWeighted(SPAWN_RULES, (r) => weights[SPAWN_RULES.indexOf(r)]);
+      try {
+        const ev = rule.run(world, rng);
+        if (ev) out.push(ev);
+      } catch (err) {
+        console.warn('[spawn] rule failed', rule.id, err);
+      }
+    }
+    expected -= 1;
+  }
+  return out;
+}
