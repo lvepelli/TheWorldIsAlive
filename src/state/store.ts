@@ -11,7 +11,7 @@ import { tickDay } from '@/engine/simulation/tick';
 import { createStore, serialize, deserialize, type SaveMeta } from '@/engine/persistence/storage';
 import { executePlan } from '@/engine/godmode/execute';
 import type { GodPlan } from '@/engine/godmode/interpreter';
-import { localGodInterpreter } from '@/engine/godmode/interpreter';
+import { godInterpreter, narrativeEnhancer } from '@/engine/ai';
 import { audio } from '@/ui/audio';
 
 export type Screen = 'world' | 'live' | 'news' | 'social' | 'markets' | 'people' | 'orgs' | 'history' | 'god';
@@ -171,13 +171,14 @@ export const useGame = create<GameState>((set, get) => ({
       set((s) => ({ version: s.version + 1, lastDayEvents: [...s.lastDayEvents.slice(-5), ev] }));
       if (ev.severity >= 4 && get().settings.cinematics) pushCinematic(get, set, ev, true);
       else pushToast(get, set, ev);
+      enhanceRecent(get, set);
       void get().saveWorld(AUTOSAVE_SLOT);
     }
     return res;
   },
   async runGodText(text) {
     const { world } = get(); if (!world) return null;
-    const plan = await localGodInterpreter.interpret(world, text);
+    const plan = await godInterpreter.interpret(world, text);
     return get().runGodPlan(plan, text);
   },
   setGodPrefill(p) { set({ godPrefill: p }); },
@@ -194,6 +195,15 @@ function afterTicks(get: () => GameState, set: (p: Partial<GameState>) => void, 
     else pushToast(get, set, ev);
   }
   set({ version: get().version + 1, lastDayEvents: produced.length ? produced.slice(-8) : get().lastDayEvents });
+  enhanceRecent(get, set);
+}
+
+/** Optional async LLM enhancement of today's top articles (no-op without an endpoint). */
+export function enhanceRecent(get: () => GameState, set: (p: Partial<GameState>) => void): void {
+  const w = get().world;
+  if (!narrativeEnhancer || !w) return;
+  const todays = w.news.filter((n) => n.day === w.day);
+  void narrativeEnhancer.enhanceDay(w, todays).then((n) => { if (n) set({ version: get().version + 1 }); });
 }
 
 function pushCinematic(get: () => GameState, set: (p: Partial<GameState>) => void, ev: WorldEvent, force: boolean): void {
