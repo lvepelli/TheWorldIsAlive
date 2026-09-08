@@ -14,6 +14,15 @@ export function Intro(): React.ReactElement {
   const [showSaves, setShowSaves] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
+  // Deep link: ?seed=... starts a world immediately (shareable worlds).
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('seed');
+      if (s && phase === 'intro' && !sessionStorage.getItem('twia:deeplinked')) { sessionStorage.setItem('twia:deeplinked', '1'); setSeed(s); void newWorld(s); }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const autosave = saves.find((s) => s.slot === 'autosave');
   const go = async (s?: string) => { setError(null); try { await newWorld(s); } catch (e) { setError((e as Error).message); } };
   const ALL_STEPS = ['Shaping continents', 'Drawing borders', 'Founding cities', 'Raising leaders and citizens', 'Incorporating companies', 'Printing newspapers', 'Opening markets', 'Setting history in motion'];

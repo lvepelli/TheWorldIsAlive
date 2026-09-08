@@ -48,6 +48,7 @@ function HudTop(): React.ReactElement {
       <div className="row hide-mobile" style={{ gap: 6 }}>
         <button className="btn icon panel" title={settings.audio ? 'Mute' : 'Enable audio'} onClick={() => { setSetting('audio', !settings.audio); audio.play('click'); }} aria-label="Toggle audio">{settings.audio ? '🔊' : '🔇'}</button>
         <button className="btn icon panel" title="Saves" onClick={() => setSaves(true)} aria-label="Save and load">💾</button>
+        <button className="btn icon panel" title="Copy a link to this world's seed" onClick={() => { const url = `${location.origin}${location.pathname}?seed=${encodeURIComponent(world.meta.seed)}`; navigator.clipboard?.writeText(url).then(() => alert(`Link copied:\n${url}`)).catch(() => prompt('Copy this link', url)); }} aria-label="Share seed">🔗</button>
       </div>
       {menu && (
         <Modal title="Advance time" onClose={() => setMenu(false)}>

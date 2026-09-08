@@ -13,6 +13,17 @@ what you caused.
 - **Mobile-first**: bottom navigation, bottom-sheet inspector, pinch/zoom map, safe areas, installable PWA. Works offline once loaded.
 - **Portable**: plain Vite + React + TypeScript. No backend, no API key required. Optional LLM hooks.
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![World map](docs/screenshots/world-desktop.png) | ![Newsroom](docs/screenshots/news-desktop.png) |
+| ![Markets](docs/screenshots/markets-desktop.png) | ![Person dialogue](docs/screenshots/person-dialogue-desktop.png) |
+
+Mobile: [world map](docs/screenshots/world-mobile.png) · [God Mode cinematic](docs/screenshots/god-cinematic-mobile.png) · [intro with seed preview](docs/screenshots/intro-desktop.png)
+
+Share a world: append `?seed=your-seed` to the URL (the 🔗 button copies it).
+
 ## Quick start
 
 ```bash
