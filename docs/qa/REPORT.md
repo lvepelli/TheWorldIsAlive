@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/ed1a1d39778dcc226bf95f7bd4a3bacafd7b5c59/index.html
-Date: 2026-09-09T08:23:08.731Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/461b2afea893c9a33c626c0930ba47fc167de084/index.html
+Date: 2026-09-09T08:37:40.921Z
 
 ## android-360 (360×800)
 
@@ -10,8 +10,8 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9699 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (9684 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -28,7 +28,7 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ a character answers a question
 - ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (9936 bright samples)
+- ✅ Regions overlay paints the map (9797 bright samples)
 - ✅ tap on the Regions overlay opens a region inspector
 - ✅ God understands annexation
 - ✅ governors appear among the people
@@ -47,8 +47,8 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8089 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8059 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -65,7 +65,7 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ a character answers a question
 - ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (8405 bright samples)
+- ✅ Regions overlay paints the map (8188 bright samples)
 - ✅ tap on the Regions overlay opens a region inspector
 - ✅ God understands annexation
 - ✅ governors appear among the people
@@ -84,8 +84,8 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8380 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8382 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -102,7 +102,7 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ a character answers a question
 - ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (9040 bright samples)
+- ✅ Regions overlay paints the map (8972 bright samples)
 - ✅ tap on the Regions overlay opens a region inspector
 - ✅ God understands annexation
 - ✅ governors appear among the people
@@ -121,8 +121,8 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8144 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8137 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -138,7 +138,7 @@ Date: 2026-09-09T08:23:08.731Z
 - ✅ a character answers a question
 - ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (8559 bright samples)
+- ✅ Regions overlay paints the map (8436 bright samples)
 - ✅ tap on the Regions overlay opens a region inspector
 - ✅ God understands annexation
 - ✅ governors appear among the people
