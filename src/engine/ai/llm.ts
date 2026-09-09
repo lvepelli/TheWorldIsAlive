@@ -14,6 +14,8 @@ import type { World, NewsArticle, WorldEvent } from '../types';
 import { PROMPTS, fill } from './prompts';
 import type { GodCommandInterpreter, GodPlan } from '../godmode/interpreter';
 import { localGodInterpreter } from '../godmode/interpreter';
+import { localDialogue, type DialogueProvider } from './dialogue';
+import type { Person } from '../types';
 import { GOD_PRESETS } from '../godmode/presets';
 import { formatDate } from '../time';
 
@@ -85,5 +87,37 @@ export class LLMGodInterpreter implements GodCommandInterpreter {
       if (!out?.action || (!GOD_PRESETS.some((p) => p.id === out.action) && out.action !== 'company-breakthrough')) return local;
       return { action: out.action, params: out.params ?? {}, interpretation: out.interpretation ?? local.interpretation, confidence: typeof out.confidence === 'number' ? out.confidence : 0.8, magnitude: out.magnitude ?? local.magnitude, delayDays: typeof out.delayDays === 'number' && out.delayDays > 0 ? Math.round(out.delayDays) : local.delayDays, customDescription: out.customDescription ?? local.customDescription, targets: local.targets };
     } catch (e) { console.warn('[llm] god interpretation failed, using local', e); return local; }
+  }
+}
+
+/**
+ * LLM-backed character dialogue. Packs personality, objective, memories, relationships,
+ * national mood and the running conversation into prompts/character_dialogue.md.
+ * Falls back to the local provider on any failure, so the UI never waits on a dead endpoint.
+ */
+export class LLMDialogueProvider implements DialogueProvider {
+  readonly id = 'llm';
+  private threads = new Map<string, { q: string; a: string }[]>();
+  constructor(private cfg: LLMConfig) {}
+  async answer(world: World, p: Person, question: string): Promise<string> {
+    const c = world.countries[p.countryId];
+    const thread = this.threads.get(p.id) ?? [];
+    const rel = p.relationships.slice(0, 6).map((r) => { const o = world.people[r.target.id]; return o ? `${o.name} (${r.type}, ${r.strength > 0.3 ? 'close' : r.strength < -0.3 ? 'hostile' : 'neutral'})` : ''; }).filter(Boolean).join('; ') || 'nobody in particular';
+    const vars = {
+      name: p.name, title: p.title ?? p.profession, profession: p.profession, country: c?.name ?? 'nowhere', traits: p.traits.join(', ') || 'unremarkable',
+      ambition: p.personality.ambition.toFixed(1), integrity: p.personality.integrity.toFixed(1), charisma: p.personality.charisma.toFixed(1), ideology: p.ideology, objective: p.objective,
+      memories: p.memories.slice(-4).map((m) => m.text).join('; ') || 'nothing notable', relationships: rel,
+      mood: c ? `happiness ${c.happiness.toFixed(0)}, unrest ${c.unrest.toFixed(0)}, ${c.atWarWith.length ? 'at war' : 'at peace'}` : 'unknown',
+      history: thread.slice(-3).map((t) => `Q: ${t.q} A: ${t.a}`).join(' | ') || 'nothing yet', question,
+    };
+    try {
+      const text = (await chat(this.cfg, fill(PROMPTS.character_dialogue.system, vars), fill(PROMPTS.character_dialogue.user, vars), 200)).trim().replace(/^"|"$/g, '');
+      if (!text) throw new Error('empty');
+      thread.push({ q: question, a: text }); this.threads.set(p.id, thread.slice(-6));
+      return text;
+    } catch (err) {
+      console.warn('[llm] dialogue failed, using local', err);
+      return localDialogue.answer(world, p, question);
+    }
   }
 }

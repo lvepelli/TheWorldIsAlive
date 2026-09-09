@@ -16,7 +16,8 @@ import { pctChange } from '@/engine/simulation/markets';
 import { sentimentFor } from '@/engine/simulation/information';
 import { countryPower } from '@/engine/simulation/systems';
 import { countConsequences } from '../screens/HistoryScreen';
-import { localDialogue, SUGGESTED_QUESTIONS } from '@/engine/ai/dialogue';
+import { SUGGESTED_QUESTIONS, rememberConversation } from '@/engine/ai/dialogue';
+import { dialogueProvider } from '@/engine/ai';
 
 export function Inspector(): React.ReactElement {
   const selection = useGame((s) => s.selection);
@@ -315,7 +316,7 @@ function Dialogue({ p }: { p: Person }): React.ReactElement {
   const world = useGame((s) => s.world)!;
   const [log, setLog] = useState<{ q: string; a: string }[]>([]);
   const [q, setQ] = useState('');
-  const ask = async (question: string) => { if (!question.trim()) return; const a = await localDialogue.answer(world, p, question); setLog((l) => [...l.slice(-5), { q: question, a }]); setQ(''); };
+  const ask = async (question: string) => { if (!question.trim()) return; const a = await dialogueProvider.answer(world, p, question); rememberConversation(world, p, question, a); setLog((l) => [...l.slice(-5), { q: question, a }]); setQ(''); };
   return (
     <Section title="Talk to them">
       <div className="chips scroll" style={{ marginBottom: 6 }}>{SUGGESTED_QUESTIONS.map((s) => <button key={s} className="chip clickable" onClick={() => void ask(s)}>{s}</button>)}</div>

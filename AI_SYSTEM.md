@@ -10,7 +10,7 @@ The game must be complete without any AI API. Generative AI is an **enhancement 
 2. Countries / organizations / cities — rule drift (`systems.ts`).
 3. Lightweight agents (tier 2/3 people) — occasional objective pursuit.
 4. Important named characters (tier 1) — frequent objective pursuit, memories, life story.
-5. **LLM-enhanced narrative** (optional) — better prose for top stories, richer God command interpretation, future dialogue.
+5. **LLM-enhanced narrative** (optional) — better prose for top stories, richer God command interpretation, in-character dialogue.
 
 ## Abstractions
 
@@ -18,7 +18,7 @@ The game must be complete without any AI API. Generative AI is an **enhancement 
 | --- | --- | --- |
 | `NarrativeProvider` (`ai/narrative.ts`): `headline`, `post`, `reply` | `LocalNarrativeProvider` (templates by outlet bias / profession / traits) | Not synchronous; instead `LLMNarrativeEnhancer.enhanceDay()` rewrites top articles after the tick |
 | `GodCommandInterpreter` (`godmode/interpreter.ts`): `interpret(world, text) → GodPlan` | `LocalGodInterpreter` (regex intents + entity matching) | `LLMGodInterpreter` (JSON plan, validated, falls back to local) |
-| Character dialogue (`ai/dialogue.ts`: `DialogueProvider.answer`) | `LocalDialogueProvider` (personality/objective/memory/relationship templates) | not wired yet; prompt ready in `prompts/character_dialogue.md` |
+| Character dialogue (`ai/dialogue.ts`: `DialogueProvider.answer`) | `LocalDialogueProvider` (personality/objective/memory/relationship templates) | `LLMDialogueProvider` (`ai/llm.ts`): prompt `character_dialogue` with a per-character thread; local fallback on error; chosen in `ai/index.ts` |
 | World summaries | `summary.ts` templates | prompt ready in `prompts/world_summary.md` |
 
 `src/engine/ai/index.ts` picks implementations based on `VITE_AI_ENDPOINT`.

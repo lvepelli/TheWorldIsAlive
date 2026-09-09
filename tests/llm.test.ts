@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createServer } from 'node:http';
 import { generateWorld } from '../src/engine/generator/world';
-import { LLMGodInterpreter, LLMNarrativeEnhancer, chat } from '../src/engine/ai/llm';
+import { LLMGodInterpreter, LLMNarrativeEnhancer, LLMDialogueProvider, chat } from '../src/engine/ai/llm';
+import { rememberConversation } from '../src/engine/ai/dialogue';
 import { RNG } from '../src/engine/rng';
 import { tickDay } from '../src/engine/simulation/tick';
 
@@ -19,7 +20,8 @@ async function mockServer(): Promise<{ url: string; close: () => void; calls: st
       if (sys.includes('God command')) {
         const cid = user.match(/Countries: (c_\w+)=/)?.[1] ?? '';
         content = `Here you go:\n{"action":"boom","params":{"a":"${cid}"},"interpretation":"LLM: boom in first country","confidence":0.9,"magnitude":1,"customDescription":"A golden age."}`;
-      } else content = '{"headline":"LLM HEADLINE","body":"LLM body text."}';
+      } else if (sys.startsWith('You are ') && sys.includes('Never break character')) content = user.includes('trust') ? 'I trust nobody, least of all interviewers.' : 'LLM answer in character.';
+      else content = '{"headline":"LLM HEADLINE","body":"LLM body text."}';
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ choices: [{ message: { content } }] }));
     });
@@ -74,5 +76,19 @@ describe('LLM integration (mocked endpoint)', () => {
     await new Promise<void>((r) => server.listen(0, r));
     const port = (server.address() as { port: number }).port;
     try { expect(await chat({ endpoint: `http://127.0.0.1:${port}/`, model: 'x' }, 's', 'u')).toBe('hello'); } finally { server.close(); }
+  });
+
+  it('LLMDialogueProvider answers in character, keeps a thread, and falls back locally', async () => {
+    const m = await mockServer();
+    const w = generateWorld({ seed: 'llm-dialogue' });
+    const p = Object.values(w.people).find((x) => x.alive)!;
+    const prov = new LLMDialogueProvider({ endpoint: m.url, model: 'mock' });
+    const a1 = await prov.answer(w, p, 'What do you want?'); expect(a1).toBe('LLM answer in character.');
+    rememberConversation(w, p, 'What do you want?', a1);
+    const a2 = await prov.answer(w, p, 'Who do you trust?'); expect(a2).toContain('trust nobody');
+    expect(p.memories.some((x) => x.text.startsWith('Was asked'))).toBe(true);
+    m.close();
+    const dead = new LLMDialogueProvider({ endpoint: 'http://127.0.0.1:9/nope', model: 'mock' });
+    const a3 = await dead.answer(w, p, 'Tell me about yourself.'); expect(typeof a3).toBe('string'); expect(a3.length).toBeGreaterThan(5);
   });
 });

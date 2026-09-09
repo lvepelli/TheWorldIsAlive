@@ -34,7 +34,9 @@ export class LocalDialogueProvider implements DialogueProvider {
       return prefix + voice([`${c.name} ${c.happiness > 60 ? 'is a good place to live' : c.happiness > 40 ? 'could be so much more' : 'is suffering'}. As for ${leader?.name ?? 'the leadership'}: ${likes ? 'I support the direction, mostly' : 'I did not vote for this, and I never will'}.`, `${likes ? 'The government understands people like me.' : 'The government has never understood people like me.'} Corruption is ${c.corruption > 60 ? 'everywhere' : c.corruption > 35 ? 'a problem' : 'under control'}, and ${c.unrest > 50 ? 'the streets are angry' : 'the streets are quiet, for now'}.`]);
     }
     if (/recent|happen|news|lately|today/.test(q)) {
-      const m = p.memories.slice(-3).reverse();
+      const m = p.memories.filter((x) => !x.text.startsWith('Was asked')).slice(-3).reverse();
+      const asked = p.memories.filter((x) => x.text.startsWith('Was asked')).length;
+      if (asked >= 3 && rng.bool(0.4)) return prefix + voice(['You keep asking me things. That is what happened recently.', 'Mostly, I have been answering your questions.']);
       if (!m.length) return prefix + voice(['Nothing worth telling. Quiet days, and I distrust quiet days.', 'My life is boring by design.']);
       return prefix + `${m.map((x) => x.text).join('. Then ')}. ${p.personality.openness > 0.5 ? 'I am still processing all of it.' : 'I would rather not dwell on it.'}`;
     }
@@ -55,3 +57,13 @@ export class LocalDialogueProvider implements DialogueProvider {
 }
 
 export const localDialogue = new LocalDialogueProvider();
+
+/**
+ * Characters remember being interviewed: a low-weight memory that later answers,
+ * social posts and the local provider can draw on. Shared by every provider.
+ */
+export function rememberConversation(world: World, p: Person, question: string, answer: string): void {
+  const text = `Was asked "${question.slice(0, 60)}" and answered: ${answer.slice(0, 80)}`;
+  p.memories.push({ day: world.day, text, weight: 0.15 });
+  if (p.memories.length > 12) p.memories.splice(0, p.memories.length - 12);
+}
