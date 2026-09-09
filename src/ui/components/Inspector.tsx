@@ -123,7 +123,7 @@ function CountryView({ c }: { c: Country }): React.ReactElement {
             <Stat k="Climate risk" v={c.climateRisk.toFixed(0)} bar={c.climateRisk} color="var(--cat-environmental)" />
           </div>
           {idx && <Section title={`${idx.name} · ${idx.value.toFixed(0)}`} right={<span className={pctChange(idx.history, 30) >= 0 ? 'up' : 'down'}>{fmtPct(pctChange(idx.history, 30))} 30d</span>}><Sparkline data={idx.history.slice(-90)} width={360} height={40} /></Section>}
-          <Section title="Leadership">{leader && <EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${leader.title} · ${leader.ideology} · approval ${c.approval.toFixed(0)}%`} />}<div className="dim" style={{ fontSize: 12, padding: '0 10px' }}>{c.electionEvery ? `Elections every ${c.electionEvery} years · next ${c.nextElectionYear}` : 'No elections'} · culture values {c.culture.values.join(', ')}</div></Section>
+          <Section title="Leadership">{leader && <EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${leader.title} · ${leader.ideology} · approval ${c.approval.toFixed(0)}%`} />}<div className="dim" style={{ fontSize: 12, padding: '0 10px' }}>{c.electionEvery ? `Elections every ${c.electionEvery} years · next ${c.nextElectionYear}` : 'No elections'} · motto “{motto(c.culture.values)}” · language {c.culture.language}</div></Section>
           <Section title="Resources"><div className="chips">{Object.entries(c.resources).map(([k, v]) => <span key={k} className="chip">{titleCase(k)} <b style={{ color: barColor(v) }}>{v.toFixed(0)}</b></span>)}</div></Section>
           <Section title={`Cities (${cities.length})`}><div className="list">{cities.slice(0, 6).map((ct) => <EntityRow key={ct.id} refx={{ kind: 'city', id: ct.id }} name={`${ct.name}${ct.capital ? ' ★' : ''}`} sub={`${fmtPop(ct.population)} · prosperity ${ct.prosperity.toFixed(0)} · unrest ${ct.unrest.toFixed(0)}`} />)}</div></Section>
           {people.length > 0 && <Section title="Notable people"><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${p.title ?? titleCase(p.profession)} · influence ${p.influence.toFixed(0)}`} />)}</div></Section>}
@@ -313,3 +313,11 @@ function Dialogue({ p }: { p: Person }): React.ReactElement {
     </Section>
   );
 }
+
+function motto(values: string[]): string {
+  const [a, b, c] = values;
+  const forms = [`Through ${a}, ${b}`, `${cap(a)}, ${b}, ${c}`, `${cap(a)} above all`, `In ${a} we endure`, `${cap(b)} and ${c}`];
+  const h = values.join('').split('').reduce((n, ch) => n + ch.charCodeAt(0), 0);
+  return forms[h % forms.length];
+}
+function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
