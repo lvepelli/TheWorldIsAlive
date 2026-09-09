@@ -385,14 +385,15 @@ export class MapRenderer {
   /** Decaying impact zones for disasters, epidemics and battles (last 60 days). */
   private drawZones(world: World, offsets: number[], t: number, reduced: boolean): void {
     const g = this.ctx; const cam = this.camera;
-    const zones = world.events.filter((e) => world.day - e.day <= 60 && (e.type.startsWith('disaster.') || e.type.startsWith('health.') || e.type === 'battle' || e.type === 'crackdown')).slice(-24);
+    const festive = (e: WorldEvent) => e.type === 'festival.film' || e.type === 'trade.fair' || e.type === 'world.games' || e.type === 'prize.laurels' || e.type === 'fair.venture';
+    const zones = world.events.filter((e) => world.day - e.day <= 60 && (e.type.startsWith('disaster.') || e.type.startsWith('health.') || e.type === 'battle' || e.type === 'crackdown' || (festive(e) && world.day - e.day <= 21))).slice(-24);
     for (const ev of zones) {
       const endedAt = ev.data?.ended as number | undefined;
-      const life = endedAt !== undefined ? Math.max(0, 0.3 - (world.day - endedAt) / 20) : 1 - (world.day - ev.day) / 60; // an ended drought fades within days
+      const kind = festive(ev) ? 'festive' : ev.type.startsWith('health.') ? 'health' : ev.type === 'battle' || ev.type === 'crackdown' ? 'war' : 'disaster';
+      const life = kind === 'festive' ? 1 - (world.day - ev.day) / 21 : endedAt !== undefined ? Math.max(0, 0.3 - (world.day - endedAt) / 20) : 1 - (world.day - ev.day) / 60; // an ended drought fades within days
       if (life <= 0) continue;
-      const kind = ev.type.startsWith('health.') ? 'health' : ev.type === 'battle' || ev.type === 'crackdown' ? 'war' : 'disaster';
-      const col = kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : /meteor|volcano|wildfire|drought/.test(ev.type) ? '255,140,60' : '96,180,255';
-      const radius = (3 + ev.severity * 2.2) * (kind === 'health' && ev.data?.pandemic ? 3 : 1) * cam.scale;
+      const col = kind === 'festive' ? '255,208,96' : kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : /meteor|volcano|wildfire|drought/.test(ev.type) ? '255,140,60' : '96,180,255';
+      const radius = (kind === 'festive' ? 2 + ev.severity * 1.6 : 3 + ev.severity * 2.2) * (kind === 'health' && ev.data?.pandemic ? 3 : 1) * cam.scale;
       for (const ox of offsets) {
         const [sx, sy] = this.worldToScreen(ev.location.x + ox, ev.location.y);
         if (sx < -radius || sx > this.width + radius || sy < -radius || sy > this.height + radius) continue;
@@ -401,6 +402,10 @@ export class MapRenderer {
         grad.addColorStop(0, `rgba(${col},${0.28 * life})`); grad.addColorStop(0.6, `rgba(${col},${0.12 * life})`); grad.addColorStop(1, `rgba(${col},0)`);
         g.fillStyle = grad; g.beginPath(); g.arc(sx, sy, radius * pulse, 0, Math.PI * 2); g.fill();
         if (kind === 'disaster' && ev.severity >= 4) { g.strokeStyle = `rgba(${col},${0.35 * life})`; g.lineWidth = 1; g.setLineDash([3, 5]); g.beginPath(); g.arc(sx, sy, radius * 0.7, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+        if (kind === 'festive') { // a slowly turning ring of lights: a celebration, not a wound
+          const n = 10; g.fillStyle = `rgba(255,236,170,${0.85 * life})`;
+          for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + (reduced ? 0 : t * 0.35); const rr = radius * 0.72; const tw = reduced ? 1 : 0.6 + 0.4 * Math.sin(t * 3 + i); g.beginPath(); g.arc(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr, Math.max(0.8, 1.4 * tw * Math.min(1, cam.scale / 6)), 0, Math.PI * 2); g.fill(); }
+        }
       }
     }
   }
