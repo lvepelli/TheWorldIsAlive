@@ -886,7 +886,14 @@ Object.assign(CONSEQUENCE_RULES, {
     const org = src.actors.find((a) => a.kind === 'organization'); const o = org ? w.organizations[org.id] : undefined;
     if (!c || !o || !o.alive) return null;
     if (o.support < 30 || c.stability > 60) { if (rng.bool(0.5)) schedule(w, 'secession.referendum', src.id, rng.int(120, 300)); return null; }
-    if (rng.bool(0.5) && !recentFounding(w, 730)) return A.createCountry(w, rng, c, src.id, false);
+    if (rng.bool(0.5) && !recentFounding(w, 730)) {
+      // Prefer the region the movement grew in (its leader's home, or a region named in its title) so the split follows regional borders.
+      const leader = o.leaderId ? w.people[o.leaderId] : undefined; const regions = (c.regionIds ?? []).map((id) => w.regions?.[id]).filter((r): r is NonNullable<typeof r> => !!r && !r.cityIds.includes(c.capitalId));
+      const region = regions.find((r) => o.name.toLowerCase().includes(r.name.toLowerCase())) ?? regions.find((r) => leader && r.cityIds.includes(leader.cityId)) ?? (src.data?.cityId ? regions.find((r) => r.cityIds.includes(src.data!.cityId as ID)) : undefined);
+      const ev = region ? A.createCountry(w, rng, c, src.id, false, undefined, region.id) : null;
+      if (ev) { c.history.push({ day: w.day, text: `${region!.name} broke away.`, eventId: ev.id }); return ev; }
+      return A.createCountry(w, rng, c, src.id, false);
+    }
     return createEvent(w, { category: 'political', type: 'referendum.blocked', severity: 3, causedBy: src.id, title: `${c.name} bans independence referendum`, description: `The ${c.adjective} government declared the separatist vote illegal and deployed police to polling stations. ${o.name} vowed to continue.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('organization', o.id)], effects: [fx('country', c.id, 'unrest', 10), fx('country', c.id, 'freedom', -5), fx('organization', o.id, 'support', 5)], tags: ['secession', c.code] });
   },
   'succession.crisis': (w: World, rng: RNG, src: WorldEvent) => {
