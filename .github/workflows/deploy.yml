@@ -66,17 +66,20 @@ jobs:
             echo "Pages not serving this build yet ($i): '$got'"; sleep 10
           done
           if [ -z "$URL" ]; then
-            echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using the githack mirror for QA."
+            echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using a CDN mirror for QA."
+            STATICALLY="https://cdn.statically.io/gh/${{ github.repository }}/${SHA_GH}/index.html"
             for i in $(seq 1 12); do
-              got=$(curl -fsSL "https://rawcdn.githack.com/${{ github.repository }}/${SHA_GH}/build-id.txt" 2>/dev/null || true)
-              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; echo "--- response headers ---"; curl -sSI "$MIRROR" || true; break; fi
-              echo "mirror not ready ($i): '$got'"; sleep 10
+              got=$(curl -fsSL "https://cdn.statically.io/gh/${{ github.repository }}/${SHA_GH}/build-id.txt" 2>/dev/null || true)
+              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$STATICALLY"; echo "statically mirror is live"; echo "--- response headers ---"; curl -sSI "$STATICALLY" || true; break; fi
+              got2=$(curl -fsSL "https://rawcdn.githack.com/${{ github.repository }}/${SHA_GH}/build-id.txt" 2>/dev/null || true)
+              if [ "$got2" = "${GITHUB_SHA}" ] && [ $i -ge 6 ]; then URL="$MIRROR"; echo "githack mirror is live"; echo "--- response headers ---"; curl -sSI "$MIRROR" || true; break; fi
+              echo "mirror not ready ($i): statically='$got' githack='$got2'"; sleep 10
             done
           fi
           if [ -z "$URL" ]; then echo "::error::No live URL serves build ${GITHUB_SHA}"; exit 1; fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           mkdir -p docs/qa
-          { echo "Pages (needs one-time enabling by the repo owner): $PAGES"; echo "Mirror, pinned to this deploy: $MIRROR"; echo "Mirror, latest: $LATEST"; echo "QA ran against: $URL"; } > docs/qa/LIVE_URL.txt
+          { echo "Pages (needs one-time enabling by the repo owner): $PAGES"; echo "Mirror (statically), pinned to this deploy: https://cdn.statically.io/gh/${{ github.repository }}/${SHA_GH}/index.html"; echo "Mirror (statically), latest: https://cdn.statically.io/gh/${{ github.repository }}/gh-pages/index.html"; echo "Mirror (githack), pinned: $MIRROR"; echo "Mirror (githack), latest: $LATEST"; echo "QA ran against: $URL"; } > docs/qa/LIVE_URL.txt
       - name: QA against the deployed site
         env:
           DEPLOY_URL: ${{ steps.live.outputs.url }}

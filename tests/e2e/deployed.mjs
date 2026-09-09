@@ -27,7 +27,9 @@ async function run(name, viewport, mobile) {
   try {
     const res = await page.goto(SITE, { waitUntil: 'load', timeout: 60000 });
     check(res && res.ok(), `page loads (HTTP ${res?.status()}, ${res?.headers()['content-type'] ?? '?'})`);
-    await page.waitForSelector('.logo', { timeout: 30000 });
+    // githack shows a one-time "One more step" interstitial for HTML; click through it.
+    if ((await page.locator('text=Open the page').count()) > 0) { lines.push('- ℹ️ host interstitial clicked (githack "One more step")'); await page.click('text=Open the page'); await page.waitForLoadState('load'); }
+    await page.waitForSelector('input[aria-label="World seed"]', { timeout: 30000 });
     check(true, 'intro renders');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     check(!overflow, 'no horizontal overflow on intro');
