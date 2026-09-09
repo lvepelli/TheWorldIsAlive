@@ -30,6 +30,7 @@ export class MapRenderer {
   private staticVersion = -1;
   private countryIndex = new Map<ID, number>();
   private labelCache = new Map<ID, { x: number; y: number; size: number }>();
+  private regionLabelCache = new Map<ID, { x: number; y: number; n: number }>();
   private citySprites = new Map<string, HTMLCanvasElement>();
   private dpr = 1;
   width = 0; height = 0;
@@ -76,7 +77,7 @@ export class MapRenderer {
       this.shapeVersionKey = key;
       this.countryIndex.clear();
       world.geography.countryOrder.forEach((id, i) => this.countryIndex.set(id, i));
-      this.labelCache.clear();
+      this.labelCache.clear(); this.regionLabelCache.clear();
       this.staticVersion = -1;
       this.recentVersion = -1;
     }
@@ -642,6 +643,24 @@ export class MapRenderer {
         g.strokeText(text, sx, sy);
         g.fillStyle = sel === c.id ? '#ffd27a' : c.atWarWith.length ? 'rgba(255,170,170,0.95)' : 'rgba(220,232,245,0.85)';
         g.fillText(text, sx, sy);
+        g.letterSpacing = '0px';
+      }
+      // Region names: small italic labels once zoomed in (always on the Regions overlay), at the mean of the region's cities.
+      const regionsOn = this.staticOverlay === 'regions';
+      if (world.regions && (z > 2.6 || (regionsOn && z > 1.4))) {
+        const W = this.W; const font = clamp(8 * Math.sqrt(z / 2.6), 8, 12);
+        g.font = `italic 500 ${font}px Inter, system-ui, sans-serif`; g.letterSpacing = '0.08em';
+        for (const r of Object.values(world.regions)) {
+          if (r.cityIds.length < 2 && !regionsOn) continue;
+          const c = world.countries[r.countryId]; if (!c || (r.cityIds.includes(c.capitalId) && !regionsOn)) continue; // the capital's region reads as the country itself
+          let lab = this.regionLabelCache.get(r.id);
+          if (!lab || lab.n !== r.cityIds.length) { const cities = r.cityIds.map((id) => world.cities[id]).filter(Boolean); if (!cities.length) continue; const x0 = cities[0].x; let sx0 = 0, sy0 = 0; for (const ct of cities) { let x = ct.x; if (x - x0 > W / 2) x -= W; else if (x0 - x > W / 2) x += W; sx0 += x; sy0 += ct.y; } lab = { x: ((sx0 / cities.length) + W) % W, y: sy0 / cities.length, n: r.cityIds.length }; this.regionLabelCache.set(r.id, lab); }
+          const [sx, sy] = this.worldToScreen(lab.x + ox, lab.y);
+          if (sx < -80 || sx > this.width + 80 || sy < -20 || sy > this.height + 20) continue;
+          const alpha = regionsOn ? 0.9 : clamp((z - 2.6) / 2, 0.35, 0.75);
+          g.lineWidth = 3; g.strokeStyle = `rgba(4,6,12,${0.7 * alpha})`; g.strokeText(r.name, sx, sy + font * 1.1);
+          g.fillStyle = r.unrest > 60 ? `rgba(255,190,150,${alpha})` : `rgba(200,215,235,${alpha})`; g.fillText(r.name, sx, sy + font * 1.1);
+        }
         g.letterSpacing = '0px';
       }
       if (z > 1.8) {
