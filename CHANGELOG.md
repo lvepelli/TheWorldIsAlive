@@ -5,6 +5,13 @@
 - Deployment: GitHub Pages via `.github/workflows/deploy.yml` (gh-pages branch), base-path-aware build, post-deploy Playwright QA on three phone viewports + desktop committed to `docs/qa`. Live: https://lvepelli.github.io/TheWorldIsAlive/
 - Map: day/night terminator sweeping the planet; tileable ocean/static raster with screen-space vignette; wrap-continuous terrain noise (no antimeridian seam); softer highland/snow texture; camera opens on the population-weighted center; seam hairline clipped from border strokes.
 - Tooling: `tests/e2e/deployed.mjs` (QA any URL), `tests/e2e/serve.mjs` (static server), `netlify.toml`.
+- Map: city lights brighten on the night side.
+- Mobile: swipe down on the inspector header/grabber to dismiss.
+- God Mode: "Inspire me" now names real countries, people and companies from the current world; "Surprise me" fires a random preset.
+- Consequences: sanctions after coups, startups spawned by breakthroughs, reconstruction after disasters, asset grabs after bankruptcies, anti-lockdown protests during pandemics.
+- Living characters: social reactions depend on family, partner, ally and enemy ties to the people involved.
+- History → Sagas: causal chains grouped into named emergent stories ("The Yukouri war", "From garage to giant").
+- News: consequence coverage references its cause ("weeks after…"); independent and international outlets mark stories as developing.
 
 ## 0.3.0 — living details
 

@@ -60,7 +60,15 @@ export class LocalNarrativeProvider implements NarrativeProvider {
     if (outlet.bias === 'sensational') headline = headline.toUpperCase().slice(0, 1) + headline.slice(1).replace(/\.$/, '') + rng.pick(['!', '', ' — what happens next?']);
     if (outlet.bias === 'business') headline = tweakBusiness(ev, headline, rng);
     const opener = rng.pick(BODY_OPENERS[outlet.bias]);
-    const spin = spinFor(world, ev, outlet, rng, involvesHome);
+    let spin = spinFor(world, ev, outlet, rng, involvesHome);
+    // Developing stories: tie consequences back to their cause so coverage reads as a continuing saga.
+    const parent = typeof ev.causedBy === 'string' && ev.causedBy.startsWith('ev_') ? world.events.find((e) => e.id === ev.causedBy) : undefined;
+    if (parent) {
+      const gap = ev.day - parent.day;
+      const when = gap <= 3 ? 'days after' : gap <= 45 ? 'weeks after' : gap <= 400 ? 'months after' : 'years after';
+      spin = `${rng.pick(['This comes', 'The development follows', 'It is the latest fallout'])} ${when} ${lowerFirst(parent.title)}. ${spin}`;
+      if (outlet.bias === 'independent' || outlet.bias === 'international') headline = `Developing: ${headline}`;
+    }
     // When the opener ends mid-sentence ("...confirmed that"), continue the sentence in lower case unless it starts with a proper noun.
     const midSentence = /(that|,)$/.test(opener);
     const desc = midSentence && /^(The|A|An|After|In|Under|Following|Voters|Armored|Investors|Health|Geologists|Traders|Leaders|Negotiators|Citing|Heavy|Thousands|Hundreds|Crowds|Troops|Live|Emergency|Cargo|Magazine|Rattled|Laid|Former|Building|Despite|Polls|Mass|Construction|Reading|Unable|Officials|Scientists|Engineers|Authorities|Banks|Fuel|Investment|Rescue|Bombings|Ministries|Followers|Licensing|Analysts|Insurance|Damage|Foreign|Unemployment|Austerity)\b/.test(ev.description) ? ev.description.charAt(0).toLowerCase() + ev.description.slice(1) : ev.description;
@@ -85,6 +93,8 @@ export class LocalNarrativeProvider implements NarrativeProvider {
     return { text: rng.pick(pool) + (rng.bool(0.4) ? flavor : ''), hashtags: [], sentiment: agree ? original.sentiment : -original.sentiment };
   }
 }
+
+function lowerFirst(t: string): string { return /^[A-Z][a-z]+ [a-z]/.test(t) && !/^(The|A|An) /.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1); }
 
 export function isNegative(ev: WorldEvent): boolean {
   if (['military', 'environmental', 'criminal', 'health'].includes(ev.category)) return !['war.ended', 'vaccine', 'outbreak.contained', 'aid'].includes(ev.type);
