@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useGame, randomSeed } from '@/state/store';
 import { SaveManager } from './screens/SaveManager';
 import { SeedPreview } from './components/SeedPreview';
+import { InstallButton } from './components/InstallButton';
 
 export function Intro(): React.ReactElement {
   const phase = useGame((s) => s.phase);
@@ -47,6 +48,7 @@ export function Intro(): React.ReactElement {
               <div className="row" style={{ justifyContent: 'center' }}><button className="btn ghost" onClick={() => setSeed(randomSeed())}>🎲 Random seed</button><button className="btn ghost" onClick={() => setShowSaves(true)}>💾 Saves & import</button></div>
               {error && <div className="card" style={{ color: 'var(--bad)' }}>{error}</div>}
             </div>
+            <InstallButton />
             <p className="dim" style={{ fontSize: 11 }}>Runs entirely in your browser. No account, no server. Works offline once loaded.</p>
           </>
         )}

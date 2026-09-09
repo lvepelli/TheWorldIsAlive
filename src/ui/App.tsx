@@ -15,6 +15,7 @@ import { Intro } from './Intro';
 import { Cinematic, Toasts } from './Overlays';
 import { Modal } from './components/Modal';
 import { SaveManager } from './screens/SaveManager';
+import { InstallButton } from './components/InstallButton';
 import { audio } from './audio';
 
 const NAV: { id: Screen; label: string; ico: string }[] = [
@@ -67,7 +68,7 @@ export function App(): React.ReactElement {
           <Modal title="More" onClose={() => setMore(false)}>
             <div className="grid-3">{NAV.filter((n) => !MOBILE_PRIMARY.includes(n.id)).map((n) => <button key={n.id} className={`btn ${screen === n.id ? 'primary' : ''}`} onClick={() => { setScreen(n.id); setMore(false); }}>{n.ico} {n.label}</button>)}</div>
             <div className="divider" />
-            <div className="row wrap"><button className="btn" onClick={() => { setMore(false); setSaves(true); }}>💾 Save / load / export</button></div>
+            <div className="row wrap"><button className="btn" onClick={() => { setMore(false); setSaves(true); }}>💾 Save / load / export</button><InstallButton /></div>
             <div className="row wrap">
               <label className="chip clickable"><input type="checkbox" checked={settings.audio} onChange={(e) => useGame.getState().setSetting('audio', e.target.checked)} /> audio</label>
               <label className="chip clickable"><input type="checkbox" checked={settings.cinematics} onChange={(e) => useGame.getState().setSetting('cinematics', e.target.checked)} /> cinematics</label>
