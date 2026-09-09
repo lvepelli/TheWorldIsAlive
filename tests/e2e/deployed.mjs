@@ -106,6 +106,7 @@ async function run(name, viewport, mobile) {
     await page.click('button:has-text("Regions")'); await page.waitForTimeout(900);
     const paintedRegions = await page.evaluate(() => { const c = document.querySelector('.map-canvas'); const g = c.getContext('2d'); const d = g.getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++; return lit; });
     check(paintedRegions > 50, `Regions overlay paints the map (${paintedRegions} bright samples)`);
+    await shot('07-regions');
     { // a tap on land while the Regions overlay is active opens that region's inspector
       let kind = '';
       for (const [fx, fy] of [[0.5, 0.42], [0.4, 0.35], [0.6, 0.5], [0.3, 0.55]]) { await page.mouse.click(Math.round(viewport.width * fx), Math.round(viewport.height * fy)); await page.waitForTimeout(500); kind = (await page.locator('.inspector .kicker').first().textContent().catch(() => '')) ?? ''; if (/region/i.test(kind)) break; await page.click('.inspector-head button[aria-label="Close"]').catch(() => {}); }
