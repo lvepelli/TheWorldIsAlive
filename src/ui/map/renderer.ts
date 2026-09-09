@@ -405,27 +405,36 @@ export class MapRenderer {
     }
   }
 
-  /** Shared border segments between two country indexes (grid coords), cached per pair. */
+  /** Shared border polylines between two country indexes, traced along the smoothed contour polygons (so fronts follow the drawn borders, not the raw grid). Cached per pair. */
   private frontCache = new Map<string, number[][]>();
   private harvestMemo: { len: number; yields?: Record<string, number> } = { len: -1 };
   private frontsFor(world: World, ra: number, rb: number): number[][] {
     const key = `${ra}:${rb}:${world.geography.countryOrder.length}`;
     const hit = this.frontCache.get(key); if (hit) return hit;
-    const geo = world.geography; const W = geo.width, H = geo.height; const cells = geo.cells;
-    const segs: number[][] = [];
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const c = cells[y * W + x]; if (c !== ra) continue;
-      const right = cells[y * W + ((x + 1) % W)];
-      if (right === rb) segs.push([x + 1, y, x + 1, y + 1]);
-      if (x === 0 && cells[y * W + W - 1] === rb) segs.push([0, y, 0, y + 1]);
-      if (y + 1 < H && cells[(y + 1) * W + x] === rb) segs.push([x, y + 1, x + 1, y + 1]);
-      if (y > 0 && cells[(y - 1) * W + x] === rb) segs.push([x, y, x + 1, y]);
-      const left = cells[y * W + ((x - 1 + W) % W)];
-      if (left === rb) segs.push([x, y, x, y + 1]);
+    const W = this.W;
+    const polysA = this.shapes?.byCountry.get(ra) ?? [], polysB = this.shapes?.byCountry.get(rb) ?? [];
+    // Spatial hash of B's outline points (plus seam copies) in 1-unit buckets.
+    const buckets = new Map<string, number[]>();
+    const put = (x: number, y: number) => { const k = `${Math.floor(x)},${Math.floor(y)}`; const b = buckets.get(k); if (b) b.push(x, y); else buckets.set(k, [x, y]); };
+    for (const p of polysB) for (let i = 0; i < p.length; i += 2) { put(p[i], p[i + 1]); put(p[i] + W, p[i + 1]); put(p[i] - W, p[i + 1]); }
+    const near = (x: number, y: number): boolean => {
+      const bx = Math.floor(x), by = Math.floor(y);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const b = buckets.get(`${bx + dx},${by + dy}`); if (!b) continue; for (let i = 0; i < b.length; i += 2) { const ex = b[i] - x, ey = b[i + 1] - y; if (ex * ex + ey * ey < 0.36) return true; } }
+      return false;
+    };
+    const lines: number[][] = [];
+    for (const p of polysA) {
+      const n = p.length / 2; if (n < 3) continue;
+      const on = new Array<boolean>(n); for (let i = 0; i < n; i++) on[i] = near(p[2 * i], p[2 * i + 1]);
+      // Start runs after a gap so a run that wraps the polygon's end is joined in one polyline.
+      let start = on.findIndex((v) => !v); if (start < 0) { lines.push(p.slice()); continue; }
+      let run: number[] = [];
+      for (let k = 1; k <= n; k++) { const i = (start + k) % n; if (on[i]) run.push(p[2 * i], p[2 * i + 1]); else if (run.length) { if (run.length >= 4) lines.push(run); run = []; } }
+      if (run.length >= 4) lines.push(run);
     }
     if (this.frontCache.size > 64) this.frontCache.clear();
-    this.frontCache.set(key, segs);
-    return segs;
+    this.frontCache.set(key, lines);
+    return lines;
   }
 
   /** Active war fronts: burning, flickering lines along borders shared by countries at war. */
@@ -439,29 +448,19 @@ export class MapRenderer {
       for (const e of c.atWarWith) { const rb = idx.get(e); if (rb === undefined || rb < ra) continue; if (c.neighbors.includes(e)) pairs.push([ra, rb]); }
     }
     if (!pairs.length) return;
-    g.save(); g.lineCap = 'round';
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    const trace = (lines: number[][]) => { g.beginPath(); for (const l of lines) { g.moveTo(l[0], l[1]); for (let i = 2; i < l.length; i += 2) g.lineTo(l[i], l[i + 1]); } };
     for (const [ra, rb] of pairs) {
-      const segs = this.frontsFor(world, ra, rb); if (!segs.length) continue;
+      const lines = this.frontsFor(world, ra, rb); if (!lines.length) continue;
       const flicker = reduced ? 0.75 : 0.6 + 0.25 * Math.sin(t * 5 + ra * 1.7);
       for (const ox of offsets) {
         g.setTransform(this.dpr * cam.scale, 0, 0, this.dpr * cam.scale, this.dpr * ((ox - cam.x) * cam.scale + this.width / 2), this.dpr * ((0 - cam.y) * cam.scale + this.height / 2));
-        // Ember glow under the line
-        g.strokeStyle = `rgba(255,120,40,${0.3 * flicker})`; g.lineWidth = 9 / cam.scale;
-        g.beginPath(); for (const [x1, y1, x2, y2] of segs) { g.moveTo(x1, y1); g.lineTo(x2, y2); } g.stroke();
-        // Marching hot line
-        g.strokeStyle = `rgba(255,220,120,${0.85 * flicker})`; g.lineWidth = 1.6 / cam.scale;
-        g.setLineDash([2.5, 2]); g.lineDashOffset = reduced ? 0 : -t * 6;
-        g.beginPath(); for (const [x1, y1, x2, y2] of segs) { g.moveTo(x1, y1); g.lineTo(x2, y2); } g.stroke();
-        g.setLineDash([]);
-        // Sparks: a few flickering points along the front, deterministic per segment
+        g.strokeStyle = `rgba(255,120,40,${0.3 * flicker})`; g.lineWidth = 9 / cam.scale; trace(lines); g.stroke();
+        g.strokeStyle = `rgba(255,220,120,${0.85 * flicker})`; g.lineWidth = 1.6 / cam.scale; g.setLineDash([2.5, 2]); g.lineDashOffset = reduced ? 0 : -t * 6; trace(lines); g.stroke(); g.setLineDash([]);
         if (!reduced && cam.scale > 2.5) {
           g.fillStyle = 'rgba(255,240,200,0.9)';
-          for (let i = 0; i < segs.length; i += 3) {
-            const [x1, y1, x2, y2] = segs[i];
-            const ph = (t * 1.3 + i * 0.37) % 1; if (ph > 0.35) continue;
-            const r = (1 - ph / 0.35) * 1.2 / cam.scale;
-            g.beginPath(); g.arc((x1 + x2) / 2, (y1 + y2) / 2 - ph * 3, r, 0, Math.PI * 2); g.fill();
-          }
+          let i = 0;
+          for (const l of lines) for (let k = 0; k < l.length; k += 6, i++) { const ph = (t * 1.3 + i * 0.37) % 1; if (ph > 0.35) continue; const r = (1 - ph / 0.35) * 1.2 / cam.scale; g.beginPath(); g.arc(l[k], l[k + 1] - ph * 3, r, 0, Math.PI * 2); g.fill(); }
         }
       }
     }

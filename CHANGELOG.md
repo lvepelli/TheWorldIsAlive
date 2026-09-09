@@ -36,6 +36,7 @@
 - History → Sagas: chains rooted in a tension rise are named ("The water war", "Rivers and grudges", "The road to war in X").
 - Rising seas: each year the most climate-stressed nations (risk above 65) can lose a coastal district — "X loses ground to the sea" displaces people, dents prosperity and, when large, sends climate migrants to a safer neighbour. About one such loss a year world-wide, most of them chaining into migration.
 - Policies: coastal defence programs (debt up, climate risk down, coastal prosperity up) enter the agenda of stressed coastal nations and jump to the top after a sea loss. Sea-rise sagas are named ("The sea takes X").
+- Map: war fronts are traced along the smoothed border polygons instead of raw grid-cell edges, so they no longer look stair-stepped next to the borders at high zoom (a spatial hash of the neighbour's contour points marks the shared stretch; each run is drawn as one rounded polyline with the ember glow, marching hot line and sparks).
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.6.0 — weather, premises and the long game
