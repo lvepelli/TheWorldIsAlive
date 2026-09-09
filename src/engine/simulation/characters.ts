@@ -123,7 +123,13 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
         if (!fresh && c.approval < 35 && p.objective !== 'survive the next election') p.objective = c.electionEvery ? 'survive the next election' : 'crush the opposition before it grows';
         else if (!fresh && c.approval > 65 && rng.bool(0.3)) p.objective = rng.pick(['secure a legacy', 'expand national influence', 'reshape the constitution']);
         // Leaders enact policies
-        const policy = rng.pick(['tax cut', 'infrastructure program', 'security law', 'press regulation', 'green transition plan', 'military modernization', 'anti-corruption drive', 'welfare expansion']);
+        // After a poor harvest, farm policies climb the agenda.
+        let lastYield: number | undefined; for (let i = world.events.length - 1; i >= 0; i--) { const e = world.events[i]; if (e.type === 'harvest.report') { lastYield = (e.data?.yields as Record<string, number> | undefined)?.[c.id]; break; } }
+        const pool = ['tax cut', 'infrastructure program', 'security law', 'press regulation', 'green transition plan', 'military modernization', 'anti-corruption drive', 'welfare expansion', 'irrigation program', 'agritech subsidy'];
+        if (lastYield !== undefined && lastYield < 0.8) pool.push('irrigation program', 'agritech subsidy', 'irrigation program');
+        const policy = rng.pick(pool);
+        if (policy === 'irrigation program') c.resources.water = clamp((c.resources.water ?? 50) + 6, 0, 100);
+        if (policy === 'agritech subsidy') c.resources.farmland = clamp((c.resources.farmland ?? 50) + 4, 0, 100);
         const effects = {
           'tax cut': [fx('country', c.id, 'gdpGrowth', 0.6), fx('country', c.id, 'debt', 4), fx('country', c.id, 'approval', 3)],
           'infrastructure program': [fx('country', c.id, 'gdpGrowth', 0.8), fx('country', c.id, 'debt', 5), fx('country', c.id, 'happiness', 2)],
@@ -133,7 +139,9 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
           'military modernization': [fx('country', c.id, 'military', 6), fx('country', c.id, 'debt', 5)],
           'anti-corruption drive': [fx('country', c.id, 'corruption', -8), fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', -2)],
           'welfare expansion': [fx('country', c.id, 'happiness', 5), fx('country', c.id, 'debt', 6), fx('country', c.id, 'approval', 4)],
-        }[policy];
+          'irrigation program': [fx('country', c.id, 'debt', 3), fx('country', c.id, 'happiness', 1), fx('country', c.id, 'climateRisk', -1)],
+          'agritech subsidy': [fx('country', c.id, 'debt', 2), fx('country', c.id, 'technology', 1), fx('country', c.id, 'gdpGrowth', 0.2)],
+        }[policy as keyof Record<string, never>] ?? [];
         return createEvent(world, {
           category: 'political', type: 'policy', severity: 2, title: `${c.name} launches ${policy}`,
           description: `${p.title ?? 'Leader'} ${p.name} signed a sweeping ${policy} into law. ${rng.pick(['Opposition parties vowed to repeal it.', 'Markets reacted calmly.', 'Supporters celebrated in the capital.', 'Analysts call it a gamble.'])}`,
