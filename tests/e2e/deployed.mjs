@@ -26,7 +26,7 @@ async function run(name, viewport, mobile) {
   const shot = (n) => page.screenshot({ path: `${OUT}${name}-${n}.png` });
   try {
     const res = await page.goto(SITE, { waitUntil: 'load', timeout: 60000 });
-    check(res && res.ok(), `page loads (HTTP ${res?.status()})`);
+    check(res && res.ok(), `page loads (HTTP ${res?.status()}, ${res?.headers()['content-type'] ?? '?'})`);
     await page.waitForSelector('.logo', { timeout: 30000 });
     check(true, 'intro renders');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
