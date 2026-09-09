@@ -116,6 +116,7 @@ export function buildChronicle(world: World, sagas: { root: WorldEvent; chain: W
   if (world.meta.premise) L.push(`**${world.meta.premise.title}.** ${world.meta.premise.blurb}`, '');
   const years = world.summaries.filter((s) => s.period === 'year');
   if (years.length) { L.push('## The years', ''); for (const s of years) { L.push(`### ${s.title}`, ''); for (const line of s.lines) L.push(`- ${line}`); L.push(''); } }
+  { const moves = world.events.filter((e) => e.type === 'country.founded' || e.type === 'region.annexed' || e.type === 'region.concession'); if (moves.length) { L.push('## Borders', ''); for (const e of moves) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}${e.playerIntervention ? ' ✦' : ''}`); L.push(''); } }
   if (sagas.length) { L.push('## Sagas', ''); for (const sg of sagas.slice(0, 12)) { L.push(`### ${sagaTitle(world, sg.root, sg.chain)}`, ''); for (const e of sg.chain.slice(0, 10)) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}`); if (sg.chain.length > 10) L.push(`- … and ${sg.chain.length - 10} more`); L.push(''); } }
   const historic = world.events.filter((e) => e.historic && e.severity >= 4);
   if (historic.length) { L.push('## Historic events', ''); for (const e of historic.slice(-40)) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}${e.playerIntervention ? ' ✦' : ''}`); L.push(''); }
