@@ -117,7 +117,7 @@ Per year: ~900 events, 1–7 wars declared, 0–2 coups, 1–6 revolutions, 0–
 - **Base path:** `vite.config.ts` uses `base: './'` (override with `BASE_PATH`); `index.html`, `manifest.webmanifest` and `sw.js` use relative/scope-relative paths so the same build works at `/`, under a sub-path, or on a CDN. `src/pwa.ts` registers `${BASE_URL}sw.js`.
 - **Netlify:** a site `the-world-is-alive` exists on the connected Netlify account (id `e8531fa1-f3f5-4308-b3e0-505741cc3410`) with `netlify.toml` in the repo, but the development sandbox could not reach Netlify hosts, so it has no deploy yet. Connecting the GitHub repo in the Netlify UI (build `npm run build`, publish `dist`) would give a second URL at the domain root.
 - **Vercel:** requires the connector to be authorized; not used.
-- **Stable checkpoints:** v0.3.0 = commit `915980f` (tag `v0.3.0` exists locally; the remote refused tag pushes from this environment — create it with `git tag v0.3.0 915980f && git push origin v0.3.0` from a machine with tag permission). Deployment pipeline = `c6819eb`.
+- **Stable checkpoints:** v0.6.0 = commit `63aec24` (weather, premises, movements, LLM dialogue); v0.5.0 = `5fff102`; v0.3.0 = commit `915980f` (tag `v0.3.0` exists locally; the remote refused tag pushes from this environment — create it with `git tag v0.3.0 915980f && git push origin v0.3.0` from a machine with tag permission). Deployment pipeline = `c6819eb`.
 
 ## Build & deploy
 
