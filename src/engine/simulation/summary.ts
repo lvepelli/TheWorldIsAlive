@@ -1,6 +1,7 @@
 /**
  * Deterministic world summaries (daily / monthly / yearly).
  */
+import { stormCells } from './weather';
 import type { World, WorldSummary } from '../types';
 import { formatDate, MONTHS, toDate } from '../time';
 import { pctChange } from './markets';
@@ -14,6 +15,10 @@ export function summarize(world: World, period: 'day' | 'month' | 'year'): World
   const dt = toDate(world.day, world.meta.startYear);
   const title = period === 'day' ? `Today in the world — ${formatDate(world.day, world.meta.startYear)}` : period === 'month' ? `This month: ${MONTHS[dt.month]} ${dt.year}` : `${dt.year - 1}: ${eraName(evs)}`;
   if (world.meta.premise && (period === 'day' ? world.day < 7 : world.day <= 400)) lines.push(`${world.meta.premise.title}: ${world.meta.premise.blurb}`);
+  if (period === 'day') {
+    const fronts = stormCells(world).filter((c) => c.under && c.strength > 0.55);
+    if (fronts.length) lines.push(`Storm fronts over ${fronts.slice(0, 2).map((c) => c.under!.name).join(' and ')}${fronts.length > 2 ? ' and elsewhere' : ''}; ${fronts[0].strength > 0.8 ? 'hurricane warnings issued' : 'flood risk rising'}.`);
+  }
   if (!evs.length) lines.push('A quiet period. The world held its breath.');
   for (const e of major.slice(0, period === 'day' ? 2 : 5)) lines.push(`${e.title}.`);
   const wars = Object.values(world.countries).reduce((s, c) => s + c.atWarWith.length, 0) / 2;

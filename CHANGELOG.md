@@ -1,15 +1,7 @@
 # Changelog
 
-## 0.5.0 — rivals, fronts and editorials
+## 0.6.0 — weather, premises and the long game
 
-- Map: burning war fronts — borders shared by countries at war glow with a marching hot line and sparks when zoomed in.
-- Companies: when a CEO dies, retires or moves on, the board appoints a successor (an existing executive or a newly generated one) with a `ceo.change` event and a small valuation shock.
-- Relationship-driven consequences: rivals pounce on scandals, allies rally, rivals rise after a downfall, mentors endorse new leaders, and new leaders purge or face old rivals as opposition.
-- Personal life: partners separate under the strain of scandals and feuds; funders pull their backing from soured entrepreneurs (hitting their companies).
-- God Mode: Snap Election (forces a vote, even in autocracies), Spark Rivalry and Matchmaker presets; the interpreter understands "calls a snap election", "become bitter rivals" and "falls in love with"; two people can be named in one command.
-- News: weekly editorials — a few outlets publish opinion pieces on the story of the week, each spun through its bias (marked "editorial").
-- History → Sagas: names for scandal rivalries ("The Okoro affair", "Vidal against the world"), feuds, snap elections and purges.
-- Balance: rival pile-ons capped, breakups reachable for less famous couples, senior allies can act as mentors.
 - World premises: every seed opens on a starting situation (The Cold Peace, The Long Boom, The Age of Unrest, After the Plague, The Machine Dawn, The Fractured Map, The Gilded Age, The Quiet Century) applied at generation, shown on the intro under the seed preview and on the onboarding card.
 - Premise arcs: each premise also schedules its own opening storyline (a border incident in the Cold Peace, a bubble warning and possible crash after the Long Boom, mass marches in the Age of Unrest, an outbreak scare After the Plague, an automation shock at the Machine Dawn, peace talks on the Fractured Map, a tycoon scandal in the Gilded Age, a resource find in the Quiet Century), all chained to a historic "premise.opening" event.
 - Trade model: trade volume between partners is derived from the smaller economy, relations, adjacency, alliance and openness (`simulation/trade.ts`); it feeds growth potential (open economies grow faster, losing partners hurts), scales the trade arcs on the map, and the country inspector lists top partners with yearly volume.
@@ -31,6 +23,19 @@
 - Balance: polarization now mean-reverts toward what unrest, war and mood sustain (it used to pin at 97 in a third of countries after a decade); movement support boosts from rallies, protests and tycoons reduced. After 10 years on the `diag` seed: 58 live movements (was 226), 2 of 32 countries above 80 polarization (was 14).
 - Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
+- Summaries: the daily summary carries a storm forecast line when fronts sit over land.
+- Tests: JSON round-trip mid-story (pending omens, premise), premise arcs, God delay parsing, LLM dialogue mock.
+
+## 0.5.0 — rivals, fronts and editorials
+
+- Map: burning war fronts — borders shared by countries at war glow with a marching hot line and sparks when zoomed in.
+- Companies: when a CEO dies, retires or moves on, the board appoints a successor (an existing executive or a newly generated one) with a `ceo.change` event and a small valuation shock.
+- Relationship-driven consequences: rivals pounce on scandals, allies rally, rivals rise after a downfall, mentors endorse new leaders, and new leaders purge or face old rivals as opposition.
+- Personal life: partners separate under the strain of scandals and feuds; funders pull their backing from soured entrepreneurs (hitting their companies).
+- God Mode: Snap Election (forces a vote, even in autocracies), Spark Rivalry and Matchmaker presets; the interpreter understands "calls a snap election", "become bitter rivals" and "falls in love with"; two people can be named in one command.
+- News: weekly editorials — a few outlets publish opinion pieces on the story of the week, each spun through its bias (marked "editorial").
+- History → Sagas: names for scandal rivalries ("The Okoro affair", "Vidal against the world"), feuds, snap elections and purges.
+- Balance: rival pile-ons capped, breakups reachable for less famous couples, senior allies can act as mentors.
 
 ## 0.4.0 — deployed & turning
 
