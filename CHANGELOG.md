@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Procedural variety: region names take flavour from the country's language family (Fjords, Krai, Wadi, Escarpment, Shire, Prefecture, Costa …) on top of the generic Province / Highlands / Coast set.
 - Mobile: tapping an overlay chip shows a one-line hint above the bar for a few seconds (what the colours mean); chips also carry the hint as a tooltip.
 - Map: the desktop legend explains the active overlay in a few words (what the colours mean, that dotted seams are regions).
 - Map: region names appear as small italic labels once you zoom in (and from a lighter zoom on the Regions overlay), amber where the region is angry; the capital's own region is not labelled on the political map since it reads as the country.

@@ -9,6 +9,18 @@ import { nextId } from '../ids';
 
 const SUFFIX_INLAND = ['Province', 'Highlands', 'Valley', 'Marches', 'Plateau', 'Basin', 'Uplands', 'Reach'];
 const SUFFIX_COAST = ['Coast', 'Shore', 'Littoral', 'Bay', 'Sound'];
+// Extra flavour per language family (same hash-derived family as `familyOf` in events/actions.ts), so a nordic country's regions
+// read differently from an arabic or east-asian one.
+const FAMILY_FLAVOUR: Record<string, { inland: string[]; coast: string[] }> = {
+  latin: { inland: ['Serra', 'Campo', 'Alta'], coast: ['Costa', 'Riviera'] },
+  nordic: { inland: ['Dales', 'Fells', 'Mark'], coast: ['Fjords', 'Skerries'] },
+  east: { inland: ['Prefecture', 'Hills', 'Plain'], coast: ['Strait', 'Harbour'] },
+  african: { inland: ['Savanna', 'Escarpment', 'District'], coast: ['Delta', 'Lagoon'] },
+  anglo: { inland: ['Shire', 'Wold', 'Moor'], coast: ['Head', 'Estuary'] },
+  slavic: { inland: ['Oblast', 'Krai', 'Steppe'], coast: ['Bank', 'Liman'] },
+  arabic: { inland: ['Wadi', 'Jabal', 'Oasis'], coast: ['Sahel', 'Gulf'] },
+};
+const FAMILIES = ['latin', 'nordic', 'east', 'african', 'anglo', 'slavic', 'arabic'];
 
 export function assignRegions(world: World, rng: RNG): void {
   world.regions ??= {};
@@ -41,7 +53,9 @@ export function assignRegionsFor(world: World, rng: RNG, c: Country): void {
     const anchor = mine.slice().sort((a, b) => b.population - a.population)[0];
     const coastal = mine.filter((ct) => ct.coastal).length > mine.length / 2;
     const isCapitalRegion = mine.some((ct) => ct.id === c.capitalId);
-    let name = isCapitalRegion ? `${anchor.name} ${rng.pick(['Metropolitan', 'Capital District', 'Heartland'])}` : `${anchor.name} ${rng.pick(coastal ? SUFFIX_COAST : SUFFIX_INLAND)}`;
+    const flavour = FAMILY_FLAVOUR[FAMILIES[RNG.hash(c.name)[0] % FAMILIES.length]];
+    const pool = coastal ? [...SUFFIX_COAST, ...flavour.coast, ...flavour.coast] : [...SUFFIX_INLAND, ...flavour.inland, ...flavour.inland];
+    let name = isCapitalRegion ? `${anchor.name} ${rng.pick(['Metropolitan', 'Capital District', 'Heartland'])}` : `${anchor.name} ${rng.pick(pool)}`;
     while (used.has(name)) name += ' II'; used.add(name);
     const far = Math.sqrt(dist2(anchor.x, anchor.y, cap.x, cap.y)) / Math.max(1, Math.sqrt(c.area || 100));
     const identity = isCapitalRegion ? rng.float(0, 0.15) : clamp(0.25 + far * 0.35 + rng.float(-0.15, 0.25) + (coastal !== !!cap.coastal ? 0.1 : 0), 0.05, 0.95);
