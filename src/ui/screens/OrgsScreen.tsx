@@ -30,7 +30,7 @@ export function OrgsScreen(): React.ReactElement {
         {orgs.length > 0 && (
           <div className="panel-solid" style={{ padding: 6 }}>
             <div className="section-title" style={{ padding: '6px 10px 0' }}>Organizations</div>
-            <div className="list">{orgs.slice(0, limit).map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={`${titleCase(o.type)} · ${o.countryId ? world.countries[o.countryId]?.name : 'International'} · ${o.agenda}`} right={<><div>{o.influence.toFixed(0)}</div><div className="dim" style={{ fontSize: 10 }}>influence</div></>} />)}</div>
+            <div className="list">{orgs.slice(0, limit).map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={`${titleCase(o.type)} · ${o.countryId ? world.countries[o.countryId]?.name : 'International'} · ${o.agenda}`} right={(o.type === 'movement' || o.type === 'religion' || o.type === 'party') ? <><div style={{ color: o.support > 40 ? 'var(--ok)' : o.support < 10 ? 'var(--text-3)' : undefined }}>{o.support.toFixed(0)}%</div><div className="dim" style={{ fontSize: 10 }}>support</div></> : <><div>{o.influence.toFixed(0)}</div><div className="dim" style={{ fontSize: 10 }}>influence</div></>} />)}</div>
           </div>
         )}
         {(type === 'all' || type === 'outlet') && outlets.length > 0 && (

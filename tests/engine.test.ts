@@ -109,6 +109,17 @@ describe('simulation', () => {
     for (const f of FEATURED_SEEDS) expect(premiseFor(f.seed).id, f.seed).toBe(f.premise);
     expect(new Set(FEATURED_SEEDS.map((f) => f.premise)).size).toBe(PREMISES.length);
   });
+  it('an interviewed character talks about it on the feed', async () => {
+    const { rememberConversation } = await import('../src/engine/ai/dialogue');
+    const w = generateWorld({ seed: 'interview' });
+    const rng = RNG.fromState(w.rngState);
+    const p = Object.values(w.people).filter((x) => x.alive && x.fame > 40).sort((a, b) => b.socialActivity - a.socialActivity)[0];
+    rememberConversation(w, p, 'What do you want?', 'To win. Obviously.');
+    let posted = false;
+    for (let i = 0; i < 3 && !posted; i++) { tickDay(w, rng); posted = w.social.some((s) => s.authorId === p.id && s.hashtags.includes('Interview')); }
+    expect(posted || p.memories.every((m) => !m.text.startsWith('Was asked'))).toBe(true);
+    expect(w.social.some((s) => s.hashtags.includes('Interview') && /What do you want\?/.test(s.text)) || p.socialActivity < 0.3).toBe(true);
+  });
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);

@@ -99,6 +99,20 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
   const out: SocialPost[] = [];
   const people = Object.values(world.people).filter((p) => p.alive && p.socialActivity > 0.05);
   if (!people.length) return out;
+  // Characters the player interviewed talk about it the next day — the conversation leaks into the feed.
+  for (const p of people) {
+    const m = p.memories.filter((x) => x.text.startsWith('Was asked') && x.day >= world.day - 2 && x.day < world.day).slice(-1)[0];
+    if (!m || rng.next() > 0.35 * p.socialActivity + 0.1) continue;
+    const q = m.text.match(/Was asked "([^"]+)"/)?.[1] ?? 'a question';
+    const a = m.text.split('answered: ')[1] ?? '';
+    const text = rng.pick([
+      `Someone asked me "${q}" yesterday. ${a ? `I said: ${a}` : 'I gave an honest answer.'} ${p.traits.includes('cynical') ? 'They looked disappointed.' : 'Still thinking about it.'}`,
+      `Strange interview yesterday. "${q}". ${a ? `My answer stands: ${a}` : 'I answered, for once.'}`,
+      `For the record, since it is being quoted: when asked "${q}", ${a ? `I said ${a}` : 'I told the truth'}.`,
+    ]);
+    out.push({ id: nextId(world, 's'), day: world.day, authorId: p.id, text: text.length > 260 ? text.slice(0, 257) + '…' : text, hashtags: ['Interview'], likes: Math.round(p.fame * rng.float(2, 20)), reposts: Math.round(p.fame * rng.float(0.1, 2)), replies: 0, sentiment: 0, viral: false });
+    p.memories = p.memories.filter((x) => x !== m); // said once
+  }
   // Event reactions
   for (const ev of todays) {
     const n = ev.severity >= 4 ? rng.int(4, 8) : ev.severity === 3 ? rng.int(2, 4) : ev.severity === 2 ? rng.int(0, 2) : rng.bool(0.3) ? 1 : 0;
