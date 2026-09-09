@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 — regions you can touch
 
 - People: a "Governors" filter chip lists every sitting governor (search already matched titles).
 - CI: the live QA also checks that a tap on the Regions overlay opens a region inspector.
