@@ -6,6 +6,8 @@ import { RNG } from '../src/engine/rng';
 import { serialize, deserialize, validateWorld } from '../src/engine/persistence/storage';
 import { CONSEQUENCE_RULES, react } from '../src/engine/events/consequences';
 import { regionalistActsOnObjective } from '../src/engine/simulation/objectives';
+import { regionsTick } from '../src/engine/simulation/regions';
+import { yearOf } from '../src/engine/time';
 import { createEvent } from '../src/engine/events/engine';
 import { localGodInterpreter } from '../src/engine/godmode/interpreter';
 import { executePlan } from '../src/engine/godmode/execute';
@@ -422,5 +424,18 @@ describe('regions', () => {
     const yes = call(r1)!; expect(yes.type).toBe('region.referendum.yes'); expect(r1.autonomy).toBeGreaterThanOrEqual(40); expect(r1.unrest).toBeLessThan(90);
     r2.identity = 0.1; r2.unrest = 20; r2.autonomy = 60;
     const no = call(r2)!; expect(no.type).toBe('region.referendum.no'); expect(r2.autonomy).toBe(60);
+  });
+  it('regional elections confirm or unseat governors at the start of an election year', () => {
+    const w = generateWorld({ seed: 'regions' }); const rng = new RNG('relect');
+    const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    c.electionEvery = 4; c.nextElectionYear = yearOf(w.day, w.meta.startYear) + 4; // an election year starts now
+    const before = (c.regionIds ?? []).map((id) => [id, w.regions[id].governorId] as const);
+    regionsTick(w, rng);
+    expect(c.history.some((h) => h.text === 'Regional elections.')).toBe(true);
+    let kept = 0, changed = 0;
+    for (const [id, gov] of before) { const r = w.regions[id]; if (r.cityIds.includes(c.capitalId)) continue; if (r.governorId === gov) { kept++; expect(w.people[gov!].history.some((h) => /Re-elected Governor/.test(h.text))).toBe(true); } else { changed++; expect(w.people[gov!].title).toBeUndefined(); expect(w.people[r.governorId!].title).toBe(`Governor of ${r.name}`); } }
+    expect(kept + changed).toBeGreaterThanOrEqual(2);
+    regionsTick(w, rng); // the same election year does not vote twice
+    expect(c.history.filter((h) => h.text === 'Regional elections.').length).toBe(1);
   });
 });
