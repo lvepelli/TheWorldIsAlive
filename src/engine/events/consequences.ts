@@ -362,6 +362,58 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     return ev;
   },
   // ---- Summits with agendas ----
+  // Calendar: a political festival winner can get banned by an unfree host; a fair's headline pair can form a venture or fall out.
+  'festival.banned': (w, rng, src) => {
+    const host = c$(w, src.data?.host as ID); const maker = src.data?.maker ? w.people[src.data.maker as ID] : undefined;
+    if (!host || !maker || host.freedom >= 45 || !src.data?.political) return null;
+    const home = w.countries[maker.countryId]; const film = src.data.film as string;
+    maker.reputation = clamp(maker.reputation + 6, -100, 100); maker.fame = clamp(maker.fame + 6, 0, 100);
+    maker.memories.push({ day: w.day, eventId: src.id, text: `${host.name} banned my film. It sold out everywhere else.`, weight: 0.6 });
+    maker.history.push({ day: w.day, text: `Had ${film} banned in ${host.name}.` });
+    if (home && home.id !== host.id) { host.relations[home.id] = clamp((host.relations[home.id] ?? 0) - 6, -100, 100); home.relations[host.id] = clamp((home.relations[host.id] ?? 0) - 4, -100, 100); }
+    return createEvent(w, {
+      category: 'cultural', type: 'festival.banned', severity: 2, causedBy: src.id,
+      title: `${host.name} bans the festival winner`,
+      description: `Days after the prize, ${host.name}'s censors pulled ${film} from every screen in the country, calling it "an insult to the state". ${maker.name} ${rng.pick(['called it the best review of the year.', 'left the country on the next flight.', 'read the ban aloud at a press conference.'])} ${home && home.id !== host.id ? `${home.name} summoned the ambassador.` : 'Cinemas quietly kept showing it.'}`,
+      location: { countryId: host.id }, actors: [ref('country', host.id), ref('person', maker.id), ...(home && home.id !== host.id ? [ref('country', home.id)] : [])],
+      effects: [fx('country', host.id, 'freedom', -1), fx('country', host.id, 'unrest', 2), ...(home && home.id !== host.id ? [fx('country', home.id, 'happiness', 1)] : [])], tags: ['culture', 'censorship', host.code],
+    });
+  },
+  'festival.rights': (w, rng, src) => {
+    const maker = src.data?.maker ? w.people[src.data.maker as ID] : undefined; if (!maker || !maker.alive) return null;
+    const studios = Object.values(w.companies).filter((co) => co.alive && co.sector === 'media'); if (!studios.length) return null;
+    const studio = rng.pickWeighted(studios, (co) => co.value + 1); const film = src.data?.film as string;
+    studio.value *= 1.04; studio.growth += 1; maker.wealth += 4; maker.history.push({ day: w.day, text: `Sold ${film} to ${studio.name}.` });
+    return createEvent(w, {
+      category: 'economic', type: 'festival.rights', severity: 2, causedBy: src.id,
+      title: `${studio.name} buys ${maker.lastName}'s festival winner`,
+      description: `${studio.name} paid a record sum for the rights to ${film}. ${rng.pick(['Its shares rose on the news.', 'Analysts called the price a vanity purchase.', 'The director gets a cut of the sequel.'])}`,
+      location: { countryId: studio.countryId, cityId: studio.cityId }, actors: [ref('company', studio.id), ref('person', maker.id)],
+      effects: [fx('company', studio.id, 'reputation', 3)], tags: ['culture', 'media', 'business'], data: { shocks: [{ sector: 'media', pct: 0.01 }] },
+    });
+  },
+  'fair.venture': (w, rng, src) => {
+    const [a, b] = ((src.data?.deal as ID[] | undefined) ?? []).map((id) => w.companies[id]); if (!a || !b || !a.alive || !b.alive) return null;
+    const ca = w.countries[a.countryId], cb = w.countries[b.countryId]; if (!ca || !cb) return null;
+    const star = src.data?.star as string;
+    const sour = ca.atWarWith.includes(cb.id) || (ca.relations[cb.id] ?? 0) < -40 || rng.bool(0.2);
+    if (sour) {
+      a.reputation = clamp(a.reputation - 4, -100, 100); b.reputation = clamp(b.reputation - 4, -100, 100);
+      return createEvent(w, {
+        category: 'economic', type: 'fair.collapse', severity: 2, causedBy: src.id, title: `${a.name}–${b.name} deal collapses`,
+        description: `The venture announced at the trade fair fell apart before a single contract was signed. ${rng.pick([`${ca.name}'s regulators objected.`, 'Both sides blamed the other in the press.', 'The engineers never agreed on the standard.'])}`,
+        location: { countryId: ca.id, cityId: a.cityId }, actors: [ref('company', a.id), ref('company', b.id)], effects: [fx('company', a.id, 'value', -2), fx('company', b.id, 'value', -2)], tags: ['business', 'trade'],
+      });
+    }
+    a.value *= 1.05; b.value *= 1.05; a.growth += 1.5; b.growth += 1.5;
+    if (ca.id !== cb.id) { ca.relations[cb.id] = clamp((ca.relations[cb.id] ?? 0) + 4, -100, 100); cb.relations[ca.id] = clamp((cb.relations[ca.id] ?? 0) + 4, -100, 100); if (!ca.tradePartners.includes(cb.id)) ca.tradePartners.push(cb.id); if (!cb.tradePartners.includes(ca.id)) cb.tradePartners.push(ca.id); }
+    return createEvent(w, {
+      category: 'economic', type: 'fair.venture', severity: 3, causedBy: src.id, title: `${a.name} and ${b.name} form a joint venture`,
+      description: `The pair that dominated the trade fair signed a joint venture to build ${star ?? 'what the fair was talking about'} at scale, with plants in ${w.cities[a.cityId]?.name ?? ca.name} and ${w.cities[b.cityId]?.name ?? cb.name}. ${rng.pick(['Both stocks jumped.', 'Unions asked who gets the jobs.', 'Rivals announced a rival alliance within the week.'])}`,
+      location: { countryId: ca.id, cityId: a.cityId }, actors: [ref('company', a.id), ref('company', b.id), ref('country', ca.id), ...(cb.id !== ca.id ? [ref('country', cb.id)] : [])],
+      effects: [fx('company', a.id, 'value', 5), fx('company', b.id, 'value', 5), fx('country', ca.id, 'gdpGrowth', 0.1), fx('country', cb.id, 'gdpGrowth', 0.1)], tags: ['business', 'trade', ca.code, cb.code], data: { shocks: [{ sector: a.sector, pct: 0.015 }] },
+    });
+  },
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
     const guests = ((src.data?.guests as ID[] | undefined) ?? []).map((id) => w.countries[id]).filter(Boolean);
@@ -844,6 +896,9 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
   { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
+  { match: (e) => e.type === 'festival.film' && !!e.data?.political, rule: 'festival.banned', delay: [1, 12], p: 0.7 },
+  { match: (e) => e.type === 'festival.film' && !!e.data?.maker, rule: 'festival.rights', delay: [10, 45], p: 0.55 },
+  { match: (e) => e.type === 'trade.fair' && (e.data?.deal as unknown[] | undefined)?.length === 2, rule: 'fair.venture', delay: [10, 45], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.aid', delay: [10, 40], p: 0.7 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.migration', delay: [20, 70], p: 0.6 },

@@ -314,3 +314,16 @@ describe('long-run balance', () => {
     expect(dialogue.length).toBeGreaterThan(10);
   });
 });
+
+describe('calendar', () => {
+  it('holds a film festival and a trade fair every year, each once', () => {
+    const w = generateWorld({ seed: 'calendar' }); const rng = new RNG('calendar');
+    for (let i = 0; i < 365 * 2 + 40; i++) tickDay(w, rng);
+    const festivals = w.events.filter((e) => e.type === 'festival.film'); const fairs = w.events.filter((e) => e.type === 'trade.fair');
+    expect(festivals.length).toBe(2); expect(fairs.length).toBe(2);
+    expect(fairs.every((e) => (e.data?.guests as string[]).length > 0)).toBe(true);
+    const years = new Set(festivals.map((e) => Math.floor(e.day / 365))); expect(years.size).toBe(2);
+    const follow = w.events.filter((e) => ['festival.banned', 'festival.rights', 'fair.venture', 'fair.collapse'].includes(e.type));
+    expect(follow.length).toBeGreaterThan(0);
+  });
+});

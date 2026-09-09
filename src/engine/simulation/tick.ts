@@ -8,6 +8,7 @@ import { spawnDailyEvents } from '../events/spawn';
 import { react, resolvePending, collectShocks } from '../events/consequences';
 import { tickMarkets } from './markets';
 import { weeklyTick, monthlyTick, yearlyTick } from './systems';
+import { calendarTick } from './calendar';
 import { monthlyCharacters } from './characters';
 import { generateNews, generateSocial, generateEditorials, updateTrending } from './information';
 import { anniversaries } from './anniversaries';
@@ -31,6 +32,7 @@ export function tickDay(world: World, rng: RNG): TickResult {
   if (world.day - world.stats.lastWeeklyDay >= 7) { weeklyTick(world, rng); generateEditorials(world, rng); world.stats.lastWeeklyDay = world.day; }
   if (world.day - world.stats.lastMonthlyDay >= 30) {
     produced.push(...monthlyTick(world, rng));
+    produced.push(...calendarTick(world, rng));
     produced.push(...monthlyCharacters(world, rng));
     world.stats.lastMonthlyDay = world.day;
     world.summaries.push(summarize(world, 'month'));

@@ -13,7 +13,8 @@ One tick = one simulated day (`simulation/tick.ts`). Cadences:
 | Daily | pending consequences, spontaneous events, reactions, markets, news, social, trending (every 2 days) | tick.ts, consequences.ts, spawn.ts, markets.ts, information.ts |
 | Weekly | population growth, GDP compounding, growth/inflation/unemployment/debt drift, happiness, unrest, stability, approval, polarization, city drift, company fundamentals | systems.ts `weeklyTick` |
 | Monthly | technology, military, corruption, climate risk, relation drift, elections, coup/collapse/revolution risk, organizations, character objectives, monthly summary | systems.ts `monthlyTick`, characters.ts |
-| Yearly | climate report, yearly summary | systems.ts `yearlyTick` |
+| Yearly | climate report, harvest report, rising seas, World Games (every 4 years), Laurel Prizes, yearly summary | systems.ts `yearlyTick` |
+| Calendar | film festival (May), trade fair (October) — once per year each, guarded by the event log | simulation/calendar.ts `calendarTick` (from the monthly tick) |
 
 Years are 365 days (no leap years) for determinism; `time.ts` converts day indexes to calendar dates.
 
