@@ -130,6 +130,7 @@ export function sagaTitle(world: { countries: Record<string, { name: string }> }
   if (root.type === 'premise.opening') return root.title;
   if (root.type === 'summit') return types.has('summit.accord') ? `The ${c ?? ''} accord`.replace('  ', ' ') : types.has('summit.collapse') ? `The talks that failed in ${c ?? '?'}` : `The ${c ?? ''} summit`.replace('  ', ' ');
   if (root.type === 'tension.rise') { const water = /water dispute/.test((root as { description?: string }).description ?? ''); return types.has('war.declared') ? (water ? 'The water war' : `The road to war in ${c ?? '?'}`) : water ? 'Rivers and grudges' : `Tensions around ${c ?? '?'}`; }
+  if (root.type === 'sea.rise') return types.has('migration.wave') ? `The sea takes ${c ?? 'a coast'}` : `High water in ${c ?? '?'}`;
   if (root.type === 'food.crisis') return types.has('protest.mass') ? 'The hungry year' : 'When bread cost too much';
   if (root.type === 'feud') return 'A feud for the ages';
   if (root.type === 'election.called') return types.has('leader.election') ? `The ${c ?? ''} upset`.replace('  ', ' ') : `${c ?? 'A nation'} votes`;
