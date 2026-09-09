@@ -73,6 +73,9 @@ const INTENTS: Intent[] = [
   { action: 'accelerate-tech', test: /\b(accelerat|speed up|golden age of (science|technology|invention)|rapid progress)/i },
   { action: 'create-company', test: /\b(found|start|launch|creat|establish|open)s?\b.*\b(company|startup|firm|corporation|business|venture)\b|\b(company|startup|firm)\b.*\b(is )?(founded|created|launched)\b/i },
   { action: 'remove-figure', test: /\b(assassinat|killed|dies|death of|murder|vanish|disappear|kidnap)/i, params: (m) => ({ how: /assassin|murder|kill/i.test(m[0]) ? 'assassination' : /vanish|disappear|kidnap/i.test(m[0]) ? 'disappearance' : 'accident' }) },
+  { action: 'election', test: /\b(snap election|early election|calls? (an )?election|hold(s|ing)? (an |free )?elections?|go(es)? to the polls|let the people vote|free elections?)\b/i },
+  { action: 'romance', test: /\b(fall in love|falls in love|in love with|marr(y|ies|ied)|wedding|romance|become a couple|get together|date(s)?\b.*\bwith)\b/i },
+  { action: 'feud', test: /\b(feud|rivals?|rivalry|sworn enem|turn against each other|hate each other|fall(s|ing)? out with|bitter enemies)\b/i },
   { action: 'scandal', test: /\b(scandal|corrupt|affair|leak|exposed|caught|bribe|embezzl)/i },
   { action: 'reveal-secret', test: /\b(secret|reveal|truth comes out)\b/i },
   { action: 'opinion-down', test: /\b(people|public|citizens|population)\b.*\b(turn against|lose faith|angry|hate|reject)|\bapproval\b.*\b(drop|fall|plunge|collapse)/i },
@@ -106,6 +109,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     if (countries[1]) { params.b = countries[1].id; targets.push({ kind: 'country', id: countries[1].id }); }
     if (companies[0]) { params.co = companies[0].id; targets.push({ kind: 'company', id: companies[0].id }); if (!params.a) params.a = companies[0].countryId; }
     if (people[0]) { params.p = people[0].id; targets.push({ kind: 'person', id: people[0].id }); if (!params.a) params.a = people[0].countryId; }
+    if (people[1]) { params.p2 = people[1].id; targets.push({ kind: 'person', id: people[1].id }); }
     if (sector) params.sector = sector;
     if (!countries.length) {
       const demonym = t.match(/\b([A-Z][a-z]+(?:ish|ian|ese|an|i|ic|ch))\b/);
@@ -129,13 +133,15 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     if (action === 'create-country' || action === 'movement' || action === 'religion' || action === 'create-company') { const nm = t.match(/\b(?:named|called)\s+["“]?([A-Z][\w' ]{2,30}?)["”]?(?:[.,]|$)/); if (nm) params.name = nm[1].trim(); }
     if (action === 'remove-figure' && !people[0]) { const leaderOf = countries[0]; if (leaderOf && /\b(leader|president|king|queen|prime minister|chancellor)\b/i.test(t)) params.p = leaderOf.leaderId; }
     if (action === 'scandal' && !people[0] && countries[0] && /\b(leader|president|king|queen|prime minister|chancellor|government)\b/i.test(t)) params.p = countries[0].leaderId;
+    if (action === 'increase-tension' && people.length >= 1 && !countries.length) action = 'feud';
+    if (action === 'feud' && !people.length && countries.length) action = 'increase-tension';
     if (action === 'bankrupt' && !companies.length) { if (countries.length || people.length) action = 'collapse-government'; else notes.push('No company named; the largest fragile company will fall.'); }
 
     const interpretation = [
       `Intent: ${labelFor(action)}${magnitude !== 1 ? ` (magnitude ×${magnitude})` : ''}.`,
       countries.length ? `Countries: ${countries.map((c) => c.name).join(', ')}.` : '',
       companies.length ? `Company: ${companies[0].name}.` : '',
-      people.length ? `Person: ${people[0].name}.` : '',
+      people.length ? `${people.length > 1 ? 'People' : 'Person'}: ${people.slice(0, 2).map((p) => p.name).join(' and ')}.` : '',
       sector ? `Sector: ${sector}.` : '',
       ...notes,
     ].filter(Boolean).join(' ');

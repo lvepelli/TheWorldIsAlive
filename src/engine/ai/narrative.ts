@@ -140,7 +140,7 @@ export function hashtagsFor(world: World, ev: WorldEvent, rng: RNG): string[] {
   if (country) tags.push(country.name.replace(/\s+/g, ''));
   const byType: Record<string, string[]> = {
     'war.declared': ['War', 'StopTheWar', 'StandWith' + (country?.name.replace(/\s+/g, '') ?? '')], 'war.ended': ['Peace', 'Ceasefire'], 'tech.breakthrough': ['Breakthrough', 'FutureIsNow', 'Science'],
-    'economy.crisis': ['Crisis', 'Recession'], 'economy.crash': ['MarketCrash', 'Crash'], 'economy.boom': ['Boom', 'Bullish'], 'leader.election': ['Election', 'Vote'], 'leader.coup': ['Coup', 'Democracy'],
+    'economy.crisis': ['Crisis', 'Recession'], 'economy.crash': ['MarketCrash', 'Crash'], 'economy.boom': ['Boom', 'Bullish'], 'leader.election': ['Election', 'Vote'], 'election.called': ['Election', 'ToThePolls'], 'leader.coup': ['Coup', 'Democracy'],
     'leader.revolution': ['Revolution', 'PowerToThePeople'], scandal: ['Scandal', 'Resign'], 'protest.mass': ['Protest', 'Enough'], protest: ['Protest'], 'government.collapse': ['Collapse', 'Anarchy'],
     'health.pandemic': ['Pandemic', 'StayHome'], 'health.epidemic': ['Outbreak'], 'company.bankrupt': ['Bankrupt', 'RIP'], 'product.launch': ['Launch', 'Innovation'], cyberattack: ['CyberAttack', 'Hacked'],
     'movement.founded': ['Movement', 'Rise'], 'country.founded': ['Independence', 'NewNation'], discovery: ['Discovery', 'Science'], 'death.assassination': ['Assassination', 'Justice'],

@@ -21,6 +21,9 @@ function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['wor
     'A global pandemic begins.',
     `The economy of ${a.name} collapses into crisis.`,
     star ? `${star.name} is caught in a huge scandal.` : `A scandal engulfs the government of ${a.name}.`,
+    people[1] && people[2] ? `${people[1].name} and ${people[2].name} become bitter rivals.` : `${weak.name} calls a snap election.`,
+    people[3] && people[4] ? `${people[3].name} falls in love with ${people[4].name}.` : `The people of ${weak.name} go to the polls.`,
+    `${cs.find((c) => !c.electionEvery)?.name ?? weak.name} holds its first free election.`,
     co ? `${co.name} invents a working fusion reactor.` : `${a.adjective} scientists discover life on another world.`,
     `${weak.name} erupts in revolution.`,
     `Oil is discovered in ${b.name}.`,
@@ -109,7 +112,7 @@ export function GodScreen(): React.ReactElement {
                   <label>{prm.label}</label>
                   {(prm.type === 'country' || prm.type === 'country2') && <div className="row"><select className="select grow" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">{prm.optional ? '— none / world —' : '— random —'}</option>{countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select><button className="btn icon" title="Pick on the map" aria-label="Pick on the map" onClick={() => { setGodPick({ presetId: preset.id, key: prm.key, params }); setScreen('world'); }}>◎</button></div>}
                   {prm.type === 'company' && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">— random —</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name} ({world.countries[c.countryId]?.name})</option>)}</select>}
-                  {prm.type === 'person' && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">— random famous person —</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title ?? p.profession}, {world.countries[p.countryId]?.name}</option>)}</select>}
+                  {(prm.type === 'person' || prm.type === 'person2') && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">{prm.type === 'person2' ? '— a fitting match —' : '— random famous person —'}</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title ?? p.profession}, {world.countries[p.countryId]?.name}</option>)}</select>}
                   {(prm.type === 'sector' || prm.type === 'government' || prm.type === 'choice' || prm.type === 'profession') && <select className="select" value={params[prm.key] ?? prm.options?.[0].value ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}>{prm.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>}
                   {prm.type === 'text' && <input className="input" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })} placeholder={prm.optional ? 'optional' : ''} />}
                 </div>
