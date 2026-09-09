@@ -8,6 +8,7 @@ import type { World, Country, WorldEvent, Sector } from '../types';
 import { SECTORS } from '../types';
 import * as A from './actions';
 import { relate } from '../simulation/relations';
+import { makePerson, makeOrg } from '../generator/world';
 import { createEvent, fx, ref } from './engine';
 
 export interface SpawnRule {
@@ -499,6 +500,63 @@ SPAWN_RULES.push({
       location: { cityId: a.cityId }, actors: [ref('person', funder.id), ref('person', a.id), ...(co ? [ref('company', co.id)] : [])],
       effects: [...(co ? [fx('company', co.id, 'value%', -10), fx('company', co.id, 'reputation', -6)] : []), fx('person', a.id, 'wealth%', -12), fx('person', a.id, 'influence', -4)],
       tags: ['funding', 'personal', ...(c ? [c.code] : [])],
+    });
+  },
+});
+
+SPAWN_RULES.push({
+  id: 'religion.tide',
+  weight: (w) => Object.values(w.organizations).filter((o) => o.alive && o.type === 'religion').length * 0.05,
+  run: (w, rng) => {
+    const orgs = Object.values(w.organizations).filter((o) => o.alive && o.type === 'religion' && o.countryId);
+    if (!orgs.length) return null;
+    const org = rng.pickWeighted(orgs, (o) => 5 + o.support);
+    const c = w.countries[org.countryId!]; const leader = org.leaderId ? w.people[org.leaderId] : undefined;
+    if (!c) return null;
+    // Faith grows in hard times and in unfree states; it ebbs in prosperous, secular ones.
+    const hardTimes = c.happiness < 45 || c.unrest > 40 || c.atWarWith.length > 0;
+    const up = rng.next() < (hardTimes ? 0.7 : 0.35) + (c.freedom < 40 ? 0.1 : 0);
+    const delta = rng.float(3, 9) * (up ? 1 : -1);
+    org.support = clamp(org.support + delta, 1, 100);
+    if (up) org.influence = clamp(org.influence + 2, 0, 100);
+    return createEvent(w, {
+      category: 'cultural', type: up ? 'religion.revival' : 'religion.decline', severity: org.support > 40 ? 3 : 2,
+      title: up ? `Revival: "${org.name}" ${rng.pick(['fills the squares', 'sweeps the countryside', 'wins the young'])} of ${c.name}` : `"${org.name}" loses its grip on ${c.name}`,
+      description: up ? `${hardTimes ? `With ${c.name} ${c.atWarWith.length ? 'at war' : 'in turmoil'}, ` : ''}${org.name} reports ${rng.pick(['record gatherings', 'a wave of conversions', 'temples that cannot hold the crowds'])}. ${leader ? `${leader.name} preached to ${rng.int(20, 400)},000 people this week.` : ''} Support stands near ${org.support.toFixed(0)}%.`
+        : `Attendance at ${org.name} ${rng.pick(['has collapsed among the under-30s', 'is falling for the third year', 'thins as prosperity spreads'])}. ${leader ? `${leader.name} blamed "${rng.pick(['the machines', 'foreign influence', 'moral decay', 'our own complacency'])}".` : ''}`,
+      location: { countryId: c.id }, actors: [ref('organization', org.id), ...(leader ? [ref('person', leader.id)] : []), ref('country', c.id)],
+      effects: up ? [fx('country', c.id, 'polarization', 2), fx('country', c.id, 'happiness', hardTimes ? 1 : 0)] : [fx('country', c.id, 'polarization', -1)],
+      tags: ['religion', 'culture', c.code],
+    });
+  },
+});
+
+SPAWN_RULES.push({
+  id: 'religion.schism',
+  weight: (w) => Object.values(w.organizations).filter((o) => o.alive && o.type === 'religion' && o.support > 20).length * 0.04,
+  run: (w, rng) => {
+    const orgs = Object.values(w.organizations).filter((o) => o.alive && o.type === 'religion' && o.support > 20 && o.countryId);
+    if (!orgs.length) return null;
+    const org = rng.pickWeighted(orgs, (o) => o.support);
+    const c = w.countries[org.countryId!]; if (!c) return null;
+    const fam = A.familyOf(w, c);
+    const old = org.leaderId ? w.people[org.leaderId] : undefined;
+    const rebel = makePerson(w, rng, fam, c, A.pickCity(w, rng, c), 'religious-leader', 1);
+    const issue = rng.pick(['the succession', 'whether machines have souls', 'the true date of the prophecy', 'money and who keeps it', 'a doctrine of purity', 'cooperation with the state']);
+    const splinter = makeOrg(w, rng, fam, c, 'religion', `${rng.pick(['Reformed', 'True', 'Orthodox', 'New', 'Free'])} ${org.name}`, rebel.id, org.ideology, org.agenda);
+    splinter.founded = w.day; splinter.support = clamp(org.support * rng.float(0.3, 0.5), 1, 100); splinter.influence = clamp(org.influence * 0.5, 0, 100);
+    org.support = clamp(org.support - splinter.support, 1, 100);
+    rebel.affiliations.push(splinter.id); rebel.fame = clamp(40 + org.support / 2, 20, 90); rebel.objective = `lead the faithful away from ${org.name}`;
+    if (old) { relate(w, rebel, old, 'enemy', -0.8); old.history.push({ day: w.day, text: `Lost part of ${org.name} to a schism led by ${rebel.name}.` }); }
+    rebel.history.push({ day: w.day, text: `Broke with ${org.name} over ${issue} and founded ${splinter.name}.` });
+    org.history.push({ day: w.day, text: `Schism: ${splinter.name} broke away over ${issue}.` });
+    return createEvent(w, {
+      category: 'cultural', type: 'religion.schism', severity: org.support + splinter.support > 45 ? 4 : 3,
+      title: `Schism splits "${org.name}" in ${c.name}`,
+      description: `A bitter dispute over ${issue} has torn ${org.name} in two. ${rebel.name} walked out with roughly ${splinter.support.toFixed(0)}% of the faithful to found ${splinter.name}. ${old ? `${old.name} called the breakaway "${rng.pick(['a heresy', 'a betrayal', 'a passing fever'])}".` : ''} ${rng.pick(['Families are split down the middle.', 'Street clashes were reported in two cities.', 'Both sides claim the holy sites.'])}`,
+      location: { cityId: rebel.cityId, countryId: c.id }, actors: [ref('organization', org.id), ref('organization', splinter.id), ref('person', rebel.id), ...(old ? [ref('person', old.id)] : []), ref('country', c.id)],
+      effects: [fx('country', c.id, 'polarization', 7), fx('country', c.id, 'unrest', 3), fx('country', c.id, 'stability', -2)],
+      tags: ['religion', 'schism', c.code], historic: org.support + splinter.support > 45,
     });
   },
 });
