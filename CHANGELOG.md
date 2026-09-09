@@ -24,6 +24,7 @@
 - Map: drifting cloud shadows. Countries show a motto and language. Yearly reviews are named by what dominated them ("The Year of Fire").
 - Accessibility: live region announces the inspected entity.
 - QA: pinch-zoom check; host-interstitial handling; content-type recorded.
+- Emergent stories: tycoon arc (billionaires fund parties, then run for office); World Games every four years with a champion athlete; scandal survival depends on a character's allies and enemies.
 
 ## 0.3.0 — living details
 
