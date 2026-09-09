@@ -36,6 +36,7 @@
 - Mobile: toasts stay at the top while the inspector sheet is open on a list screen, so they never cover the sheet.
 - People: a "Changed course" panel lists characters you persuaded and what they did about it; the inspector marks an objective that came from an interview.
 - Dialogue: a "You should make peace." starter chip makes persuasion discoverable.
+- Hardening: persuaded objectives are sanitized (no quotes, angle brackets or newlines) and capped at 80 characters; advice spanning lines still counts.
 
 ## 0.5.0 — rivals, fronts and editorials
 

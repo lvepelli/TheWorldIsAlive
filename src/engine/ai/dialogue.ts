@@ -73,12 +73,13 @@ export function rememberConversation(world: World, p: Person, question: string, 
   p.memories.push({ day: world.day, text, weight: 0.15 });
   if (p.memories.length > 12) p.memories.splice(0, p.memories.length - 12);
   // Persuasion: an open-minded character sometimes adopts a suggestion as a new objective.
-  const m = question.match(/\b(?:you should|you must|why don't you|i advise you to|i urge you to|please)\s+(.{4,80}?)[?.!]*$/i);
+  const m = question.match(/\b(?:you should|you must|why don't you|i advise you to|i urge you to|please)\s+([\s\S]{4,}?)[?.!]*$/i);
   if (m) {
     const rng = new RNG(`${p.id}:persuade:${world.day}:${question}`);
     const chance = 0.15 + p.personality.openness * 0.35 - p.personality.caution * 0.2 + (/\bwar|peace|ceasefire|election|resign|reform\b/i.test(m[1]) && p.personality.ambition > 0.7 ? -0.1 : 0);
     if (rng.next() < chance) {
-      const goal = m[1].trim().replace(/^to\s+/i, '');
+      const goal = m[1].trim().replace(/^to\s+/i, '').replace(/["“”\n\r`<>]/g, '').replace(/\s+/g, ' ').slice(0, 80);
+      if (goal.length < 4) return {};
       p.objective = goal;
       p.history.push({ day: world.day, text: `Persuaded by an interviewer to ${goal}.` });
       p.memories.push({ day: world.day, text: `Decided to ${goal} after an unusual conversation.`, weight: 0.5 });

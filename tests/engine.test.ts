@@ -160,6 +160,19 @@ describe('simulation', () => {
     expect(pivoted).toBe(true);
     expect(w.events.some((e) => e.type === 'company.pivot' && e.actors.some((a) => a.id === co.id))).toBe(true);
   }, 30000);
+  it('persuasion sanitizes and caps adversarial advice', async () => {
+    const { rememberConversation } = await import('../src/engine/ai/dialogue');
+    const w = generateWorld({ seed: 'adversarial' });
+    const p = Object.values(w.people).find((x) => x.alive)!; p.personality.openness = 1; p.personality.caution = 0;
+    const nasty = 'You should ' + '<script>alert("x")</script> ' + '“quote” `tick` \n newline ' + 'a'.repeat(500);
+    let goal: string | undefined;
+    for (let i = 0; i < 30 && !goal; i++) { w.day = i; goal = rememberConversation(w, p, nasty, 'ok').persuaded; }
+    expect(goal).toBeTruthy();
+    expect(goal!.length).toBeLessThanOrEqual(80);
+    expect(goal).not.toMatch(/[<>"“”`\n]/);
+    expect(p.objective).toBe(goal);
+    expect(rememberConversation(w, p, 'You should ', 'ok').persuaded).toBeUndefined();
+  });
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
