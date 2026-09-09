@@ -22,6 +22,7 @@
 - God Mode: delayed interventions — "In 3 months, X declares war on Y", "next year a pandemic begins", "two weeks from now…" record an omen event now and carry out the plan on the day (through the consequence engine, so it survives saves); the resulting event is chained to the omen.
 - Religion: faiths rise in hard times and ebb in prosperity ("revival"/"decline" events) and split in schisms — a breakaway leader founds a Reformed/True/Orthodox splinter with part of the faithful, the two leaders become enemies, polarization jumps.
 - Characters: an executive passed over for the CEO job becomes the new chief's rival (with a new objective), feeding the feud, scandal and funding rules.
+- Culture: yearly Laurel Prizes for art and science (fame, wealth and influence for the laureates; a `prize.laurels` event), alongside the four-yearly World Games.
 - Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
 

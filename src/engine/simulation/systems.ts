@@ -154,6 +154,32 @@ export function yearlyTick(world: World, rng: RNG): WorldEvent[] {
       effects: [fx('country', host.id, 'happiness', 4), fx('country', host.id, 'debt', 2), fx('country', winner.id, 'happiness', 5), fx('country', winner.id, 'approval', 2)], tags: ['culture', 'sports', host.code, winner.code],
     }));
   }
+  // The Laurels: yearly prizes for art and science, a stage for characters to become famous on.
+  {
+    const cs = Object.values(world.countries);
+    const artists = Object.values(world.people).filter((p) => p.alive && !p.retired && p.profession === 'artist');
+    const scientists = Object.values(world.people).filter((p) => p.alive && !p.retired && (p.profession === 'scientist' || p.profession === 'engineer'));
+    const artLaureate = artists.length ? rng.pickWeighted(artists, (p) => p.fame + p.personality.openness * 30 + 5) : undefined;
+    const sciLaureate = scientists.length ? rng.pickWeighted(scientists, (p) => p.fame + p.influence + 5) : undefined;
+    if (artLaureate || sciLaureate) {
+      const seat = rng.pickWeighted(cs, (c) => c.technology + c.freedom);
+      const works = ['a novel about the machines', 'a symphony written for drones', 'a mural the size of a district', 'a film shot entirely at night', 'a cycle of poems about the border', 'a game played by a whole city'];
+      const feats = ['work on room-temperature superconductors', 'a cure that reached patients within a year', 'mapping the ocean floor with swarms', 'a theory of turbulence', 'the first synthetic ecosystem', 'quantum error correction at scale'];
+      for (const [p, what] of [[artLaureate, rng.pick(works)], [sciLaureate, rng.pick(feats)]] as [typeof artLaureate, string][]) {
+        if (!p) continue;
+        p.fame = clamp(p.fame + 20, 0, 100); p.wealth += 2; p.influence = clamp(p.influence + 6, 0, 100);
+        p.history.push({ day: world.day, text: `Won the ${year} Laurel Prize for ${what}.` });
+      }
+      out.push(createEvent(world, {
+        category: 'cultural', type: 'prize.laurels', severity: (artLaureate?.fame ?? 0) > 70 || (sciLaureate?.fame ?? 0) > 70 ? 3 : 2,
+        title: `${year} Laurel Prizes: ${[artLaureate?.name, sciLaureate?.name].filter(Boolean).join(' and ')} honoured`,
+        description: `At the ceremony in ${world.cities[seat.capitalId]?.name ?? seat.name}, ${artLaureate ? `${artLaureate.name} (${world.countries[artLaureate.countryId]?.adjective ?? ''} artist) took the arts laurel` : ''}${artLaureate && sciLaureate ? ' and ' : ''}${sciLaureate ? `${sciLaureate.name} (${world.countries[sciLaureate.countryId]?.adjective ?? ''} ${sciLaureate.profession}) took the science laurel` : ''}. ${rng.pick(['The speeches were political.', 'A protester interrupted the ceremony.', 'The after-party made more headlines than the prizes.', 'Bookmakers had picked neither.'])}`,
+        location: { countryId: seat.id }, actors: [...(artLaureate ? [ref('person', artLaureate.id)] : []), ...(sciLaureate ? [ref('person', sciLaureate.id)] : []), ref('country', seat.id)],
+        effects: [...(artLaureate ? [fx('country', artLaureate.countryId, 'happiness', 1)] : []), ...(sciLaureate ? [fx('country', sciLaureate.countryId, 'technology', 1)] : [])],
+        tags: ['culture', 'prize', seat.code],
+      }));
+    }
+  }
   return out;
 }
 
