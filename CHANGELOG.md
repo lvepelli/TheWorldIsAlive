@@ -22,6 +22,7 @@
 - Consequences: post-election honeymoon policies; disputed elections in corrupt states.
 - Mobile: Share-this-world button (Web Share API) in the More sheet.
 - Map: drifting cloud shadows. Countries show a motto and language. Yearly reviews are named by what dominated them ("The Year of Fire").
+- Map: burning war fronts — borders shared by countries at war glow with a marching hot line and sparks when zoomed in.
 - Accessibility: live region announces the inspected entity.
 - QA: pinch-zoom check; host-interstitial handling; content-type recorded.
 - Emergent stories: tycoon arc (billionaires fund parties, then run for office); World Games every four years with a champion athlete; scandal survival depends on a character's allies and enemies.

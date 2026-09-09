@@ -260,6 +260,7 @@ export class MapRenderer {
     if (opts.links !== 'none') this.drawLinks(world, offsets, t, selCountry, opts.reducedMotion, opts.links === 'all');
     this.drawClouds(offsets, t, opts.reducedMotion);
     this.drawZones(world, offsets, t, opts.reducedMotion);
+    this.drawFronts(world, offsets, t, opts.reducedMotion);
     this.drawFlows(world, offsets, t, opts.reducedMotion);
     // Cities
     this.drawCities(world, offsets, t, opts);
@@ -363,6 +364,69 @@ export class MapRenderer {
         if (kind === 'disaster' && ev.severity >= 4) { g.strokeStyle = `rgba(${col},${0.35 * life})`; g.lineWidth = 1; g.setLineDash([3, 5]); g.beginPath(); g.arc(sx, sy, radius * 0.7, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
       }
     }
+  }
+
+  /** Shared border segments between two country indexes (grid coords), cached per pair. */
+  private frontCache = new Map<string, number[][]>();
+  private frontsFor(world: World, ra: number, rb: number): number[][] {
+    const key = `${ra}:${rb}:${world.geography.countryOrder.length}`;
+    const hit = this.frontCache.get(key); if (hit) return hit;
+    const geo = world.geography; const W = geo.width, H = geo.height; const cells = geo.cells;
+    const segs: number[][] = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const c = cells[y * W + x]; if (c !== ra) continue;
+      const right = cells[y * W + ((x + 1) % W)];
+      if (right === rb) segs.push([x + 1, y, x + 1, y + 1]);
+      if (x === 0 && cells[y * W + W - 1] === rb) segs.push([0, y, 0, y + 1]);
+      if (y + 1 < H && cells[(y + 1) * W + x] === rb) segs.push([x, y + 1, x + 1, y + 1]);
+      if (y > 0 && cells[(y - 1) * W + x] === rb) segs.push([x, y, x + 1, y]);
+      const left = cells[y * W + ((x - 1 + W) % W)];
+      if (left === rb) segs.push([x, y, x, y + 1]);
+    }
+    if (this.frontCache.size > 64) this.frontCache.clear();
+    this.frontCache.set(key, segs);
+    return segs;
+  }
+
+  /** Active war fronts: burning, flickering lines along borders shared by countries at war. */
+  private drawFronts(world: World, offsets: number[], t: number, reduced: boolean): void {
+    const g = this.ctx; const cam = this.camera;
+    const order = world.geography.countryOrder;
+    const idx = new Map<ID, number>(); order.forEach((id, i) => idx.set(id, i));
+    const pairs: [number, number][] = [];
+    for (const c of Object.values(world.countries)) {
+      const ra = idx.get(c.id); if (ra === undefined) continue;
+      for (const e of c.atWarWith) { const rb = idx.get(e); if (rb === undefined || rb < ra) continue; if (c.neighbors.includes(e)) pairs.push([ra, rb]); }
+    }
+    if (!pairs.length) return;
+    g.save(); g.lineCap = 'round';
+    for (const [ra, rb] of pairs) {
+      const segs = this.frontsFor(world, ra, rb); if (!segs.length) continue;
+      const flicker = reduced ? 0.75 : 0.6 + 0.25 * Math.sin(t * 5 + ra * 1.7);
+      for (const ox of offsets) {
+        g.setTransform(this.dpr * cam.scale, 0, 0, this.dpr * cam.scale, this.dpr * ((ox - cam.x) * cam.scale + this.width / 2), this.dpr * ((0 - cam.y) * cam.scale + this.height / 2));
+        // Ember glow under the line
+        g.strokeStyle = `rgba(255,120,40,${0.3 * flicker})`; g.lineWidth = 9 / cam.scale;
+        g.beginPath(); for (const [x1, y1, x2, y2] of segs) { g.moveTo(x1, y1); g.lineTo(x2, y2); } g.stroke();
+        // Marching hot line
+        g.strokeStyle = `rgba(255,220,120,${0.85 * flicker})`; g.lineWidth = 1.6 / cam.scale;
+        g.setLineDash([2.5, 2]); g.lineDashOffset = reduced ? 0 : -t * 6;
+        g.beginPath(); for (const [x1, y1, x2, y2] of segs) { g.moveTo(x1, y1); g.lineTo(x2, y2); } g.stroke();
+        g.setLineDash([]);
+        // Sparks: a few flickering points along the front, deterministic per segment
+        if (!reduced && cam.scale > 2.5) {
+          g.fillStyle = 'rgba(255,240,200,0.9)';
+          for (let i = 0; i < segs.length; i += 3) {
+            const [x1, y1, x2, y2] = segs[i];
+            const ph = (t * 1.3 + i * 0.37) % 1; if (ph > 0.35) continue;
+            const r = (1 - ph / 0.35) * 1.2 / cam.scale;
+            g.beginPath(); g.arc((x1 + x2) / 2, (y1 + y2) / 2 - ph * 3, r, 0, Math.PI * 2); g.fill();
+          }
+        }
+      }
+    }
+    g.restore();
+    g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
   /** Animated particle flows for migration waves (last 40 days). */
