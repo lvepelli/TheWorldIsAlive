@@ -13,7 +13,7 @@ The player is an observer with divine powers. The world has no win condition; th
 3. Advance time (pause/1×/5×/20×/≫ or jumps).
 4. Events emerge; consequences chain; cinematics for world-changing moments.
 5. Inspect entities and follow relationships.
-6. Intervene through God Mode (preset or freeform).
+6. Intervene through God Mode (preset or freeform, immediately or "in 3 months"), or the quiet way: talk a leader or a CEO into something and watch them act on it.
 7. Trace consequences in the event's causal chain and in History → Your interventions.
 8. Continue indefinitely; the world's story diverges from every other seed and every other player.
 
@@ -33,7 +33,7 @@ The player is an observer with divine powers. The world has no win condition; th
 | News | Outlets with bias, style, credibility, audience; multiple outlets spin the same event differently |
 | Social | Posts, replies, likes/reposts, viral flag, trending hashtags, global mood |
 | Markets | World composite, national indexes, commodities, listed companies, movers |
-| People | Searchable/sortable figures; profiles with personality, objectives, life story, memories, sentiment |
+| People | Searchable/sortable figures; profiles with personality, objectives, life story, memories, sentiment; talk to anyone (local or LLM voice), and "you should …" can persuade open characters — leaders then make peace, call votes or reform, CEOs pivot companies; a "Changed course" panel tracks the people you swayed |
 | Orgs | Governments, parties, movements, companies, research, military, alliances, NGOs, unions, religions, criminal networks, media |
 | History | Timeline by month with filters (year, country, category), named sagas, your interventions with downstream counts, period summaries, Markdown chronicle export |
 | God | Freeform command with live interpretation preview; delayed commands ("In 3 months, …") recorded as omens and carried out on the day; 37 presets in 7 groups; intervention log |

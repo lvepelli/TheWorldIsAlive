@@ -66,6 +66,8 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Files that are safe vs. delicate
 
 - Safe to extend: `spawn.ts`, `consequences.ts`, `actions.ts`, `presets.ts`, screens, `global.css`.
+- Objectives are behaviour: `characters.ts` matches `person.objective` text against regexes (peace/election/reform/resign for leaders, field words for CEOs via `pivotForObjective`, research fields via `fieldFromObjective`). Any code that sets an objective string is therefore steering the simulation; keep the phrases human-readable and check those regexes when adding new ones.
+- Anything that mutates the world outside a tick (dialogue persuasion, presets executed from the UI) must call `useGame.getState().bump()` afterwards or screens keep showing stale memoized data until the next day.
 - Delicate: `geography.ts` (region growth + island cleanup; noise is blended with a one-world-width-shifted sample so terrain wraps seamlessly — keep that if you change the noise), `contours.ts` (edge tracing assumes 4-connectivity and the seam rule), `renderer.ts` (camera wrap math), `loop.ts` (render throttling and cinematic gating), `storage.ts` (validation).
 
 ## Technical debt
