@@ -380,3 +380,5 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+.premise-tag { margin-top: 8px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); opacity: 0.9; }

@@ -77,6 +77,7 @@ function Onboarding(): React.ReactElement | null {
     <div className="panel" style={{ padding: '10px 12px', borderColor: 'rgba(240,179,90,0.4)', maxWidth: 520, alignSelf: 'flex-start' }} role="note">
       <div className="kicker" style={{ color: 'var(--accent)' }}>{world.meta.name} · year {world.meta.startYear}</div>
       <div className="row wrap" style={{ gap: 12, margin: '4px 0 6px', fontSize: 12 }}><span><b className="mono">{cs.length}</b> nations</span><span><b className="mono">{(pop / 1e9).toFixed(1)}B</b> people</span><span><b className="mono">{wars}</b> war{wars === 1 ? '' : 's'}</span><span>Superpower: <b>{biggest?.name}</b></span><span>Most fragile: <b>{fragile?.name}</b></span></div>
+      {world.meta.premise && <div style={{ fontSize: 13, marginTop: 2 }}><b style={{ color: 'var(--accent)' }}>{world.meta.premise.title}.</b> {world.meta.premise.blurb}</div>}
       <div style={{ fontSize: 13, marginTop: 4 }}>Tap a glowing city or a nation to inspect it. Time runs at the top. When you are ready to make history, open <b>✦ God Mode</b>.</div>
       <div className="row" style={{ marginTop: 8 }}><button className="btn sm primary" onClick={() => { setOnboarded(); setScreen('god'); }}>Open God Mode</button><button className="btn sm ghost" onClick={setOnboarded}>Got it</button></div>
     </div>

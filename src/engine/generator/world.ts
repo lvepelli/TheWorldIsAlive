@@ -11,6 +11,7 @@ import { nextId } from '../ids';
 import { DAYS_PER_YEAR } from '../types';
 import * as N from '../names';
 import { fillMarkets } from '../simulation/markets';
+import { applyPremise } from './premise';
 
 const GOVS: GovernmentType[] = ['democracy', 'republic', 'monarchy', 'technocracy', 'autocracy', 'military-junta', 'theocracy', 'federation', 'oligarchy', 'council'];
 const IDEOS: Ideology[] = ['liberal', 'conservative', 'socialist', 'nationalist', 'technocratic', 'green', 'libertarian', 'populist', 'traditionalist', 'progressive'];
@@ -293,6 +294,9 @@ export function generateWorld(opts: GenerateOptions): World {
 
   // ---- Markets ------------------------------------------------------------------
   fillMarkets(world, rng.fork('markets'));
+
+  // ---- Premise: the world's starting situation ------------------------------------
+  applyPremise(world, seed);
 
   world.rngState = rng.state();
   return world;

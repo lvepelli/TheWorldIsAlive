@@ -1,5 +1,9 @@
 # World Engine
 
+## Generation premise (`generator/premise.ts`)
+
+After geography, countries, people, companies, outlets, relationships and markets are generated, `applyPremise(world, seed)` picks one of eight starting situations deterministically from the seed (`premiseFor(seed)` is cheap enough for the intro to show it before generation) and nudges the initial state: The Cold Peace (two blocs, alliances, hostile relations), The Long Boom (growth, debt, inflated valuations), The Age of Unrest, After the Plague (smaller population, biotech premium), The Machine Dawn (tech + unemployment in the top eight economies), The Fractured Map (three live border wars), The Gilded Age (corruption, tycoon wealth), The Quiet Century (calm). The choice is stored in `meta.premise`.
+
 ## Tick model
 
 One tick = one simulated day (`simulation/tick.ts`). Cadences:

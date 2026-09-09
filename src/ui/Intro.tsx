@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useGame, randomSeed } from '@/state/store';
 import { SaveManager } from './screens/SaveManager';
 import { SeedPreview } from './components/SeedPreview';
+import { premiseFor } from '@/engine/generator/premise';
 import { InstallButton } from './components/InstallButton';
 
 export function Intro(): React.ReactElement {
@@ -30,7 +31,7 @@ export function Intro(): React.ReactElement {
   return (
     <div className="intro">
       <div className="intro-inner">
-        {phase === 'generating' || showSaves ? <div className="orb" aria-hidden /> : <SeedPreview seed={seed || 'the-world-is-alive'} />}
+        {phase === 'generating' || showSaves ? <div className="orb" aria-hidden /> : <><SeedPreview seed={seed || 'the-world-is-alive'} /><div className="premise-tag" aria-label="World premise">{premiseFor(seed || 'the-world-is-alive').title}</div></>}
         <h1 className="logo">The World<br />Is Alive<small>A LIVING CIVILIZATION SIMULATOR</small></h1>
         {phase === 'generating' ? (
           <div className="gen-steps" aria-live="polite">

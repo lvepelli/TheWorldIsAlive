@@ -37,7 +37,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Incomplete / simplified (honest list)
 
-- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes, feuds, breakups and funding withdrawals (`simulation/relations.ts`), and they drive consequences (`consequences.ts`: rival pounce, ally rally, rival ascends, mentor endorsement, purge/opposition). Weekly editorials live in `information.ts` (`generateEditorials`).
+- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes, feuds, breakups and funding withdrawals (`simulation/relations.ts`), and they drive consequences (`consequences.ts`: rival pounce, ally rally, rival ascends, mentor endorsement, purge/opposition). Weekly editorials live in `information.ts` (`generateEditorials`). Starting situations ("premises") are in `generator/premise.ts`; add one by appending to `PREMISES` (deterministic from the seed, so existing seeds change if the list order changes).
 - **Regions** (country → region → city) are collapsed to country → city. `Region` type exists but is unused.
 - **Trade routes on the map** are shown only for the selected country; there is no trade-volume simulation beyond `tradePartners` relation effects.
 - **Weather** is not simulated; disasters/epidemics/battles show as decaying zones, migrations as particle flows, wars as pulsing borders/arcs.

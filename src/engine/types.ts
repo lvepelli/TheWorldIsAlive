@@ -339,6 +339,8 @@ export interface WorldMeta {
   createdAt: number;      // real timestamp
   version: number;        // save format version
   startYear: number;
+  /** Starting situation chosen from the seed (see generator/premise.ts). */
+  premise?: { id: string; title: string; blurb: string };
 }
 
 export interface World {
