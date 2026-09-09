@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Accessibility: the relationship graph carries a hidden text alternative (nodes, ties and their strength).
 - Accessibility: the map canvas describes itself to screen readers (nations, wars, restless regions, events on record, current selection) and updates as the world changes.
 - God Mode: region fields in the Create Country, Grant Autonomy, Annex Region and Regional Referendum forms autocomplete with the regions of the chosen country.
 - Tests: `tests/prompts.test.ts` checks that every prompt in `prompts.ts` has a markdown twin with the same placeholders.

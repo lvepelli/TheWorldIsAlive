@@ -107,7 +107,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 7. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds. Region-era numbers (20 years on `diag`): 32 → 38 nations, ~14 annexations, ~137 autonomy demands — see the balance snapshot; the 20-year balance test now asserts nations ≤ 45 and region/country consistency.
 8. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
 9. **Localization** of templates (extract strings from `narrative.ts`/`actions.ts`).
-10. **Accessibility**: modal focus trap + inspector focus hand-off are done; keyboard map navigation, larger-text and high-contrast settings all exist; severity dots now carry `aria-label`/`title` text (Minor … World-changing) everywhere and the Live severity filter has screen-reader labels; the map canvas now carries a live text summary (`aria-describedby`: nations, wars, restless regions, events, selection); remaining: a text alternative for the relation graph.
+10. **Accessibility**: modal focus trap + inspector focus hand-off are done; keyboard map navigation, larger-text and high-contrast settings all exist; severity dots now carry `aria-label`/`title` text (Minor … World-changing) everywhere and the Live severity filter has screen-reader labels; the map canvas now carries a live text summary (`aria-describedby`: nations, wars, restless regions, events, selection); the relation graph also has a hidden text alternative listing its ties. Remaining: nothing known beyond a full audit with a real screen reader.
 11. **Capacitor packaging** (see MOBILE.md) + native file export.
 
 ## Balance snapshot (seed `diag`, 15 years)

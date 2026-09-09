@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { EntityRef, World } from '@/engine/types';
 import { useGame } from '@/state/store';
 import { hueFor } from '../format';
@@ -81,5 +81,6 @@ export function RelationGraph({ center }: { center: EntityRef }): React.ReactEle
     canvas.addEventListener('click', onClick);
     return () => { cancelAnimationFrame(raf); canvas.removeEventListener('click', onClick); };
   }, [world, center.kind, center.id, select, center]);
-  return <canvas ref={ref} className="graph" aria-label="Relationship graph" />;
+  const textual = useMemo(() => { const g = buildGraph(world, center); const centreLabel = g.nodes[0]?.label ?? 'this entity'; const lines = g.edges.slice(0, 40).map((e) => `${g.nodes[e.a]?.label} and ${g.nodes[e.b]?.label}: ${e.w > 0.66 ? 'strong tie' : e.w > 0.33 ? 'tie' : 'weak tie'}`); return `Relationship graph around ${centreLabel}: ${g.nodes.length} nodes, ${g.edges.length} ties. ${lines.join('; ')}${g.edges.length > 40 ? '; and more' : ''}.`; }, [world, center.kind, center.id]);
+  return <><canvas ref={ref} className="graph" aria-label="Relationship graph" aria-describedby={`graph-text-${center.id}`} /><div id={`graph-text-${center.id}`} className="sr-only">{textual}</div></>;
 }
