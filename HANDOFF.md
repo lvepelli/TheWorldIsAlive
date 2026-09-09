@@ -88,6 +88,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Testing status
 
 - `tests/robustness.test.ts`: six simulated years with ~240 random freeform commands and presets, invariants checked yearly (capitals, living leaders, city ownership, symmetric wars/alliances, finite numbers, geography consistency), save round-trip after chaos; junk-input interpreter test.
+- `tests/prompts.test.ts`: every `PROMPTS` entry has a `prompts/<key>.md` twin with the same `{{placeholders}}`.
 - `tests/llm.test.ts`: mocked endpoint tests for God interpretation, fallback, enhancer budget, Anthropic-style parsing.
 - `tests/contours.test.ts`: polygon coverage vs. cell area for every country; single-cell island edge case.
 - `tests/engine.test.ts`: 31 tests — referendums, region dialogue, regions (partition, secession along a region, annexation transfer, ousted-governor liberation movement, old-save migration), calendar (festival + fair once a year with follow-ups), determinism, world richness, 365-day progression (~0.6 s), first-5-days activity, run determinism, save round-trip, corrupted save rejection, every God preset, freeform interpretation + consequences, summaries, 20-year balance (population, GDP, inflation, debt, wars, living people, index bounds, event cap, dialogue).
