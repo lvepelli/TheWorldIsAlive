@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/79c64b0f25ac733ea1e6394e5cd10fd8958aafaa/index.html
-Date: 2026-09-09T04:50:07.764Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/3a97b49a99a4eaa8b4ae0de6613496e48cadc43b/index.html
+Date: 2026-09-09T04:56:52.750Z
 
 ## android-360 (360×800)
 
@@ -22,6 +22,11 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ Social screen renders without overflow
 - ✅ Markets screen renders without overflow
 - ✅ History screen renders without overflow
+- ✅ News shows weekly editorials
+- ✅ Live shows developing stories or events
+- ✅ History offers the chronicle export
+- ✅ a character answers a question
+- ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
 - ✅ freeform God command interpreted
 - ✅ God intervention executed
@@ -38,7 +43,7 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8084 bright samples)
+- ✅ map is painted (8089 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -50,6 +55,11 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ Social screen renders without overflow
 - ✅ Markets screen renders without overflow
 - ✅ History screen renders without overflow
+- ✅ News shows weekly editorials
+- ✅ Live shows developing stories or events
+- ✅ History offers the chronicle export
+- ✅ a character answers a question
+- ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
 - ✅ freeform God command interpreted
 - ✅ God intervention executed
@@ -66,8 +76,8 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8381 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
+- ✅ map is painted (8386 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -78,6 +88,11 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ Social screen renders without overflow
 - ✅ Markets screen renders without overflow
 - ✅ History screen renders without overflow
+- ✅ News shows weekly editorials
+- ✅ Live shows developing stories or events
+- ✅ History offers the chronicle export
+- ✅ a character answers a question
+- ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
 - ✅ freeform God command interpreted
 - ✅ God intervention executed
@@ -94,7 +109,7 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8144 bright samples)
+- ✅ map is painted (8145 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -105,6 +120,11 @@ Date: 2026-09-09T04:50:07.764Z
 - ✅ Social screen renders without overflow
 - ✅ Markets screen renders without overflow
 - ✅ History screen renders without overflow
+- ✅ News shows weekly editorials
+- ✅ Live shows developing stories or events
+- ✅ History offers the chronicle export
+- ✅ a character answers a question
+- ✅ delayed God command is understood
 - ✅ event inspector shows causal chain
 - ✅ freeform God command interpreted
 - ✅ God intervention executed
