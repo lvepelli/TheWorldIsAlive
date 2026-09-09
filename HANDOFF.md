@@ -28,6 +28,9 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 | Persistence | `engine/persistence/storage.ts` | IndexedDB via idb-keyval, memory fallback, validation, export/import |
 | Optional LLM | `engine/ai/llm.ts`, `prompts/` | enhancer + interpreter with fallback; disabled unless `VITE_AI_ENDPOINT` set |
 | Dialogue | `engine/ai/dialogue.ts` | local template provider; UI in person inspector ("Talk to them") |
+| Bylines / quote-reposts | `simulation/information.ts` | articles carry `authorId` (journalist characters gain fame); viral posts get quoted |
+| Pick on map | `state/store.ts` `godPick`, `map/WorldMap.tsx`, `screens/GodScreen.tsx` | tapping a nation fills a God preset parameter |
+| PWA install | `ui/install.ts`, `components/InstallButton.tsx` | Android prompt capture, iOS hint |
 | Story arcs | `events/spawn.ts` (space, espionage, secession, automation, feuds), `events/consequences.ts` (referendum, succession crisis, space race, sanctions, startups, reconstruction, asset grabs, lockdown protests) | History → Sagas tab groups chains (`collectChain`, `sagaTitle` in `HistoryScreen.tsx`) |
 | UI | `src/ui/*` | map renderer, 9 screens, inspector, graph, cinematics, toasts, intro, audio, debug |
 | PWA | `public/manifest.webmanifest`, `public/sw.js`, `src/pwa.ts`, `public/icons` | |
@@ -68,6 +71,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Technical debt
 
 - `Inspector.tsx` is large (one file, seven views); split per entity kind when touching it seriously.
+- CI runs are serialized by the `pages` concurrency group; each push cancels queued (not running) runs, so a burst of pushes means only the last one gets QA'd. Fine for solo work; switch to per-SHA groups if several people push.
 - Some inline styles in screens should migrate to CSS classes.
 - Event `type` strings are free-form; a union type would catch typos in TRIGGERS.
 - `RelationGraph` re-runs layout on every open (240 frames) — fine, but could cache positions.
