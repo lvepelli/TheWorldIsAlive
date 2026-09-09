@@ -35,9 +35,11 @@ export function Toasts(): React.ReactElement {
   const select = useGame((s) => s.select);
   const dismiss = useGame((s) => s.dismissToast);
   const screen = useGame((s) => s.screen);
-  // On phones, list screens keep their headers readable: toasts dock above the bottom nav instead of covering the top.
+  const selection = useGame((s) => s.selection);
+  // On phones, list screens keep their headers readable: toasts dock above the bottom nav instead of covering the top —
+  // unless the inspector sheet is open there, in which case they stay at the top so they never cover the sheet.
   return (
-    <div className={`toasts ${screen !== 'world' ? 'docked' : ''}`} aria-live="polite">
+    <div className={`toasts ${screen !== 'world' && !selection ? 'docked' : ''}`} aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className="toast" style={{ ['--c' as string]: t.event.playerIntervention ? 'var(--accent)' : catVar(t.event.category) }} onClick={() => { dismiss(t.id); select({ kind: 'event', id: t.event.id }); }}>
           <div className="rail" />

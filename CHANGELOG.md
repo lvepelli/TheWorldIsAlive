@@ -33,6 +33,7 @@
 - Fix: a leader whose home city seceded could be assassinated without any succession (the throne stayed with a dead person); succession now covers every country a person led, and a sitting leader stays with the old capital when their city breaks away.
 - Companies act on their CEO's objectives: a chief persuaded toward a field (a cure, space, clean energy, AI, defense, transport, food, finance) pivots the company into that sector, sometimes with a breakthrough to match; freshly adopted objectives are pursued with urgency for about eight months.
 - Journalists quote your interviews: a famous character you questioned may get a profile piece ("…: X speaks") built on what they told you, with fame and reputation effects; researchers persuaded toward a field chase breakthroughs in it.
+- Mobile: toasts stay at the top while the inspector sheet is open on a list screen, so they never cover the sheet.
 
 ## 0.5.0 — rivals, fronts and editorials
 
