@@ -3,6 +3,7 @@
  * shape the numbers that the event engine reacts to.
  */
 import { tradeShare } from './trade';
+import { pctChange } from './markets';
 import { RNG, clamp } from '../rng';
 import type { World, Country, WorldEvent } from '../types';
 import { DAYS_PER_YEAR } from '../types';
@@ -14,6 +15,24 @@ import { createEvent, fx, ref } from '../events/engine';
 // WEEKLY: population, economy drift, unrest dynamics
 // ---------------------------------------------------------------------------
 export function weeklyTick(world: World, rng: RNG): void {
+  // Food-price crisis: when grain has spiked over two months (droughts, floods, war), the poor go hungry first.
+  const grain = world.commodities.grain;
+  if (grain && grain.history.length > 60) {
+    const rise = pctChange(grain.history, 60);
+    const recent = world.events.slice(-600).some((e) => e.type === 'food.crisis' && world.day - e.day < 120);
+    if (rise > 25 && !recent) {
+      const cs = Object.values(world.countries).map((c) => ({ c, pc: (c.gdp * 1e9) / Math.max(1, c.population) })).sort((a, b) => a.pc - b.pc);
+      const poor = cs.slice(0, Math.max(3, Math.floor(cs.length / 3))).map((x) => x.c);
+      createEvent(world, {
+        category: 'economic', type: 'food.crisis', severity: rise > 45 ? 4 : 3,
+        title: `Food prices spiral: grain up ${rise.toFixed(0)}% in two months`,
+        description: `Bread lines returned to ${poor.slice(0, 3).map((c) => c.name).join(', ')} as grain hit ${grain.price.toFixed(0)} ${grain.unit}. ${rng.pick(['Governments blamed speculators.', 'Export bans spread from capital to capital.', 'Aid agencies warned of famine in the poorest regions.'])}`,
+        location: { countryId: poor[0].id }, actors: poor.slice(0, 4).map((c) => ref('country', c.id)),
+        effects: poor.flatMap((c) => [fx('country', c.id, 'happiness', -3), fx('country', c.id, 'unrest', 4), fx('country', c.id, 'inflation', 1.5)]),
+        tags: ['food', 'crisis', 'economy'], historic: rise > 45, data: { rise, poor: poor.map((c) => c.id), shocks: [{ sector: 'agriculture', pct: 0.05 }, { sector: 'retail', pct: -0.03 }] },
+      });
+    }
+  }
   const wk = 7 / DAYS_PER_YEAR;
   for (const c of Object.values(world.countries)) {
     // Population growth: base fertility minus development, plus happiness effect

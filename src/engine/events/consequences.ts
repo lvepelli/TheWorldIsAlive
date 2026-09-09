@@ -304,6 +304,35 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       location: { cityId: person.cityId }, actors: [ref('person', person.id)], effects: [fx('person', person.id, 'wealth%', -30), fx('person', person.id, 'fame', 5)], tags: ['scandal', 'downfall'],
     });
   },
+  // ---- Food crisis chain ----
+  'food.riots': (w, rng, src) => {
+    const ids = (src.data?.poor as ID[] | undefined) ?? []; const poor = ids.map((id) => w.countries[id]).filter(Boolean);
+    if (!poor.length) return null;
+    const c = rng.pickWeighted(poor, (x) => x.unrest + 10);
+    const city = A.capitalOf(w, c);
+    return createEvent(w, {
+      category: 'social', type: 'protest.mass', severity: 3, causedBy: src.id,
+      title: `Bread riots in ${city?.name ?? c.name}`,
+      description: `Crowds ${rng.pick(['stormed markets', 'blocked the port', 'marched on the palace', 'looted grain depots'])} in ${city?.name ?? c.name} as food prices outran wages. ${rng.pick(['Troops fired over their heads.', 'The government promised subsidies by morning.', 'Three ministers resigned.'])}`,
+      location: { cityId: city?.id, countryId: c.id }, actors: [ref('country', c.id)],
+      effects: [fx('country', c.id, 'unrest', 8), fx('country', c.id, 'stability', -5), fx('country', c.id, 'approval', -6)], tags: ['protest', 'food', c.code],
+    });
+  },
+  'food.aid': (w, rng, src) => {
+    const ids = (src.data?.poor as ID[] | undefined) ?? []; const poor = ids.map((id) => w.countries[id]).filter(Boolean);
+    const rich = Object.values(w.countries).filter((c) => !ids.includes(c.id)).sort((a, b) => b.gdp - a.gdp).slice(0, 3);
+    if (!poor.length || !rich.length) return null;
+    const donor = rng.pick(rich); const to = rng.pick(poor);
+    A.setRelation(w, donor, to, 8);
+    return createEvent(w, {
+      category: 'diplomatic', type: 'aid', severity: 2, causedBy: src.id,
+      title: `${donor.name} ships emergency grain to ${to.name}`,
+      description: `${donor.name} released ${rng.int(2, 9)} million tonnes from strategic reserves for ${to.name} and its neighbours. ${rng.pick(['Critics at home called it charity abroad.', 'The gesture was noticed in every hungry capital.', 'Convoys were escorted by the navy.'])}`,
+      location: { countryId: to.id }, actors: [ref('country', donor.id), ref('country', to.id)],
+      effects: [fx('country', to.id, 'happiness', 2), fx('country', to.id, 'unrest', -2), fx('country', donor.id, 'approval', 1)], tags: ['aid', 'food', donor.code, to.code],
+      data: { shocks: [{ commodityId: 'grain', pct: -0.03 }] as MarketShock[] },
+    });
+  },
   // ---- Summits with agendas ----
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
@@ -787,6 +816,8 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
   { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
+  { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },
+  { match: (e) => e.type === 'food.crisis', rule: 'food.aid', delay: [10, 40], p: 0.7 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
   { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },
