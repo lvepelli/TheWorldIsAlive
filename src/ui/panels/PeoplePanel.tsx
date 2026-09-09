@@ -4,7 +4,7 @@ import { useT } from '../i18n';
 import { Drawer } from '../shell/Drawer';
 import { EntityRow } from '../components/EntityRow';
 import { ListControls, useListState, useSorted, type SortOpt } from './ListPanel';
-import { profLabel } from '../format';
+import { profLabel , personTitle } from '../format';
 import type { Person, Profession } from '@/engine/types';
 
 type ProfFilter = Profession | 'all' | 'governor' | 'leader';
@@ -23,7 +23,7 @@ export function PeoplePanel(): React.ReactElement {
     <Drawer title={t('panel.people')} sub={`${items.length}`}>
       <ListControls items={list} sorts={sorts} {...st}><label className="chip clickable"><input type="checkbox" checked={dead} onChange={(e) => setDead(e.target.checked)} /> {t('common.dead')}</label></ListControls>
       <div className="chips scroll">{PROFS.map((p) => <button key={p} className={`chip clickable ${prof === p ? 'active' : ''}`} onClick={() => setProf(p)}>{p === 'all' ? t('common.all') : p === 'leader' ? t('politics.leaders') : p === 'governor' ? t('prof.governor') : profLabel(p)}</button>)}</div>
-      <div className="list">{list.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${p.title ?? profLabel(p.profession)} · ${world.countries[p.countryId]?.name ?? ''}${!p.alive ? ` · ${t('common.dead')}` : ''}`} right={<span className="mono dim">{p.influence.toFixed(0)}</span>} />)}</div>
+      <div className="list">{list.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${personTitle(p)} · ${world.countries[p.countryId]?.name ?? ''}${!p.alive ? ` · ${t('common.dead')}` : ''}`} right={<span className="mono dim">{p.influence.toFixed(0)}</span>} />)}</div>
     </Drawer>
   );
 }

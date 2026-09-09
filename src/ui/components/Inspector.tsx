@@ -9,7 +9,7 @@ import { EventCard } from './EventCard';
 import { Sparkline, LineChart } from './Sparkline';
 import { RelationGraph } from './RelationGraph';
 import { Post } from '../screens/SocialScreen';
-import { fmtMoneyB, fmtPop, fmtPct, catVar, sevLabel, titleCase, govLabel, profLabel, sectorLabel, ideoLabel, relLabel, orgTypeLabel, resLabel, relationBucket, relationColor, trendArrow, trendColor } from '../format';
+import { fmtMoneyB, fmtPop, fmtPct, catVar, sevLabel, titleCase, govLabel, profLabel, sectorLabel, ideoLabel, relLabel, orgTypeLabel, resLabel, relationBucket, relationColor, trendArrow, trendColor , personTitle } from '../format';
 import { tradeLinks, tradeShare } from '@/engine/simulation/trade';
 import { regionsOf, regionOf, regionStats } from '@/engine/generator/regions';
 import { ageOf, formatDate, daysAgo, yearOf } from '@/engine/time';
@@ -112,7 +112,7 @@ function CountryView({ c }: { c: Country }): React.ReactElement {
       <Tabs tabs={tabs} tab={tab} setTab={setTab} />
       {tab === 'summary' && <>
         <div className="stat-grid"><Stat k={t('stat.population')} v={fmtPop(c.population)} /><Stat k={t('stat.gdp')} v={fmtMoneyB(c.gdp)} sub={fmtPct(c.gdpGrowth)} /><Stat k={t('stat.stability')} v={c.stability.toFixed(0)} bar={c.stability} color={barColor(c.stability)} /><Stat k={t('stat.happiness')} v={c.happiness.toFixed(0)} bar={c.happiness} color={barColor(c.happiness)} /><Stat k={t('stat.approval')} v={`${c.approval.toFixed(0)}%`} bar={c.approval} /><Stat k={t('stat.unrest')} v={c.unrest.toFixed(0)} bar={c.unrest} color={barColor(100 - c.unrest)} /></div>
-        {leader && <Section title={t('country.leader')}><EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${leader.title ?? profLabel(leader.profession)} · ${ideoLabel(leader.ideology)} · ${t('stat.approval').toLowerCase()} ${c.approval.toFixed(0)}%`} /><div className="dim" style={{ fontSize: 12, marginTop: 4 }}>{c.electionEvery ? `${t('country.electionsEvery', { n: c.electionEvery })} · ${t('country.nextElection', { year: c.nextElectionYear })}` : t('country.noElections')} · {t('country.capital').toLowerCase()} {world.cities[c.capitalId]?.name} · {t('country.language')} {c.culture.language}</div></Section>}
+        {leader && <Section title={t('country.leader')}><EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${personTitle(leader)} · ${ideoLabel(leader.ideology)} · ${t('stat.approval').toLowerCase()} ${c.approval.toFixed(0)}%`} /><div className="dim" style={{ fontSize: 12, marginTop: 4 }}>{c.electionEvery ? `${t('country.electionsEvery', { n: c.electionEvery })} · ${t('country.nextElection', { year: c.nextElectionYear })}` : t('country.noElections')} · {t('country.capital').toLowerCase()} {world.cities[c.capitalId]?.name} · {t('country.language')} {c.culture.language}</div></Section>}
         <RelationChips c={c} />
         {companies.length > 0 && <Section title={t('country.topCompanies')}><div className="list">{companies.slice(0, 3).map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section>}
         <Section title={t('country.recentEvents')}><Events list={events.slice(0, 4)} /></Section>
@@ -121,7 +121,7 @@ function CountryView({ c }: { c: Country }): React.ReactElement {
       {tab === 'economy' && <CountryEconomy c={c} companies={companies} idx={idx} />}
       {tab === 'politics' && <>
         <div className="stat-grid"><Stat k={t('country.government')} v={govLabel(c.government)} /><Stat k={t('country.ideology')} v={ideoLabel(c.ideology)} /><Stat k={t('stat.approval')} v={`${c.approval.toFixed(0)}%`} bar={c.approval} /><Stat k={t('stat.polarization')} v={c.polarization.toFixed(0)} bar={c.polarization} color={barColor(100 - c.polarization)} /><Stat k={t('stat.freedom')} v={c.freedom.toFixed(0)} bar={c.freedom} /><Stat k={t('stat.corruption')} v={c.corruption.toFixed(0)} bar={c.corruption} color={barColor(100 - c.corruption)} /></div>
-        {leader && <Section title={t('country.leader')}><EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${leader.title ?? profLabel(leader.profession)} · ${ideoLabel(leader.ideology)}`} /></Section>}
+        {leader && <Section title={t('country.leader')}><EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${personTitle(leader)} · ${ideoLabel(leader.ideology)}`} /></Section>}
         <div className="dim" style={{ fontSize: 12 }}>{c.electionEvery ? `${t('country.electionsEvery', { n: c.electionEvery })} · ${t('country.nextElection', { year: c.nextElectionYear })}` : t('country.noElections')}</div>
         {orgs.filter((o) => o.type === 'party' || o.type === 'movement').length > 0 && <Section title={t('country.movements')}><div className="list">{orgs.filter((o) => o.type === 'party' || o.type === 'movement').sort((a, b) => b.support - a.support).slice(0, 8).map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={`${orgTypeLabel(o.type)}${o.ideology ? ` · ${ideoLabel(o.ideology)}` : ''}`} right={`${o.support.toFixed(0)}%`} />)}</div></Section>}
         <Section title={t('nav.god')}><div className="chips"><GodShortcut presetId="election" params={{ a: c.id }} label={t('politics.elections')} /><GodShortcut presetId="coup" params={{ a: c.id }} label={t('god.group.politics')} /><GodShortcut presetId="movement" params={{ a: c.id }} label={t('org.type.movement')} /></div></Section>
@@ -139,7 +139,7 @@ function CountryView({ c }: { c: Country }): React.ReactElement {
         {orgs.filter((o) => o.type === 'religion').length > 0 && <Section title={t('country.faiths')}><div className="list">{orgs.filter((o) => o.type === 'religion').map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={orgTypeLabel(o.type)} right={`${o.support.toFixed(0)}%`} />)}</div></Section>}
         {orgs.filter((o) => o.type === 'movement' || o.type === 'union').length > 0 && <Section title={t('country.movements')}><div className="list">{orgs.filter((o) => o.type === 'movement' || o.type === 'union').sort((a, b) => b.support - a.support).map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={o.agenda} right={`${o.support.toFixed(0)}%`} />)}</div></Section>}
       </>}
-      {tab === 'people' && <div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${p.title ?? profLabel(p.profession)} · ${t('stat.influence').toLowerCase()} ${p.influence.toFixed(0)}`} />)}</div>}
+      {tab === 'people' && <div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${personTitle(p)} · ${t('stat.influence').toLowerCase()} ${p.influence.toFixed(0)}`} />)}</div>}
       {tab === 'history' && <HistoryList items={c.history} startYear={world.meta.startYear} />}
       {tab === 'events' && <Events list={events} />}
     </>
@@ -260,10 +260,10 @@ function CityView({ c }: { c: City }): React.ReactElement {
       {tab === 'summary' && <>
         {country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={`${govLabel(country.government)} · ${t('stat.stability').toLowerCase()} ${country.stability.toFixed(0)}`} />}
         {region && <EntityRow refx={{ kind: 'region', id: region.id }} name={region.name} sub={`${t('entity.region')} · ${t('stat.unrest').toLowerCase()} ${region.unrest.toFixed(0)}`} />}
-        {people.length > 0 && <Section title={t('city.peopleHere')}><div className="list">{people.slice(0, 3).map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={p.title ?? profLabel(p.profession)} />)}</div></Section>}
+        {people.length > 0 && <Section title={t('city.peopleHere')}><div className="list">{people.slice(0, 3).map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={personTitle(p)} />)}</div></Section>}
         <Section title={t('country.recentEvents')}><Events list={events.slice(0, 3)} /></Section>
       </>}
-      {tab === 'people' && (people.length > 0 ? <Section title={t('city.peopleHere')}><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={p.title ?? profLabel(p.profession)} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>)}
+      {tab === 'people' && (people.length > 0 ? <Section title={t('city.peopleHere')}><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={personTitle(p)} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>)}
       {tab === 'companies' && (companies.length > 0 ? <Section title={t('city.companiesHere')}><div className="list">{companies.map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>)}
       {tab === 'events' && <Section title={t('country.recentEvents')}><Events list={events} /></Section>}
     </>
@@ -285,7 +285,7 @@ function PersonView({ p }: { p: Person }): React.ReactElement {
   const tabs: { id: PTab; label: string }[] = [{ id: 'summary', label: t('tab.summary') }, { id: 'relations', label: t('tab.relations') }, { id: 'career', label: t('tab.career') }, { id: 'events', label: t('tab.events') }, { id: 'opinion', label: t('tab.opinion') }];
   return (
     <>
-      <div className="hero"><Avatar name={p.name} id={p.id} size="lg" alive={p.alive} /><div className="grow"><div className="title">{p.name} {!p.alive && <span className="tag" style={{ color: 'var(--bad)' }}>{t('common.dead')}</span>}{p.retired && <span className="tag dim">{t('common.retired')}</span>}</div><div className="dim" style={{ fontSize: 12 }}>{p.title ?? profLabel(p.profession)} · {ageOf(p.birthDay, world.day)} {t('common.age')} · {country?.name}</div></div></div>
+      <div className="hero"><Avatar name={p.name} id={p.id} size="lg" alive={p.alive} /><div className="grow"><div className="title">{p.name} {!p.alive && <span className="tag" style={{ color: 'var(--bad)' }}>{t('common.dead')}</span>}{p.retired && <span className="tag dim">{t('common.retired')}</span>}</div><div className="dim" style={{ fontSize: 12 }}>{personTitle(p)} · {ageOf(p.birthDay, world.day)} {t('common.age')} · {country?.name}</div></div></div>
       <Tabs tabs={tabs} tab={tab} setTab={setTab} />
       {tab === 'summary' && <>
         <div className="stat-grid"><Stat k={t('stat.influence')} v={p.influence.toFixed(0)} bar={p.influence} color="var(--cat-political)" /><Stat k={t('stat.fame')} v={p.fame.toFixed(0)} bar={p.fame} color="var(--cat-cultural)" /><Stat k={t('stat.wealth')} v={p.wealth >= 1000 ? `$${(p.wealth / 1000).toFixed(1)}B` : `$${p.wealth.toFixed(1)}M`} /><Stat k={t('stat.reputation')} v={p.reputation.toFixed(0)} bar={(p.reputation + 100) / 2} color={p.reputation < -20 ? 'var(--bad)' : p.reputation > 20 ? 'var(--ok)' : 'var(--warn)'} /></div>
@@ -295,7 +295,7 @@ function PersonView({ p }: { p: Person }): React.ReactElement {
         <Section title={t('nav.god')}><div className="chips"><GodShortcut presetId="scandal" params={{ p: p.id }} label={t('cat.political')} /><GodShortcut presetId="remove-figure" params={{ p: p.id }} label={t('common.dismiss')} />{country && !isLeader && <GodShortcut presetId="figure" params={{ a: country.id }} label={t('rel.rival')} />}</div></Section>
       </>}
       {tab === 'relations' && <>
-        <div className="list">{p.relationships.slice(0, 14).map((r) => { const o = world.people[r.target.id]; if (!o) return null; const col = r.strength > 0.3 ? 'var(--ok)' : r.strength < -0.3 ? 'var(--bad)' : 'var(--text-3)'; return <EntityRow key={r.target.id} refx={{ kind: 'person', id: o.id }} name={o.name} sub={`${relLabel(r.type)} · ${o.title ?? profLabel(o.profession)}`} right={<span className="mono" style={{ color: col }}>{r.strength > 0 ? '+' : ''}{(r.strength * 100).toFixed(0)}</span>} />; })}{!p.relationships.length && <div className="dim">{t('person.noRelations')}</div>}</div>
+        <div className="list">{p.relationships.slice(0, 14).map((r) => { const o = world.people[r.target.id]; if (!o) return null; const col = r.strength > 0.3 ? 'var(--ok)' : r.strength < -0.3 ? 'var(--bad)' : 'var(--text-3)'; return <EntityRow key={r.target.id} refx={{ kind: 'person', id: o.id }} name={o.name} sub={`${relLabel(r.type)} · ${personTitle(o)}`} right={<span className="mono" style={{ color: col }}>{r.strength > 0 ? '+' : ''}{(r.strength * 100).toFixed(0)}</span>} />; })}{!p.relationships.length && <div className="dim">{t('person.noRelations')}</div>}</div>
         <RelationGraph center={{ kind: 'person', id: p.id }} />
       </>}
       {tab === 'career' && <><Section title={t('person.lifeStory')}><HistoryList items={p.history} startYear={world.meta.startYear} /></Section>{p.memories.length > 0 && <Section title={t('person.memories')}><div className="dim" style={{ fontSize: 12 }}>{p.memories.slice(-5).reverse().map((m) => m.text).join(' · ')}</div></Section>}</>}

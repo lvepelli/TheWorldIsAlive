@@ -3,7 +3,7 @@ import { useGame } from '@/state/store';
 import { useT } from '../i18n';
 import { Drawer } from '../shell/Drawer';
 import { EntityRow } from '../components/EntityRow';
-import { govLabel, ideoLabel } from '../format';
+import { govLabel, ideoLabel , personTitle } from '../format';
 import { yearOf } from '@/engine/time';
 
 /** Politics: who rules where, upcoming votes, fragile states, recent political events. */
@@ -22,7 +22,7 @@ export function PoliticsPanel(): React.ReactElement {
       <div className="section-title">{t('politics.upheaval')}</div>
       <div className="list">{fragile.map((c) => <EntityRow key={c.id} refx={{ kind: 'country', id: c.id }} name={c.name} sub={`${govLabel(c.government)} · ${t('stat.unrest')} ${c.unrest.toFixed(0)} · ${t('stat.approval')} ${c.approval.toFixed(0)}%`} right={<span className="mono" style={{ color: 'var(--bad)' }}>{c.stability.toFixed(0)}</span>} />)}</div>
       <div className="section-title">{t('politics.leaders')}</div>
-      <div className="list">{cs.map((c) => { const l = world.people[c.leaderId]; if (!l) return null; return <div key={c.id} className="entity-row" onClick={() => select({ kind: 'person', id: l.id })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') select({ kind: 'person', id: l.id }); }}><div className="grow"><div>{l.name} <span className="dim">· {c.name}</span></div><div className="dim" style={{ fontSize: 12 }}>{l.title ?? govLabel(c.government)} · {ideoLabel(l.ideology)} · {t('stat.approval')} {c.approval.toFixed(0)}%</div></div></div>; })}</div>
+      <div className="list">{cs.map((c) => { const l = world.people[c.leaderId]; if (!l) return null; return <div key={c.id} className="entity-row" onClick={() => select({ kind: 'person', id: l.id })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') select({ kind: 'person', id: l.id }); }}><div className="grow"><div>{l.name} <span className="dim">· {c.name}</span></div><div className="dim" style={{ fontSize: 12 }}>{l.title ? personTitle(l) : govLabel(c.government)} · {ideoLabel(l.ideology)} · {t('stat.approval')} {c.approval.toFixed(0)}%</div></div></div>; })}</div>
     </Drawer>
   );
 }

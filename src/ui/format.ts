@@ -14,6 +14,7 @@ export function fmtMoneyB(b: number): string {
 export function fmtPct(p: number, digits = 1): string { return `${p >= 0 ? '+' : ''}${p.toFixed(digits)}%`; }
 export function fmtPop(n: number): string { return fmtNum(n, 1); }
 import { t } from '@/i18n';
+import { getLang as getLangCode } from '@/engine/i18n/lang';
 export function sevLabel(s: number): string { return s >= 1 && s <= 5 ? t(`sev.${s}`) : ''; }
 export function catLabel(cat: string): string { return t(`cat.${cat}`); }
 export function govLabel(g: string): string { const k = `gov.${g}`; const v = t(k); return v === k ? titleCase(g) : v; }
@@ -32,3 +33,14 @@ export function catVar(cat: string): string { return `var(--cat-${cat})`; }
 export function initials(name: string): string { return name.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase(); }
 export function hueFor(id: string): number { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360; return h; }
 export function titleCase(s: string): string { return s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }
+
+const TITLE_ES: Record<string, string> = { President: 'Presidente', 'Prime Minister': 'Primer ministro', Monarch: 'Monarca', 'Director-General': 'Director general', 'Supreme Leader': 'Líder supremo', Marshal: 'Mariscal', 'High Cleric': 'Sumo clérigo', Chancellor: 'Canciller', Chairman: 'Presidente del consejo', 'First Councillor': 'Primer consejero', CEO: 'CEO', Founder: 'Fundador', General: 'General' };
+/** A person's title (localized when known) or their localized profession. */
+export function personTitle(p: { title?: string; profession: string }): string {
+  if (!p.title) return profLabel(p.profession);
+  if (getLangCode() !== 'es') return p.title;
+  if (TITLE_ES[p.title]) return TITLE_ES[p.title];
+  const gov = p.title.match(/^Governor of (.+)$/); if (gov) return `Gobernador de ${gov[1]}`;
+  const lead = p.title.match(/^Leader of (.+)$/); if (lead) return `Líder de ${lead[1]}`;
+  return p.title;
+}

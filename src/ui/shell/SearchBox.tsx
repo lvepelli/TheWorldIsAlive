@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '@/state/store';
 import type { EntityRef } from '@/engine/types';
 import { useT } from '../i18n';
+import { personTitle } from '../format';
 import { renderEvent } from '@/engine/i18n/render';
 
 interface Hit { ref: EntityRef; name: string; sub: string; x?: number; y?: number; zoom?: number }
@@ -19,7 +20,7 @@ export function SearchBox(): React.ReactElement {
     for (const c of Object.values(world.countries)) if (m(c.name)) out.push({ ref: { kind: 'country', id: c.id }, name: c.name, sub: t('entity.country'), x: c.centroid.x, y: c.centroid.y, zoom: 2.2 });
     for (const r of Object.values(world.regions ?? {})) if (m(r.name)) { const ct = world.cities[r.cityIds[0]]; out.push({ ref: { kind: 'region', id: r.id }, name: r.name, sub: `${t('entity.region')} · ${world.countries[r.countryId]?.name ?? ''}`, x: ct?.x, y: ct?.y, zoom: 3 }); }
     for (const c of Object.values(world.cities)) if (m(c.name)) out.push({ ref: { kind: 'city', id: c.id }, name: c.name, sub: `${t('entity.city')} · ${world.countries[c.countryId]?.name ?? ''}`, x: c.x, y: c.y, zoom: 4 });
-    for (const p of Object.values(world.people)) if (p.alive && m(p.name)) out.push({ ref: { kind: 'person', id: p.id }, name: p.name, sub: `${p.title ?? t(`prof.${p.profession}`)} · ${world.countries[p.countryId]?.name ?? ''}` });
+    for (const p of Object.values(world.people)) if (p.alive && m(p.name)) out.push({ ref: { kind: 'person', id: p.id }, name: p.name, sub: `${personTitle(p)} · ${world.countries[p.countryId]?.name ?? ''}` });
     for (const c of Object.values(world.companies)) if (c.alive && m(c.name)) out.push({ ref: { kind: 'company', id: c.id }, name: c.name, sub: `${t('entity.company')} · ${world.countries[c.countryId]?.name ?? ''}` });
     for (const o of Object.values(world.organizations)) if (o.alive && m(o.name)) out.push({ ref: { kind: 'organization', id: o.id }, name: o.name, sub: t(`org.type.${o.type}`) });
     if (out.length < 12) for (let i = world.events.length - 1; i >= 0 && out.length < 16; i--) { const e = world.events[i]; const r = renderEvent(e, world); if (m(r.title) || m(e.title)) out.push({ ref: { kind: 'event', id: e.id }, name: r.title, sub: t('entity.event'), x: e.location.x, y: e.location.y, zoom: 2.4 }); }
