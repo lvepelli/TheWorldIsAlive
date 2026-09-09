@@ -31,6 +31,14 @@ export class MapRenderer {
   private countryIndex = new Map<ID, number>();
   private labelCache = new Map<ID, { x: number; y: number; size: number }>();
   private regionLabelCache = new Map<ID, { x: number; y: number; n: number }>();
+  private regionLabelHits: { id: ID; x: number; y: number; w: number; h: number }[] = [];
+  private regionCellCache: { key: string; idx: Int32Array; regions: Region[] } | null = null;
+  /** Cached per-cell region index (same key as the seams cache). */
+  private regionCellIndex(world: World): { idx: Int32Array; regions: Region[] } {
+    const geo = world.geography; const key = `${Object.keys(world.regions ?? {}).length}:${geo.countryOrder.length}:${Object.keys(world.cities).length}:${geo.version ?? 0}`;
+    if (this.regionCellCache?.key !== key) { const r = this.regionCells(world); this.regionCellCache = { key, ...r }; }
+    return this.regionCellCache;
+  }
   private citySprites = new Map<string, HTMLCanvasElement>();
   private dpr = 1;
   width = 0; height = 0;
@@ -118,10 +126,14 @@ export class MapRenderer {
       if (d < r && (!best || d < bd)) { best = city; bd = d; }
     }
     if (best) return { kind: 'city', id: best.id };
+    // Region name labels (drawn when zoomed in) are tappable.
+    for (const b of this.regionLabelHits) if (sx >= b.x && sx <= b.x + b.w && sy >= b.y && sy <= b.y + b.h) return { kind: 'region', id: b.id };
     const cx = Math.floor(gx), cy = Math.floor(gy);
     if (cy < 0 || cy >= this.H) return null;
     const r = this.world.geography.cells[cy * this.W + cx];
     if (r < 0) return null;
+    // On the Regions overlay a tap on land selects the region itself.
+    if (this.staticOverlay === 'regions' && this.world.regions) { const rc = this.regionCellIndex(this.world); const ri = rc.idx[cy * this.W + cx]; if (ri >= 0 && rc.regions[ri]) return { kind: 'region', id: rc.regions[ri].id }; }
     const id = this.world.geography.countryOrder[r];
     return id && this.world.countries[id] ? { kind: 'country', id } : null;
   }
@@ -647,6 +659,7 @@ export class MapRenderer {
       }
       // Region names: small italic labels once zoomed in (always on the Regions overlay), at the mean of the region's cities.
       const regionsOn = this.staticOverlay === 'regions';
+      if (ox === offsets[0]) this.regionLabelHits = [];
       if (world.regions && (z > 2.6 || (regionsOn && z > 1.4))) {
         const W = this.W; const font = clamp(8 * Math.sqrt(z / 2.6), 8, 12);
         g.font = `italic 500 ${font}px Inter, system-ui, sans-serif`; g.letterSpacing = '0.08em';
@@ -660,6 +673,7 @@ export class MapRenderer {
           const alpha = regionsOn ? 0.9 : clamp((z - 2.6) / 2, 0.35, 0.75);
           g.lineWidth = 3; g.strokeStyle = `rgba(4,6,12,${0.7 * alpha})`; g.strokeText(r.name, sx, sy + font * 1.1);
           g.fillStyle = r.unrest > 60 ? `rgba(255,190,150,${alpha})` : `rgba(200,215,235,${alpha})`; g.fillText(r.name, sx, sy + font * 1.1);
+          const tw = g.measureText(r.name).width; this.regionLabelHits.push({ id: r.id, x: sx - tw / 2 - 6, y: sy + font * 1.1 - font * 0.8, w: tw + 12, h: font * 1.6 });
         }
         g.letterSpacing = '0px';
       }

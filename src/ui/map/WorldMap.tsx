@@ -150,7 +150,7 @@ export function WorldMap(): React.ReactElement {
     return () => { canvas.removeEventListener('keydown', onKey); canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerup', onUp); canvas.removeEventListener('pointercancel', onUp); canvas.removeEventListener('wheel', onWheel); canvas.removeEventListener('pointerleave', onLeave); };
   }, [select]);
 
-  const hoverName = hover && world ? (hover.kind === 'city' ? world.cities[hover.id]?.name : world.countries[hover.id]?.name) : null;
+  const hoverName = hover && world ? (hover.kind === 'city' ? world.cities[hover.id]?.name : hover.kind === 'region' ? world.regions?.[hover.id]?.name : world.countries[hover.id]?.name) : null;
   return (
     <>
       <canvas ref={canvasRef} className="map-canvas" tabIndex={0} role="application" aria-label="World map. Arrow keys pan, plus and minus zoom, Enter selects the nation or city at the center, Home resets the view." />
