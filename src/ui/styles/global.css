@@ -386,3 +386,8 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
 }
 
 .premise-tag { margin-top: 8px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); opacity: 0.9; }
+
+/* Accessibility settings (More sheet): larger text scales the whole UI; high contrast lifts secondary text and lines. */
+html[data-large-text] { zoom: 1.15; }
+html[data-high-contrast] { --text-2: #d6e0ee; --text-3: #a9b6c9; --line: rgba(143, 211, 255, 0.3); --line-strong: rgba(143, 211, 255, 0.55); --panel: rgba(8, 11, 20, 0.96); --bg: #000; }
+html[data-high-contrast] .btn, html[data-high-contrast] .chip { border-color: var(--line-strong); }

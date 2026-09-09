@@ -14,6 +14,7 @@
 - Premise arcs: each premise also schedules its own opening storyline (a border incident in the Cold Peace, a bubble warning and possible crash after the Long Boom, mass marches in the Age of Unrest, an outbreak scare After the Plague, an automation shock at the Machine Dawn, peace talks on the Fractured Map, a tycoon scandal in the Gilded Age, a resource find in the Quiet Century), all chained to a historic "premise.opening" event.
 - Trade model: trade volume between partners is derived from the smaller economy, relations, adjacency, alliance and openness (`simulation/trade.ts`); it feeds growth potential (open economies grow faster, losing partners hurts), scales the trade arcs on the map, and the country inspector lists top partners with yearly volume.
 - Map: Trade overlay colours nations by trade as a share of GDP.
+- Accessibility: "larger text" and "high contrast" settings in the More sheet (persisted); the desktop side nav gains a ⚙ more button for settings, saves, share and install.
 - Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
 

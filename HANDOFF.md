@@ -97,7 +97,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 7. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
 8. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
 9. **Localization** of templates (extract strings from `narrative.ts`/`actions.ts`).
-10. **Accessibility**: modal focus trap + inspector focus hand-off are done; keyboard map navigation exists (`WorldMap.tsx` onKey); remaining: a high-contrast theme and larger-text setting.
+10. **Accessibility**: modal focus trap + inspector focus hand-off are done; keyboard map navigation, larger-text and high-contrast settings all exist; remaining: audit colour-only information (severity colours) for a text equivalent everywhere.
 11. **Capacitor packaging** (see MOBILE.md) + native file export.
 
 ## Balance snapshot (seed `diag`, 15 years)

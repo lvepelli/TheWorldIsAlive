@@ -21,7 +21,7 @@ export type LinkMode = 'auto' | 'all' | 'none';
 export type Phase = 'intro' | 'generating' | 'playing';
 
 export interface Toast { id: string; event: WorldEvent; at: number; }
-export interface Settings { audio: boolean; debug: boolean; cinematics: boolean; }
+export interface Settings { audio: boolean; debug: boolean; cinematics: boolean; largeText: boolean; highContrast: boolean; }
 
 interface GameState {
   phase: Phase;
@@ -82,8 +82,8 @@ const AUTOSAVE_SLOT = 'autosave';
 const SETTINGS_KEY = 'twia:settings';
 
 function loadSettings(): Settings {
-  try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return { audio: false, debug: false, cinematics: true, ...JSON.parse(raw) }; } catch { /* ignore */ }
-  return { audio: false, debug: false, cinematics: true };
+  try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return { audio: false, debug: false, cinematics: true, largeText: false, highContrast: false, ...JSON.parse(raw) }; } catch { /* ignore */ }
+  return { audio: false, debug: false, cinematics: true, largeText: false, highContrast: false };
 }
 
 let toastSeq = 0;

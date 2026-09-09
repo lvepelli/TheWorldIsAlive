@@ -34,6 +34,7 @@ export function App(): React.ReactElement {
   const [saves, setSaves] = useState(false);
   useEffect(() => startLoop(), []);
   useEffect(() => { audio.setEnabled(settings.audio); }, [settings.audio]);
+  useEffect(() => { const el = document.documentElement; el.toggleAttribute('data-large-text', settings.largeText); el.toggleAttribute('data-high-contrast', settings.highContrast); }, [settings.largeText, settings.highContrast]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'TEXTAREA' || (e.target as HTMLElement)?.tagName === 'SELECT') return;
@@ -54,6 +55,7 @@ export function App(): React.ReactElement {
           <div className="brand" title="THE WORLD IS ALIVE">TWIA</div>
           {NAV.map((n) => <button key={n.id} className={`${screen === n.id ? 'active' : ''} ${n.id === 'god' ? 'god' : ''}`} onClick={() => setScreen(n.id)} aria-label={n.label}><span className="ico">{n.ico}</span>{n.label}</button>)}
           <div className="spacer" />
+          <button onClick={() => setMore(true)} title="Settings, saves, share, install" aria-label="Settings"><span className="ico">⚙</span>more</button>
           <button onClick={() => useGame.getState().setSetting('debug', !settings.debug)} title="Debug (Shift+D)"><span className="ico">🛠</span>debug</button>
         </nav>
         <main className="app-main">
@@ -72,6 +74,8 @@ export function App(): React.ReactElement {
             <div className="row wrap">
               <label className="chip clickable"><input type="checkbox" checked={settings.audio} onChange={(e) => useGame.getState().setSetting('audio', e.target.checked)} /> audio</label>
               <label className="chip clickable"><input type="checkbox" checked={settings.cinematics} onChange={(e) => useGame.getState().setSetting('cinematics', e.target.checked)} /> cinematics</label>
+              <label className="chip clickable"><input type="checkbox" checked={settings.largeText} onChange={(e) => useGame.getState().setSetting('largeText', e.target.checked)} /> larger text</label>
+              <label className="chip clickable"><input type="checkbox" checked={settings.highContrast} onChange={(e) => useGame.getState().setSetting('highContrast', e.target.checked)} /> high contrast</label>
               <label className="chip clickable"><input type="checkbox" checked={settings.debug} onChange={(e) => useGame.getState().setSetting('debug', e.target.checked)} /> debug</label>
             </div>
           </Modal>

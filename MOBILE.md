@@ -27,6 +27,10 @@ Deployment: `.github/workflows/deploy.yml` on every push publishes the path-rela
 - double tap: zoom in; wheel: zoom (desktop)
 - camera eases toward `focus` requests (inspect → ◎ button, cinematics)
 
+## Readability settings
+
+More → *larger text* scales the whole UI by 15% (CSS `zoom` on `<html>`, so the canvas and hit-testing stay correct); *high contrast* lifts secondary text and line colours and makes panels opaque. Both persist in `localStorage` under `twia:settings`.
+
 ## Performance on phones
 
 - Device pixel ratio capped at 2 for the map canvas.
