@@ -330,6 +330,19 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
   .overlay-picker button { padding: 5px 7px; font-size: 10px; }
 }
 
+/* ---- Short viewports (phones in landscape) --------------------------------------- */
+@media (max-height: 520px) and (max-width: 899px) {
+  :root { --bottom-nav-h: 44px; }
+  .bottom-nav button { font-size: 9px; gap: 1px; }
+  .bottom-nav button .ico { font-size: 16px; }
+  .hud-bottom .ticker { display: none; }
+  .hud-bottom .panel:has(.kicker) { display: none; }
+  .toasts { right: auto; width: min(420px, 60vw); top: calc(56px + var(--safe-top)); }
+  .toast:nth-child(n+2) { display: none; }
+  .inspector { max-height: 85%; }
+  .screen { padding-top: 8px; }
+}
+
 /* ---- Desktop ----------------------------------------------------------------- */
 @media (min-width: 900px) {
   .hide-desktop { display: none !important; }
