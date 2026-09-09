@@ -28,6 +28,8 @@ The player is an observer with divine powers. The world has no win condition; th
 
 | Section | Purpose |
 | --- | --- |
+| Votes | Election campaigns open the September before a vote (poll, challenger, promise); national elections return the incumbent or a challenger (surging movements field their leader); regional elections confirm or unseat governors; free states can put an autonomy demand to a referendum whose turnout and yes-share follow identity, unrest and autonomy. |
+| Calendar | Film festival (May), trade fair (October), holy days per faith, climate conference (December), World Games (every four years), Laurel Prizes, harvest reports, anniversaries — each a stage for characters and a source of follow-ups. |
 | Regions & borders | Every nation is 2–4 regions with a governor, identity, autonomy and unrest. Grievance → autonomy demand → concession (devolution) or crackdown → liberation movement / secession along the region's own cells; decisive wars can annex the loser's nearest region; the ousted governor comes back as a regionalist. Regions overlay + seams, Borders tab in History, God targets regions by name. |
 | World | Living map; overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest, regions); war fronts, region seams, trade arcs, day/night; tap to inspect; keyboard navigation; ticker |
 | Live | Daily and period summaries, developing-story cards (active causal chains), chronological event stream with category/severity filters |
