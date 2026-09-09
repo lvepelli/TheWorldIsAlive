@@ -13,5 +13,7 @@ fallback in `src/engine/ai/narrative.ts` and `src/engine/godmode/interpreter.ts`
 | `news_article.md` | `LLMNarrativeEnhancer.enhanceArticle` | JSON `{ "headline": string, "body": string }` |
 | `social_post.md` | `LLMNarrativeEnhancer.enhancePost` | JSON `{ "text": string }` (≤ 240 chars) |
 | `god_command.md` | `LLMGodInterpreter.interpret` | JSON `GodPlan` (see `src/engine/godmode/interpreter.ts`) |
+
+`god_command.md` receives `{{actions}}` (every preset id with its params), `{{countries}}`, `{{companies}}`, `{{people}}` and `{{regions}}` (`id=name (countryId, unrest)`), so the model can fill country, person, company and region parameters by id.
 | `world_summary.md` | future: narrative period summaries | plain prose |
 | `character_dialogue.md` | talk to a character (`LLMDialogueProvider`; local fallback) | plain prose in character voice, 1–3 sentences |
