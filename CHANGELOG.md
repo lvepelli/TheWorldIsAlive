@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.1 — regions you can touch
+## 0.9.2 — votes, voices and a steadier world
 
 - Regional elections: in states that vote, every non-capital region confirms or replaces its governor at the start of an election year (incumbents survive more often when the region is calm and their reputation good); notable changes in restless or distinct regions become events, and a separatist winner is noted.
 - Social: governors and regionalists post in their own voice about their region's demands, concessions, crackdowns, referendums and annexations.
@@ -19,6 +19,9 @@
 - God Mode: "Hold a referendum in <Region>" and a Regional Referendum preset (45 presets) put any region to a vote; the result lands weeks later like a natural one.
 - Referendums: a free state (freedom above 60) answers an autonomy demand with a referendum about a third of the time (once per region per three years). Turnout and the yes-share follow identity, unrest and existing autonomy; a yes brings sweeping devolution (or, when the region is furious and the state fragile, an honoured vote for independence), a no calms the region and costs the governor who campaigned for it. Sagas: "The X referendum".
 - Summaries: monthly and yearly reviews name the most restless regions (unrest above 55) and their countries.
+
+## 0.9.1 — regions you can touch
+
 - People: a "Governors" filter chip lists every sitting governor (search already matched titles).
 - CI: the live QA also checks that a tap on the Regions overlay opens a region inspector.
 - Map: region names are tappable once drawn, and on the Regions overlay any tap on land opens that region (hover on desktop names it).

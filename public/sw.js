@@ -1,5 +1,5 @@
 /* THE WORLD IS ALIVE — minimal offline-first service worker (app shell cache). */
-const CACHE = 'twia-shell-v5';
+const CACHE = 'twia-shell-v6';
 // Scope-relative so the same worker serves from / or from a sub-path (GitHub Pages).
 const BASE = new URL('./', self.location.href).pathname;
 const SHELL = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest', BASE + 'icons/icon.svg'];
