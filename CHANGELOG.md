@@ -18,6 +18,9 @@
 - PWA: in-app Install button (Android/desktop) and iOS Add-to-Home-Screen hint; compact landscape layout for phones.
 - Saves: yearly compaction keeps files under ~8 MB after a decade; event cap 3000.
 - Fix: secession could push a parent country's population below zero.
+- News: journalist bylines (articles are written by characters who gain fame; profiles list bylines); more specific hashtags.
+- Consequences: post-election honeymoon policies; disputed elections in corrupt states.
+- Mobile: Share-this-world button (Web Share API) in the More sheet.
 
 ## 0.3.0 — living details
 
