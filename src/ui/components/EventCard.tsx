@@ -13,7 +13,7 @@ export function EventCard({ ev, compact = false }: { ev: WorldEvent; compact?: b
       <div className="rail" />
       <div className="grow">
         <div className="meta">
-          <span className={`sev sev-${ev.severity}`} title={sevLabel(ev.severity)} />
+          <span className={`sev sev-${ev.severity}`} role="img" aria-label={sevLabel(ev.severity)} title={sevLabel(ev.severity)} />
           <span className="cat" style={{ ['--c' as string]: catVar(ev.category) }}>{ev.category}</span>
           {country && <span className="ellipsis">· {country.name}</span>}
           <span className="grow" />

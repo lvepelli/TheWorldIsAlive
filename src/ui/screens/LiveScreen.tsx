@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useGame } from '@/state/store';
 import { EVENT_CATEGORIES, type EventCategory, type WorldEvent } from '@/engine/types';
 import { EventCard } from '../components/EventCard';
-import { catVar } from '../format';
+import { catVar, sevLabel } from '../format';
 import { summarize } from '@/engine/simulation/summary';
 import { collectChain, sagaTitle } from './HistoryScreen';
 
@@ -70,7 +70,7 @@ export function LiveScreen(): React.ReactElement {
         </div>
         <div className="row">
           <span className="kicker">Min severity</span>
-          {[1, 2, 3, 4, 5].map((s) => <button key={s} className={`chip clickable ${minSev === s ? 'active' : ''}`} onClick={() => setMinSev(s)}><span className={`sev sev-${s}`} /> {s}</button>)}
+          {[1, 2, 3, 4, 5].map((s) => <button key={s} className={`chip clickable ${minSev === s ? 'active' : ''}`} onClick={() => setMinSev(s)}><span className={`sev sev-${s}`} aria-hidden="true" /> {s}<span className="sr-only"> {sevLabel(s)}</span></button>)}
         </div>
         <div className="list">
           {events.map((e) => <EventCard key={e.id} ev={e} />)}

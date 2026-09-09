@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { WorldMap } from '../map/WorldMap';
 import { useGame, type MapOverlay, type Speed } from '@/state/store';
 import { formatDate } from '@/engine/time';
-import { catVar } from '../format';
+import { catVar, sevLabel } from '../format';
 import { audio } from '../audio';
 import { Modal } from '../components/Modal';
 import { SaveManager } from './SaveManager';
@@ -121,7 +121,7 @@ function HudBottom(): React.ReactElement {
           <div className="ticker-track" style={{ animationDuration: `${Math.max(30, items.length * 9)}s` }}>
             {[...items, ...items].map((e, i) => (
               <span key={e.id + i} className="item clickable" onClick={() => select({ kind: 'event', id: e.id })}>
-                <span className={`sev sev-${e.severity}`} /><span style={{ color: catVar(e.category), textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.1em' }}>{e.category}</span><span>{e.title}</span>
+                <span className={`sev sev-${e.severity}`} role="img" aria-label={sevLabel(e.severity)} title={sevLabel(e.severity)} /><span style={{ color: catVar(e.category), textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.1em' }}>{e.category}</span><span>{e.title}</span>
               </span>
             ))}
           </div>

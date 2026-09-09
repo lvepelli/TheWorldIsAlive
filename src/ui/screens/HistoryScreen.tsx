@@ -3,7 +3,7 @@ import { useGame } from '@/state/store';
 import { EventCard } from '../components/EventCard';
 import { toDate, MONTHS, formatDate } from '@/engine/time';
 import { EVENT_CATEGORIES, type EventCategory, type WorldEvent, type World } from '@/engine/types';
-import { catVar } from '../format';
+import { catVar, sevLabel } from '../format';
 
 export function HistoryScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
@@ -55,9 +55,9 @@ export function HistoryScreen(): React.ReactElement {
             <p className="muted" style={{ fontSize: 13 }}>Stories the world wrote by itself: an event and everything it set in motion. Tap any step to inspect it.</p>
             {sagas.map((s) => (
               <div key={s.root.id} className="card">
-                <div className="row"><span className={`sev sev-${s.sev}`} /><span className="kicker" style={{ color: catVar(s.root.category) }}>{sagaTitle(world, s.root, s.chain)}</span><span className="grow" /><span className="dim mono" style={{ fontSize: 11 }}>{s.size} events · {s.span}d{s.root.playerIntervention ? ' · ✦ yours' : ''}</span></div>
+                <div className="row"><span className={`sev sev-${s.sev}`} role="img" aria-label={sevLabel(s.sev)} title={sevLabel(s.sev)} /><span className="kicker" style={{ color: catVar(s.root.category) }}>{sagaTitle(world, s.root, s.chain)}</span><span className="grow" /><span className="dim mono" style={{ fontSize: 11 }}>{s.size} events · {s.span}d{s.root.playerIntervention ? ' · ✦ yours' : ''}</span></div>
                 <div className="chain" style={{ marginTop: 6 }}>
-                  {s.chain.slice(0, 7).map((e, i) => <div key={e.id} className={`node ${i === 0 ? 'current' : ''}`} style={{ ['--c' as string]: catVar(e.category) }} onClick={() => select({ kind: 'event', id: e.id })}><span className={`sev sev-${e.severity}`} /><span className="grow ellipsis">{e.title}</span><span className="dim mono" style={{ fontSize: 10 }}>{formatDate(e.day, world.meta.startYear, 'short')}</span></div>)}
+                  {s.chain.slice(0, 7).map((e, i) => <div key={e.id} className={`node ${i === 0 ? 'current' : ''}`} style={{ ['--c' as string]: catVar(e.category) }} onClick={() => select({ kind: 'event', id: e.id })}><span className={`sev sev-${e.severity}`} role="img" aria-label={sevLabel(e.severity)} title={sevLabel(e.severity)} /><span className="grow ellipsis">{e.title}</span><span className="dim mono" style={{ fontSize: 10 }}>{formatDate(e.day, world.meta.startYear, 'short')}</span></div>)}
                   {s.chain.length > 7 && <div className="arrow">… {s.chain.length - 7} more</div>}
                 </div>
               </div>
