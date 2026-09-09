@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useGame } from '@/state/store';
 import { EventCard } from '../components/EventCard';
 import { toDate, MONTHS, formatDate } from '@/engine/time';
-import { EVENT_CATEGORIES, type EventCategory, type WorldEvent } from '@/engine/types';
+import { EVENT_CATEGORIES, type EventCategory, type WorldEvent, type World } from '@/engine/types';
 import { catVar } from '../format';
 
 export function HistoryScreen(): React.ReactElement {
@@ -10,6 +10,7 @@ export function HistoryScreen(): React.ReactElement {
   const version = useGame((s) => s.version);
   const select = useGame((s) => s.select);
   const [tab, setTab] = useState<'timeline' | 'sagas' | 'interventions' | 'summaries'>('timeline');
+  const [copied, setCopied] = useState(false);
   const [cat, setCat] = useState<EventCategory | 'all'>('all');
   const [country, setCountry] = useState('all');
   const [year, setYear] = useState<number | 'all'>('all');
@@ -28,7 +29,7 @@ export function HistoryScreen(): React.ReactElement {
   return (
     <div className="screen">
       <div className="screen-inner">
-        <div className="screen-header"><div><div className="kicker">Chronicle of {world.meta.name}</div><h2 className="screen-title">History</h2></div><div className="dim mono">seed {world.meta.seed}</div></div>
+        <div className="screen-header"><div><div className="kicker">Chronicle of {world.meta.name}</div><h2 className="screen-title">History</h2></div><div className="row"><span className="dim mono hide-mobile">seed {world.meta.seed}</span><button className="btn sm" title="Copy or share the chronicle as Markdown" onClick={() => { const md = buildChronicle(world, sagas); const nav = navigator as Navigator & { share?: (d: { title: string; text: string }) => Promise<void> }; const copy = () => navigator.clipboard?.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => prompt('Copy the chronicle', md)); if (nav.share && window.innerWidth < 900) void nav.share.call(navigator, { title: `Chronicle of ${world.meta.name}`, text: md }).catch(copy); else void copy(); }}>{copied ? '✓ Copied' : '📜 Export chronicle'}</button></div></div>
         <div className="row">
           {(['timeline', 'sagas', 'interventions', 'summaries'] as const).map((t) => <button key={t} className={`chip clickable ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t === 'interventions' ? `Your interventions (${world.interventions.length})` : t === 'sagas' ? `Sagas (${sagas.length})` : t[0].toUpperCase() + t.slice(1)}</button>)}
         </div>
@@ -95,6 +96,22 @@ export function countConsequences(world: { events: { id: string; consequences: s
 }
 
 /** Root plus all downstream events (breadth-first, chronological), capped for display. */
+/** Markdown chronicle of the world: premise, year reviews, sagas, historic events, interventions. */
+export function buildChronicle(world: World, sagas: { root: WorldEvent; chain: WorldEvent[] }[]): string {
+  const y = world.meta.startYear; const L: string[] = [];
+  L.push(`# ${world.meta.name}`, '', `*A world simulated by The World Is Alive. Seed \`${world.meta.seed}\`, ${formatDate(0, y)} – ${formatDate(world.day, y)}.*`, '');
+  if (world.meta.premise) L.push(`**${world.meta.premise.title}.** ${world.meta.premise.blurb}`, '');
+  const years = world.summaries.filter((s) => s.period === 'year');
+  if (years.length) { L.push('## The years', ''); for (const s of years) { L.push(`### ${s.title}`, ''); for (const line of s.lines) L.push(`- ${line}`); L.push(''); } }
+  if (sagas.length) { L.push('## Sagas', ''); for (const sg of sagas.slice(0, 12)) { L.push(`### ${sagaTitle(world, sg.root, sg.chain)}`, ''); for (const e of sg.chain.slice(0, 10)) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}`); if (sg.chain.length > 10) L.push(`- … and ${sg.chain.length - 10} more`); L.push(''); } }
+  const historic = world.events.filter((e) => e.historic && e.severity >= 4);
+  if (historic.length) { L.push('## Historic events', ''); for (const e of historic.slice(-40)) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}${e.playerIntervention ? ' ✦' : ''}`); L.push(''); }
+  if (world.interventions.length) { L.push('## Divine interventions', ''); for (const i of world.interventions.slice(-30)) L.push(`- ${formatDate(i.day, y, 'short')} — ${i.interpretation ?? i.command}`); L.push(''); }
+  const cs = Object.values(world.countries).sort((a, b) => b.gdp - a.gdp);
+  L.push('## The world today', '', `${cs.length} nations, ${(cs.reduce((a, c) => a + c.population, 0) / 1e9).toFixed(1)} billion people. Largest economy: ${cs[0]?.name}. Most fragile: ${cs.slice().sort((a, b) => a.stability - b.stability)[0]?.name}.`, '');
+  return L.join('\n');
+}
+
 export function collectChain(world: { events: WorldEvent[] }, rootId: string): WorldEvent[] {
   const byId = new Map(world.events.map((e) => [e.id, e] as const));
   const out: WorldEvent[] = []; const seen = new Set<string>(); const queue = [rootId];
