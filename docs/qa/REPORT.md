@@ -1,39 +1,57 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/8f9eb02ae031a217032a0cba5d8f1eeb09cc0851/index.html
-Date: 2026-09-09T09:36:50.985Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/411a13bcb2197d88815249ac71f4bf5c49a92257/index.html
+Date: 2026-09-09T22:44:31.278Z
 
 ## android-360 (360×800)
 
 - ✅ page loads (HTTP 200, text/html)
 - ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
+- ✅ Spanish is the default language
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9698 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted
+- ✅ simulation progresses at 1× (6 ene 2040 → 8 ene 2040)
 - ✅ no visible controls under 28px (0)
-- ✅ tap on map opens inspector
-- ✅ inspector has no horizontal overflow
+- ✅ tap on map opens the entity panel
+- ✅ entity panel has tabs
+- ✅ entity panel has no horizontal overflow
 - ✅ map drag moves the view
-- ✅ pinch zoom scales the map (6.04 → 20.55)
-- ✅ Live screen renders without overflow
-- ✅ News screen renders without overflow
-- ✅ Social screen renders without overflow
-- ✅ Markets screen renders without overflow
-- ✅ History screen renders without overflow
-- ✅ News shows weekly editorials
-- ✅ Live shows developing stories or events
-- ✅ History offers the chronicle export
+- ✅ pinch zoom scales the map (5.65 → 19.21)
+- ✅ countries section renders without overflow
+- ✅ regions section renders without overflow
+- ✅ people section renders without overflow
+- ✅ companies section renders without overflow
+- ✅ economy section renders without overflow
+- ✅ politics section renders without overflow
+- ✅ diplomacy section renders without overflow
+- ✅ technology section renders without overflow
+- ✅ society section renders without overflow
+- ✅ religions section renders without overflow
+- ✅ calendar section renders without overflow
+- ✅ events section renders without overflow
+- ✅ news section renders without overflow
+- ✅ social section renders without overflow
+- ✅ history section renders without overflow
+- ✅ god section renders without overflow
+- ✅ economy table row opens the country panel
+- ✅ events timeline lists events
+- ✅ event detail shows causes and consequences
+- ✅ news renders articles or an empty state
 - ✅ a character answers a question
-- ✅ delayed God command is understood
-- ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (9962 bright samples)
-- ✅ tap on the Regions overlay opens a region inspector
-- ✅ God understands annexation
-- ✅ governors appear among the people
-- ✅ freeform God command interpreted
+- ✅ Regions map mode paints the map
+- ✅ tap in Regions mode opens a region panel
+- ✅ map modes cycle without breaking the map
+- ✅ Spanish delayed God command is understood
+- ✅ English God command is understood
 - ✅ God intervention executed
+- ✅ God Mode shows its categories
+- ✅ preset configuration shows target, magnitude and timing
+- ✅ alerts panel lists grouped alerts
+- ✅ UI switches to English
+- ✅ UI switches back to Spanish
+- ✅ no duplicated words or broken punctuation on screen
 - ✅ autosave survives reload (IndexedDB)
 - ✅ manifest served with icons
 - ✅ service worker file served
@@ -45,32 +63,50 @@ Date: 2026-09-09T09:36:50.985Z
 - ✅ page loads (HTTP 200, text/html)
 - ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
+- ✅ Spanish is the default language
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8102 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted
+- ✅ simulation progresses at 1× (6 ene 2040 → 8 ene 2040)
 - ✅ no visible controls under 28px (0)
-- ✅ tap on map opens inspector
-- ✅ inspector has no horizontal overflow
+- ✅ tap on map opens the entity panel
+- ✅ entity panel has tabs
+- ✅ entity panel has no horizontal overflow
 - ✅ map drag moves the view
-- ✅ pinch zoom scales the map (6.40 → 21.77)
-- ✅ Live screen renders without overflow
-- ✅ News screen renders without overflow
-- ✅ Social screen renders without overflow
-- ✅ Markets screen renders without overflow
-- ✅ History screen renders without overflow
-- ✅ News shows weekly editorials
-- ✅ Live shows developing stories or events
-- ✅ History offers the chronicle export
+- ✅ pinch zoom scales the map (6.01 → 20.44)
+- ✅ countries section renders without overflow
+- ✅ regions section renders without overflow
+- ✅ people section renders without overflow
+- ✅ companies section renders without overflow
+- ✅ economy section renders without overflow
+- ✅ politics section renders without overflow
+- ✅ diplomacy section renders without overflow
+- ✅ technology section renders without overflow
+- ✅ society section renders without overflow
+- ✅ religions section renders without overflow
+- ✅ calendar section renders without overflow
+- ✅ events section renders without overflow
+- ✅ news section renders without overflow
+- ✅ social section renders without overflow
+- ✅ history section renders without overflow
+- ✅ god section renders without overflow
+- ✅ economy table row opens the country panel
+- ✅ events timeline lists events
+- ✅ event detail shows causes and consequences
+- ✅ news renders articles or an empty state
 - ✅ a character answers a question
-- ✅ delayed God command is understood
-- ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (8463 bright samples)
-- ✅ tap on the Regions overlay opens a region inspector
-- ✅ God understands annexation
-- ✅ governors appear among the people
-- ✅ freeform God command interpreted
+- ✅ Regions map mode paints the map
+- ✅ tap in Regions mode opens a region panel
+- ✅ map modes cycle without breaking the map
+- ✅ Spanish delayed God command is understood
+- ✅ English God command is understood
 - ✅ God intervention executed
+- ✅ God Mode shows its categories
+- ✅ preset configuration shows target, magnitude and timing
+- ✅ alerts panel lists grouped alerts
+- ✅ UI switches to English
+- ✅ UI switches back to Spanish
+- ✅ no duplicated words or broken punctuation on screen
 - ✅ autosave survives reload (IndexedDB)
 - ✅ manifest served with icons
 - ✅ service worker file served
@@ -82,32 +118,50 @@ Date: 2026-09-09T09:36:50.985Z
 - ✅ page loads (HTTP 200, text/html)
 - ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
+- ✅ Spanish is the default language
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8387 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted
+- ✅ simulation progresses at 1× (6 ene 2040 → 8 ene 2040)
 - ✅ no visible controls under 28px (0)
-- ✅ tap on map opens inspector
-- ✅ inspector has no horizontal overflow
+- ✅ tap on map opens the entity panel
+- ✅ entity panel has tabs
+- ✅ entity panel has no horizontal overflow
 - ✅ map drag moves the view
-- ✅ pinch zoom scales the map (7.12 → 24.21)
-- ✅ Live screen renders without overflow
-- ✅ News screen renders without overflow
-- ✅ Social screen renders without overflow
-- ✅ Markets screen renders without overflow
-- ✅ History screen renders without overflow
-- ✅ News shows weekly editorials
-- ✅ Live shows developing stories or events
-- ✅ History offers the chronicle export
+- ✅ pinch zoom scales the map (6.73 → 22.88)
+- ✅ countries section renders without overflow
+- ✅ regions section renders without overflow
+- ✅ people section renders without overflow
+- ✅ companies section renders without overflow
+- ✅ economy section renders without overflow
+- ✅ politics section renders without overflow
+- ✅ diplomacy section renders without overflow
+- ✅ technology section renders without overflow
+- ✅ society section renders without overflow
+- ✅ religions section renders without overflow
+- ✅ calendar section renders without overflow
+- ✅ events section renders without overflow
+- ✅ news section renders without overflow
+- ✅ social section renders without overflow
+- ✅ history section renders without overflow
+- ✅ god section renders without overflow
+- ✅ economy table row opens the country panel
+- ✅ events timeline lists events
+- ✅ event detail shows causes and consequences
+- ✅ news renders articles or an empty state
 - ✅ a character answers a question
-- ✅ delayed God command is understood
-- ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (9022 bright samples)
-- ✅ tap on the Regions overlay opens a region inspector
-- ✅ God understands annexation
-- ✅ governors appear among the people
-- ✅ freeform God command interpreted
+- ✅ Regions map mode paints the map
+- ✅ tap in Regions mode opens a region panel
+- ✅ map modes cycle without breaking the map
+- ✅ Spanish delayed God command is understood
+- ✅ English God command is understood
 - ✅ God intervention executed
+- ✅ God Mode shows its categories
+- ✅ preset configuration shows target, magnitude and timing
+- ✅ alerts panel lists grouped alerts
+- ✅ UI switches to English
+- ✅ UI switches back to Spanish
+- ✅ no duplicated words or broken punctuation on screen
 - ✅ autosave survives reload (IndexedDB)
 - ✅ manifest served with icons
 - ✅ service worker file served
@@ -119,31 +173,49 @@ Date: 2026-09-09T09:36:50.985Z
 - ✅ page loads (HTTP 200, text/html)
 - ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
+- ✅ Spanish is the default language
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8149 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted
+- ✅ simulation progresses at 1× (6 ene 2040 → 8 ene 2040)
 - ✅ no visible controls under 28px (0)
-- ✅ tap on map opens inspector
-- ✅ inspector has no horizontal overflow
+- ✅ tap on map opens the entity panel
+- ✅ entity panel has tabs
+- ✅ entity panel has no horizontal overflow
 - ✅ map drag moves the view
-- ✅ Live screen renders without overflow
-- ✅ News screen renders without overflow
-- ✅ Social screen renders without overflow
-- ✅ Markets screen renders without overflow
-- ✅ History screen renders without overflow
-- ✅ News shows weekly editorials
-- ✅ Live shows developing stories or events
-- ✅ History offers the chronicle export
+- ✅ countries section renders without overflow
+- ✅ regions section renders without overflow
+- ✅ people section renders without overflow
+- ✅ companies section renders without overflow
+- ✅ economy section renders without overflow
+- ✅ politics section renders without overflow
+- ✅ diplomacy section renders without overflow
+- ✅ technology section renders without overflow
+- ✅ society section renders without overflow
+- ✅ religions section renders without overflow
+- ✅ calendar section renders without overflow
+- ✅ events section renders without overflow
+- ✅ news section renders without overflow
+- ✅ social section renders without overflow
+- ✅ history section renders without overflow
+- ✅ god section renders without overflow
+- ✅ economy table row opens the country panel
+- ✅ events timeline lists events
+- ✅ event detail shows causes and consequences
+- ✅ news renders articles or an empty state
 - ✅ a character answers a question
-- ✅ delayed God command is understood
-- ✅ event inspector shows causal chain
-- ✅ Regions overlay paints the map (8607 bright samples)
-- ✅ tap on the Regions overlay opens a region inspector
-- ✅ God understands annexation
-- ✅ governors appear among the people
-- ✅ freeform God command interpreted
+- ✅ Regions map mode paints the map
+- ✅ tap in Regions mode opens a region panel
+- ✅ map modes cycle without breaking the map
+- ✅ Spanish delayed God command is understood
+- ✅ English God command is understood
 - ✅ God intervention executed
+- ✅ God Mode shows its categories
+- ✅ preset configuration shows target, magnitude and timing
+- ✅ alerts panel lists grouped alerts
+- ✅ UI switches to English
+- ✅ UI switches back to Spanish
+- ✅ no duplicated words or broken punctuation on screen
 - ✅ autosave survives reload (IndexedDB)
 - ✅ manifest served with icons
 - ✅ service worker file served
