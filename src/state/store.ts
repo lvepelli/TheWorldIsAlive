@@ -47,6 +47,8 @@ interface GameState {
   perf: { tps: number; fps: number };
   lastDayEvents: WorldEvent[];
   godPrefill: { presetId?: string; params?: Record<string, string>; text?: string } | null;
+  /** When set, the next tap on a country on the map fills this God preset parameter instead of opening the inspector. */
+  godPick: { presetId: string; key: string; params: Record<string, string> } | null;
 
   newWorld: (seed?: string, name?: string) => Promise<void>;
   bump: () => void;
@@ -71,6 +73,7 @@ interface GameState {
   runGodPlan: (plan: GodPlan, raw: string) => ReturnType<typeof executePlan> | null;
   runGodText: (text: string) => Promise<ReturnType<typeof executePlan> | null>;
   setGodPrefill: (p: GameState['godPrefill']) => void;
+  setGodPick: (p: GameState['godPick']) => void;
   toIntro: () => void;
 }
 
@@ -87,7 +90,7 @@ let toastSeq = 0;
 
 export const useGame = create<GameState>((set, get) => ({
   phase: 'intro', world: null, rng: null, version: 0, speed: 0, screen: 'world', selection: null, selectionStack: [], cinematic: null, cinematicQueue: [], lastCinematicAt: 0,
-  toasts: [], overlay: 'political', links: 'auto', onboarded: (() => { try { return localStorage.getItem('twia:onboarded') === '1'; } catch { return false; } })(), focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null,
+  toasts: [], overlay: 'political', links: 'auto', onboarded: (() => { try { return localStorage.getItem('twia:onboarded') === '1'; } catch { return false; } })(), focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null, godPick: null,
 
   async newWorld(seed, name) {
     const s = seed?.trim() || randomSeed();
@@ -189,6 +192,7 @@ export const useGame = create<GameState>((set, get) => ({
     return get().runGodPlan(plan, text);
   },
   setGodPrefill(p) { set({ godPrefill: p }); },
+  setGodPick(p) { set({ godPick: p }); },
   toIntro() { set({ phase: 'intro', speed: 0, selection: null, cinematic: null }); void get().refreshSaves(); },
 }));
 

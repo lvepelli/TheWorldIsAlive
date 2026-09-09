@@ -79,6 +79,12 @@ function Onboarding(): React.ReactElement | null {
   );
 }
 
+function PickBanner(): React.ReactElement | null {
+  const pick = useGame((s) => s.godPick); const setGodPick = useGame((s) => s.setGodPick); const setScreen = useGame((s) => s.setScreen);
+  if (!pick) return null;
+  return <div className="panel" style={{ padding: '8px 12px', borderColor: 'rgba(240,179,90,0.6)', alignSelf: 'center', display: 'flex', gap: 10, alignItems: 'center' }}><span style={{ color: 'var(--accent)', fontWeight: 700 }}>✦ Tap a nation on the map</span><button className="btn sm ghost" onClick={() => { setGodPick(null); setScreen('god'); }}>Cancel</button></div>;
+}
+
 function HudBottom(): React.ReactElement {
   const overlay = useGame((s) => s.overlay);
   const setOverlay = useGame((s) => s.setOverlay);
@@ -92,6 +98,7 @@ function HudBottom(): React.ReactElement {
   const wars = Object.values(world.countries).reduce((s, c) => s + c.atWarWith.length, 0) / 2;
   return (
     <div className="hud-bottom">
+      <PickBanner />
       <Onboarding />
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', gap: 6 }}>
         <div className="panel overlay-picker" role="tablist" aria-label="Map overlay" style={{ overflowX: 'auto', maxWidth: '100%' }}>

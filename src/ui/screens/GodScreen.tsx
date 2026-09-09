@@ -38,6 +38,7 @@ export function GodScreen(): React.ReactElement {
   const focusOn = useGame((s) => s.focusOn);
   const prefill = useGame((s) => s.godPrefill);
   const setPrefill = useGame((s) => s.setGodPrefill);
+  const setGodPick = useGame((s) => s.setGodPick);
   const [text, setText] = useState('');
   const [preview, setPreview] = useState<GodPlan | null>(null);
   const [preset, setPreset] = useState<GodPreset | null>(null);
@@ -106,7 +107,7 @@ export function GodScreen(): React.ReactElement {
               {preset.params.map((prm) => (
                 <div key={prm.key} className="field">
                   <label>{prm.label}</label>
-                  {(prm.type === 'country' || prm.type === 'country2') && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">{prm.optional ? '— none / world —' : '— random —'}</option>{countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
+                  {(prm.type === 'country' || prm.type === 'country2') && <div className="row"><select className="select grow" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">{prm.optional ? '— none / world —' : '— random —'}</option>{countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select><button className="btn icon" title="Pick on the map" aria-label="Pick on the map" onClick={() => { setGodPick({ presetId: preset.id, key: prm.key, params }); setScreen('world'); }}>◎</button></div>}
                   {prm.type === 'company' && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">— random —</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name} ({world.countries[c.countryId]?.name})</option>)}</select>}
                   {prm.type === 'person' && <select className="select" value={params[prm.key] ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}><option value="">— random famous person —</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title ?? p.profession}, {world.countries[p.countryId]?.name}</option>)}</select>}
                   {(prm.type === 'sector' || prm.type === 'government' || prm.type === 'choice' || prm.type === 'profession') && <select className="select" value={params[prm.key] ?? prm.options?.[0].value ?? ''} onChange={(e) => setParams({ ...params, [prm.key]: e.target.value })}>{prm.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>}

@@ -109,7 +109,11 @@ export function WorldMap(): React.ReactElement {
         if (down && !moved && performance.now() - down.t < 500) {
           const now = performance.now();
           if (now - lastTap < 320) { zoomAt(p.x, p.y, 1.8); lastTap = 0; }
-          else { lastTap = now; const hit = r.hitTest(p.x, p.y); select(hit); if (hit) { const [gx, gy] = r.screenToWorld(p.x, p.y); if (window.innerWidth < 900) target.current = { x: gx, y: gy + (r.height * 0.22) / r.camera.scale, scale: r.camera.scale }; } }
+          else {
+            lastTap = now; const hit = r.hitTest(p.x, p.y);
+            const pick = useGame.getState().godPick;
+            if (pick && hit) { const cid = hit.kind === 'country' ? hit.id : useGame.getState().world?.cities[hit.id]?.countryId; if (cid) { useGame.getState().setGodPick(null); useGame.getState().setGodPrefill({ presetId: pick.presetId, params: { ...pick.params, [pick.key]: cid } }); useGame.getState().setScreen('god'); return; } }
+            select(hit); if (hit) { const [gx, gy] = r.screenToWorld(p.x, p.y); if (window.innerWidth < 900) target.current = { x: gx, y: gy + (r.height * 0.22) / r.camera.scale, scale: r.camera.scale }; } }
         }
         down = null;
       }
