@@ -150,6 +150,16 @@ describe('simulation', () => {
     for (let i = 0; i < 365 && !ended; i++) { tickDay(w, rng); ended = !a!.atWarWith.length || w.events.some((e) => e.type === 'war.ended' && /personal objective/.test(e.description)); }
     expect(ended).toBe(true);
   }, 30000);
+  it('a CEO persuaded toward a new field pivots the company', () => {
+    const w = generateWorld({ seed: 'pivot' });
+    const rng = RNG.fromState(w.rngState);
+    const co = Object.values(w.companies).filter((x) => x.alive && x.sector !== 'biotech' && w.people[x.ceoId]?.alive).sort((a, b) => b.value - a.value)[0];
+    const ceo = w.people[co.ceoId]; ceo.objective = 'cure cancer within a decade'; ceo.memories.push({ day: 0, text: 'Decided to cure cancer within a decade after an unusual conversation.', weight: 0.5 });
+    let pivoted = false;
+    for (let i = 0; i < 730 && !pivoted; i++) { tickDay(w, rng); pivoted = co.sector === 'biotech'; }
+    expect(pivoted).toBe(true);
+    expect(w.events.some((e) => e.type === 'company.pivot' && e.actors.some((a) => a.id === co.id))).toBe(true);
+  }, 30000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);

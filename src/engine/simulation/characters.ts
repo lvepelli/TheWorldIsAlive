@@ -3,7 +3,7 @@
  * lose influence, found companies, run for office, die and retire.
  */
 import { RNG, clamp } from '../rng';
-import type { World, Person, WorldEvent, Sector } from '../types';
+import type { World, Person, WorldEvent, Sector, Company } from '../types';
 import { DAYS_PER_YEAR, SECTORS } from '../types';
 import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
@@ -72,7 +72,9 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
       continue;
     }
     // Tier-1 characters pursue objectives; tier-2 do so rarely
-    const drive = (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition);
+    // A freshly adopted objective (e.g. after a persuasive interview) is pursued with urgency for a while.
+    const urgent = p.memories.some((m) => m.text.startsWith('Decided to') && world.day - m.day < 240);
+    const drive = urgent ? Math.max(0.5, (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition) * 4) : (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition);
     if (rng.next() > drive) continue;
     const ev = pursueObjective(world, rng, p);
     if (ev) out.push(ev);
@@ -107,7 +109,8 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
         return ev;
       }
       const co = p.affiliations.map((id) => world.companies[id]).find((x) => x?.alive);
-      if (co && co.value > 50 && p.objective !== 'dominate the industry' && rng.bool(0.5)) p.objective = 'dominate the industry';
+      if (co && co.ceoId === p.id) { const pv = pivotForObjective(world, rng, p, co); if (pv) return pv; }
+      if (co && co.value > 50 && p.objective !== 'dominate the industry' && !/\b(cure|space|green|ai |robot|clean|climate)\b/.test(p.objective.toLowerCase()) && rng.bool(0.5)) p.objective = 'dominate the industry';
       if (co && rng.bool(0.15)) { const ev = A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5); if (rng.bool(0.5)) p.objective = rng.pick(['turn the breakthrough into an empire', 'win the highest prize', 'keep the discovery out of military hands']); return ev; }
       return null;
     }
@@ -200,6 +203,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     case 'executive': {
       const co = p.affiliations.map((id) => world.companies[id]).find((x) => x?.alive && x.ceoId === p.id);
       if (!co) return null;
+      { const pv = pivotForObjective(world, rng, p, co); if (pv) return pv; }
       const targets = Object.values(world.companies).filter((x) => x.alive && x.id !== co.id && x.sector === co.sector && x.value < co.value * 0.4 && x.value > 0.5);
       if (targets.length && rng.bool(0.3)) {
         const t = rng.pick(targets);
@@ -239,4 +243,18 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     default:
       return null;
   }
+}
+
+/** A CEO whose objective names a new field pivots the company toward it (60%/attempt); returns the pivot event or null. */
+function pivotForObjective(world: World, rng: RNG, p: Person, co: Company): WorldEvent | null {
+  const c = world.countries[p.countryId]; if (!c) return null;
+  const goal = p.objective.toLowerCase();
+  const PIVOTS: [RegExp, Sector, string][] = [[/\b(cure|vaccine|disease|health|medicine|cancer|aging)\b/, 'biotech', 'drug'], [/\b(space|rocket|mars|orbit|satellite)\b/, 'aerospace', 'rocket'], [/\b(green|solar|clean|climate|renewable|fusion|battery|batteries)\b/, 'energy', 'battery'], [/\b(ai|robot|automation|software|chip|quantum|computer)\b/, 'technology', 'AI model'], [/\b(weapon|defen[cs]e|drone|missile)\b/, 'defense', 'drone'], [/\b(car|vehicle|train|transport|ship)\b/, 'transport', 'vehicle'], [/\b(farm|food|crop|agricultur)\b/, 'agriculture', 'crop'], [/\b(bank|finance|payment|money)\b/, 'finance', 'payment system']];
+  const pivot = PIVOTS.find(([re]) => re.test(goal));
+  if (!pivot || co.sector === pivot[1] || !rng.bool(0.8)) return null;
+  const from = co.sector; co.sector = pivot[1];
+  p.history.push({ day: world.day, text: `Steered ${co.name} into ${pivot[1]}.` });
+  const ev = createEvent(world, { category: 'corporate', type: 'company.pivot', severity: co.value > 500 ? 3 : 2, title: `${co.name} bets the company on ${pivot[1]}`, description: `${p.name} announced that ${co.name} is leaving ${from} behind to pursue "${p.objective}". ${rng.pick(['Investors were split.', 'The share price whipsawed.', 'Half the engineering staff cheered; the other half updated their résumés.'])}`, location: { cityId: co.cityId, countryId: c.id }, actors: [ref('company', co.id), ref('person', p.id)], effects: [fx('company', co.id, 'value%', rng.float(-15, 10)), fx('company', co.id, 'reputation', 4)], tags: ['pivot', 'corporate', c.code], data: { shocks: [{ sector: pivot[1], pct: 0.02 }] } });
+  if (rng.bool(0.5)) A.techBreakthrough(world, rng, co, c, pivot[2], ev.id, false, 0.8);
+  return ev;
 }
