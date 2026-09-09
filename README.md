@@ -26,7 +26,7 @@ Share a world: append `?seed=your-seed` to the URL (the 🔗 button copies it).
 
 ## Play it now (mobile-friendly)
 
-**Live build (works now, statically.io mirror of the `gh-pages` branch):** https://cdn.statically.io/gh/lvepelli/TheWorldIsAlive/gh-pages/index.html
+**Live build (works now — githack mirror of the `gh-pages` branch; tap "Open the page" once if a prompt appears):** https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html
 
 **GitHub Pages URL:** https://lvepelli.github.io/TheWorldIsAlive/ — becomes active after a one-time click by the repository owner: *Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `gh-pages` / (root) → Save*. (The Actions token cannot enable Pages by itself.) Every later push updates it automatically.
 

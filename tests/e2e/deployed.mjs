@@ -86,7 +86,9 @@ async function run(name, viewport, mobile) {
     await nav('World');
     if (mobile) { await page.click('.bottom-nav button[aria-label="More"]'); await page.click('text=Save / load / export'); } else await page.click('button[aria-label="Save and load"]');
     await page.click('text=Overwrite autosave'); await page.waitForTimeout(600); await page.keyboard.press('Escape');
-    await page.reload({ waitUntil: 'load' }); await page.waitForSelector('.logo', { timeout: 30000 });
+    await page.reload({ waitUntil: 'load' });
+    if ((await page.locator('text=Open the page').count()) > 0) { lines.push('- ℹ️ host interstitial appeared again after reload'); await page.click('text=Open the page'); await page.waitForLoadState('load'); }
+    await page.waitForSelector('.logo', { timeout: 30000 });
     check((await page.locator('button:has-text("Continue")').count()) > 0, 'autosave survives reload (IndexedDB)');
     // PWA assets
     const manifest = await page.evaluate(async () => { const l = document.querySelector('link[rel=manifest]'); if (!l) return null; const r = await fetch(l.href); return r.ok ? await r.json() : null; });
