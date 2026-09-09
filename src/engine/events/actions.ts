@@ -42,7 +42,7 @@ export function declareWar(world: World, rng: RNG, a: Country, b: Country, cause
   a.alliances = a.alliances.filter((x) => x !== b.id); b.alliances = b.alliances.filter((x) => x !== a.id);
   a.tradePartners = a.tradePartners.filter((x) => x !== b.id); b.tradePartners = b.tradePartners.filter((x) => x !== a.id);
   const la = leaderOf(world, a), lb = leaderOf(world, b);
-  const why = reason ?? rng.pick(['a disputed border region', 'the seizure of a merchant convoy', 'alleged support for insurgents', 'a contested resource field', 'the collapse of peace talks', 'a cross-border missile incident']);
+  const why = reason ?? rng.pick(['a disputed border region', 'the seizure of a merchant convoy', 'alleged support for insurgents', 'a contested resource field', 'the collapse of peace talks', 'a cross-border missile incident', 'the assassination of a diplomat', 'a dam that cut off a shared river', 'the expulsion of ethnic kin', 'a decades-old humiliation the new leader vowed to avenge']);
   return createEvent(world, {
     category: 'military', type: 'war.declared', severity: 5, ...base(cause, player),
     title: `${a.name} declares war on ${b.name}`,

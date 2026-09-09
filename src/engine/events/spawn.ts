@@ -20,7 +20,7 @@ const pickCountry = (w: World, rng: RNG, weight: (c: Country) => number) => rng.
 const livePeople = (w: World) => Object.values(w.people).filter((p) => p.alive && !p.retired);
 const liveCompanies = (w: World) => Object.values(w.companies).filter((c) => c.alive);
 
-const TECH_FIELDS = ['battery', 'fusion', 'quantum computing', 'gene editing', 'artificial intelligence', 'room-temperature superconductor', 'carbon capture', 'desalination', 'neural interface', 'orbital manufacturing', 'synthetic fuel', 'longevity', 'robotics', 'photonic chip'];
+const TECH_FIELDS = ['battery', 'fusion', 'quantum computing', 'gene editing', 'artificial intelligence', 'room-temperature superconductor', 'carbon capture', 'desalination', 'neural interface', 'orbital manufacturing', 'synthetic fuel', 'longevity', 'robotics', 'photonic chip', 'lab-grown organ', 'weather control', 'solid-state hydrogen', 'universal translator', 'bio-concrete', 'swarm drone', 'atmospheric water harvesting', 'DNA data storage', 'graphene manufacturing', 'geothermal drilling'];
 
 export const SPAWN_RULES: SpawnRule[] = [
   {
@@ -32,7 +32,7 @@ export const SPAWN_RULES: SpawnRule[] = [
       const big = c.unrest > 55;
       const mv = c.movements.map((id) => w.organizations[id]).filter((o) => o?.alive);
       const org = mv.length ? rng.pick(mv) : undefined;
-      const cause = rng.pick(['soaring food prices', 'a disputed election', 'police brutality', 'corruption in the cabinet', 'unpaid wages', 'a controversial new law', 'water shortages', 'youth unemployment']);
+      const cause = rng.pick(['soaring food prices', 'a disputed election', 'police brutality', 'corruption in the cabinet', 'unpaid wages', 'a controversial new law', 'water shortages', 'youth unemployment', 'a pension reform', 'rent hikes', 'a banned protest song', 'the arrest of a popular blogger', 'fuel rationing', 'a stadium being built instead of a hospital', 'surveillance cameras on every corner']);
       return createEvent(w, {
         category: 'social', type: big ? 'protest.mass' : 'protest', severity: big ? 3 : 2,
         title: big ? `Hundreds of thousands march in ${city.name}` : `Protests erupt in ${city.name} over ${cause}`,

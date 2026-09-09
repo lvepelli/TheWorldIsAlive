@@ -447,7 +447,7 @@ export function makeOutlet(world: World, rng: RNG, fam: N.LanguageFamily, countr
   const id = nextId(world, 'm');
   const cred: Record<OutletBias, number> = { establishment: 65, opposition: 55, sensational: 30, business: 70, international: 75, independent: 68, state: 35 };
   const styles: Record<OutletBias, MediaOutlet['style']> = { establishment: 'broadsheet', opposition: 'digital', sensational: 'tabloid', business: 'wire', international: 'tv', independent: 'digital', state: 'tv' };
-  const mottos = ['Truth, first.', 'The world as it is.', 'Never look away.', 'Facts. Fast.', 'Beyond the headline.', 'Voices that matter.', 'Every angle.', 'Trusted since the beginning.', 'What they don\'t want you to know.', 'Markets. Money. Power.'];
+  const mottos = ['Truth, first.', 'The world as it is.', 'Never look away.', 'Facts. Fast.', 'Beyond the headline.', 'Voices that matter.', 'Every angle.', 'Trusted since the beginning.', 'What they don\'t want you to know.', 'Markets. Money. Power.', 'Read it before they delete it.', 'Calm in a loud world.', 'Numbers, not narratives.', 'From the street, not the palace.', 'All the news, twice as loud.', 'We were there.'];
   const o: MediaOutlet = {
     id, kind: 'outlet', name: N.outletName(rng, fam, country?.name ?? 'World', bias), countryId: country?.id ?? null, bias,
     credibility: clamp(cred[bias] + rng.gauss(0, 10), 5, 98), audience: Math.round(rng.float(0.5, country ? country.population / 4_000_000 + 2 : 60) * 10) / 10,
