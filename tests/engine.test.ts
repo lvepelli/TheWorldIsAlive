@@ -54,6 +54,20 @@ describe('simulation', () => {
     console.log(`365 days in ${ms}ms — ${w.events.length} events, ${w.news.length} news, ${w.social.length} posts`);
     expect(ms).toBeLessThan(20000);
   });
+  it('relationships drive consequences (rivals pounce on scandals)', () => {
+    const w = generateWorld({ seed: 'rivalry' });
+    const rng = RNG.fromState(w.rngState);
+    for (let i = 0; i < 365 * 3; i++) tickDay(w, rng);
+    const attacks = w.events.filter((e) => e.type === 'rival.attack');
+    expect(attacks.length).toBeGreaterThan(0);
+    for (const a of attacks) {
+      const src = w.events.find((e) => e.id === a.causedBy);
+      expect(src?.type).toBe('scandal');
+      const [rival, victim] = a.actors.map((x) => w.people[x.id]);
+      expect(rival && victim && rival.id !== victim.id).toBe(true);
+      expect(src?.actors.some((x) => x.id === victim.id)).toBe(true);
+    }
+  }, 30000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);

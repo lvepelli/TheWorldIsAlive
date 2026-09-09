@@ -8,6 +8,7 @@ import type { World, WorldEvent, PendingConsequence, ID, Sector } from '../types
 import * as A from './actions';
 import { createEvent, fx, ref, schedule } from './engine';
 import type { MarketShock } from '../simulation/markets';
+import { relate } from '../simulation/relations';
 
 export type ConsequenceRule = (world: World, rng: RNG, source: WorldEvent, payload: Record<string, unknown>) => WorldEvent | null | void;
 
@@ -303,6 +304,110 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       location: { cityId: person.cityId }, actors: [ref('person', person.id)], effects: [fx('person', person.id, 'wealth%', -30), fx('person', person.id, 'fame', 5)], tags: ['scandal', 'downfall'],
     });
   },
+  // ---- Relationship-driven chains ----
+  'scandal.rival-pounce': (w, rng, src) => {
+    const p = src.actors.find((a) => a.kind === 'person'); const person = p ? w.people[p.id] : undefined;
+    if (!person || !person.alive) return null;
+    const rivals = person.relationships.filter((r) => r.strength < -0.25 && w.people[r.target.id]?.alive).map((r) => w.people[r.target.id]);
+    if (!rivals.length) return null;
+    const rival = rng.pickWeighted(rivals, (x) => x.influence + x.personality.ambition * 30);
+    relate(w, rival, person, 'rival', -0.15);
+    rival.history.push({ day: w.day, text: `Publicly attacked ${person.name} over the scandal.` });
+    const c = w.countries[person.countryId];
+    const isLeader = c?.leaderId === person.id;
+    return createEvent(w, {
+      category: 'political', type: 'rival.attack', severity: isLeader ? 3 : 2, causedBy: src.id,
+      title: `${rival.name} turns the knife: "${person.name} must go"`,
+      description: `${rival.name}, a long-time ${rival.profession} rival of ${person.name}, ${rng.pick(['called for a full investigation', 'released a statement demanding resignation', 'went on every channel that would have them', 'published a scathing open letter'])}. ${rng.pick(['The feud is now out in the open.', 'Insiders say the two have not spoken in years.', 'Allies of both are choosing sides.'])}`,
+      location: { cityId: rival.cityId }, actors: [ref('person', rival.id), ref('person', person.id)],
+      effects: [fx('person', rival.id, 'influence', 4), fx('person', rival.id, 'fame', 6), fx('person', person.id, 'reputation', -8), ...(isLeader && c ? [fx('country', c.id, 'approval', -3)] : [])],
+      tags: ['scandal', 'rivalry', 'feud'],
+    });
+  },
+  'scandal.allies-rally': (w, rng, src) => {
+    const p = src.actors.find((a) => a.kind === 'person'); const person = p ? w.people[p.id] : undefined;
+    if (!person || !person.alive) return null;
+    const allies = person.relationships.filter((r) => r.strength > 0.35 && r.type !== 'family' && r.type !== 'partner' && w.people[r.target.id]?.alive).map((r) => w.people[r.target.id]);
+    if (!allies.length) return null;
+    const ally = rng.pickWeighted(allies, (x) => x.fame + x.influence);
+    relate(w, ally, person, 'ally', 0.1);
+    ally.history.push({ day: w.day, text: `Stood by ${person.name} during the scandal.` });
+    const c = w.countries[person.countryId];
+    const isLeader = c?.leaderId === person.id;
+    return createEvent(w, {
+      category: 'political', type: 'ally.rally', severity: 2, causedBy: src.id,
+      title: `${ally.name} stands by ${person.name}`,
+      description: `${ally.name} ${rng.pick(['dismissed the accusations as a smear', 'appeared alongside the embattled figure', 'rallied supporters in a fiery speech', 'called the coverage "a coordinated hit"'])}. ${allies.length > 1 ? `${allies.length - 1} other ${allies.length > 2 ? 'allies have' : 'ally has'} also spoken out.` : 'Whether it is enough remains to be seen.'}`,
+      location: { cityId: ally.cityId }, actors: [ref('person', ally.id), ref('person', person.id)],
+      effects: [fx('person', person.id, 'reputation', 5), fx('person', ally.id, 'fame', 3), ...(isLeader && c ? [fx('country', c.id, 'approval', 2)] : [])],
+      tags: ['scandal', 'loyalty'],
+    });
+  },
+  'downfall.rival-rises': (w, rng, src) => {
+    const p = src.actors.find((a) => a.kind === 'person'); const person = p ? w.people[p.id] : undefined;
+    if (!person) return null;
+    const rivals = person.relationships.filter((r) => r.strength < -0.3 && w.people[r.target.id]?.alive).map((r) => w.people[r.target.id]);
+    if (!rivals.length) return null;
+    const rival = rng.pickWeighted(rivals, (x) => x.personality.ambition * 50 + x.influence);
+    rival.history.push({ day: w.day, text: `Rose to prominence after the fall of rival ${person.name}.` });
+    rival.objective = rival.profession === 'politician' ? 'reach the top office' : rival.objective;
+    return createEvent(w, {
+      category: 'personal', type: 'rival.ascends', severity: 2, causedBy: src.id,
+      title: `${rival.name} fills the void left by ${person.name}`,
+      description: `With ${person.name} out of the picture, ${rival.name} has ${rng.pick(['absorbed their network', 'been courted by their former backers', 'claimed the mantle', 'quietly taken over the room'])}. ${rng.pick(['Old grudges, it seems, pay off.', 'The rivalry ends with a clear winner.', 'Some call it opportunism; others call it politics.'])}`,
+      location: { cityId: rival.cityId }, actors: [ref('person', rival.id), ref('person', person.id)],
+      effects: [fx('person', rival.id, 'influence', 10), fx('person', rival.id, 'fame', 8), fx('person', rival.id, 'wealth%', 8)],
+      tags: ['rivalry', 'rise'],
+    });
+  },
+  'leader.mentor-endorses': (w, rng, src) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    const leader = c ? w.people[c.leaderId] : undefined;
+    if (!c || !leader || !leader.alive) return null;
+    const mentorRel = leader.relationships.find((r) => r.type === 'mentor' && r.strength > 0 && w.people[r.target.id]?.alive);
+    const mentor = mentorRel ? w.people[mentorRel.target.id] : undefined;
+    if (!mentor) return null;
+    relate(w, mentor, leader, 'mentor', 0.15);
+    mentor.history.push({ day: w.day, text: `Endorsed protégé ${leader.name} as ${leader.title} of ${c.name}.` });
+    return createEvent(w, {
+      category: 'political', type: 'mentor.endorsement', severity: 2, causedBy: src.id,
+      title: `${mentor.name} blesses protégé ${leader.name}`,
+      description: `${mentor.name}, who ${rng.pick(['guided', 'first recruited', 'shaped the career of'])} ${leader.name}, offered a public endorsement: "${rng.pick(['I taught them everything, and they surpassed me.', 'The country is in the right hands.', 'This is the moment we prepared for.'])}" The gesture ${rng.pick(['reassured the old guard', 'unified rival factions', 'was widely read as a passing of the torch'])}.`,
+      location: { cityId: mentor.cityId }, actors: [ref('person', mentor.id), ref('person', leader.id), ref('country', c.id)],
+      effects: [fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', 2), fx('person', mentor.id, 'influence', 3)],
+      tags: ['mentor', 'endorsement', c.code],
+    });
+  },
+  'leader.rival-opposition': (w, rng, src) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    const leader = c ? w.people[c.leaderId] : undefined;
+    if (!c || !leader || !leader.alive) return null;
+    const rivals = leader.relationships.filter((r) => r.strength < -0.3 && r.type !== 'family' && w.people[r.target.id]?.alive && w.people[r.target.id].countryId === c.id).map((r) => w.people[r.target.id]);
+    if (!rivals.length) return null;
+    const rival = rng.pickWeighted(rivals, (x) => x.influence + x.fame);
+    if (c.freedom < 35 && rng.bool(0.5)) {
+      rival.history.push({ day: w.day, text: `Arrested on the orders of rival ${leader.name}.` });
+      relate(w, rival, leader, 'enemy', -0.3);
+      return createEvent(w, {
+        category: 'political', type: 'purge', severity: 3, causedBy: src.id,
+        title: `${leader.name} moves against old rival ${rival.name}`,
+        description: `Within weeks of taking power, ${leader.name} had ${rival.name} ${rng.pick(['detained on corruption charges', 'stripped of every office', 'placed under house arrest', 'barred from public life'])}. ${rng.pick(['Human-rights groups cried foul.', 'The two have loathed each other for years.', 'The message to other critics was unmistakable.'])}`,
+        location: { cityId: rival.cityId }, actors: [ref('person', leader.id), ref('person', rival.id), ref('country', c.id)],
+        effects: [fx('person', rival.id, 'influence', -25), fx('person', rival.id, 'fame', 6), fx('country', c.id, 'freedom', -4), fx('country', c.id, 'unrest', 3)],
+        tags: ['purge', 'rivalry', c.code],
+      });
+    }
+    rival.objective = rival.profession === 'politician' ? 'reach the top office' : rival.objective;
+    rival.history.push({ day: w.day, text: `Became the face of the opposition to ${leader.name}.` });
+    return createEvent(w, {
+      category: 'political', type: 'opposition.leader', severity: 2, causedBy: src.id,
+      title: `${rival.name} emerges as ${leader.name}'s chief opponent`,
+      description: `The ${rival.profession} ${rival.name}, whose rivalry with ${leader.name} goes back years, ${rng.pick(['rallied the opposition', 'launched a movement to unseat the new leader', 'vowed to make life "very difficult" for the government'])}. Polls suggest ${rng.pick(['a growing following', 'the country is split', 'voters are listening'])}.`,
+      location: { cityId: rival.cityId }, actors: [ref('person', rival.id), ref('person', leader.id), ref('country', c.id)],
+      effects: [fx('person', rival.id, 'influence', 8), fx('person', rival.id, 'fame', 10), fx('country', c.id, 'approval', -3), fx('country', c.id, 'polarization', 3)],
+      tags: ['opposition', 'rivalry', c.code],
+    });
+  },
   // ---- Protest chain ----
   'protest.escalation': (w, rng, src) => {
     const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
@@ -565,6 +670,11 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type.startsWith('disaster.') && e.severity >= 4, rule: 'disaster.reconstruction', delay: [60, 150], p: 0.85 },
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
+  { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.8 },
+  { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
+  { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.8 },
+  { match: (e) => e.type.startsWith('leader.') && e.type !== 'leader.succession', rule: 'leader.mentor-endorses', delay: [2, 15], p: 0.8 },
+  { match: (e) => e.type.startsWith('leader.'), rule: 'leader.rival-opposition', delay: [15, 90], p: 0.6 },
 ];
 
 /** Schedule follow-ups for a freshly created event. */

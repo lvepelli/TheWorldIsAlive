@@ -90,7 +90,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 1. **Enable GitHub Pages** (owner, one click) so the clean URL and first-party PWA install work; CI then prefers it automatically.
 2. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
-3. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
+3. **More relationship-driven rules**: rival pounce / ally rally / mentor endorsement / purge exist in `consequences.ts`; add funders withdrawing money, family feuds, and partner breakups as personal events.
 4. **Weather fronts / climate visualization** on the map and a trade-volume simulation feeding the trade arcs.
 5. **Religious schisms** and cultural championships as recurring calendar events (CEO succession and the World Games exist in `characters.ts` / `systems.ts`; add rivalry between passed-over executives).
 6. **Regions** inside big countries (use `Region`), with regional unrest driving secession.

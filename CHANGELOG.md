@@ -26,6 +26,7 @@
 - QA: pinch-zoom check; host-interstitial handling; content-type recorded.
 - Emergent stories: tycoon arc (billionaires fund parties, then run for office); World Games every four years with a champion athlete; scandal survival depends on a character's allies and enemies.
 - Companies: when a CEO dies, retires or moves on, the board appoints a successor (an existing executive or a newly generated one) with a `ceo.change` event and a small valuation shock.
+- Relationship-driven consequences: rivals pounce on scandals, allies rally, rivals rise after a downfall, mentors endorse new leaders, and new leaders purge or face old rivals as opposition.
 
 ## 0.3.0 — living details
 
