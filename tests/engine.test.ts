@@ -145,7 +145,8 @@ describe('simulation', () => {
     const cs = Object.values(w.countries);
     let a = cs.find((c) => c.atWarWith.length);
     if (!a) { a = cs.find((c) => c.neighbors.length)!; declareWar(w, rng, a, w.countries[a.neighbors[0]], 'simulation', false); }
-    const leader = w.people[a.leaderId]; leader.objective = 'make peace with our neighbours'; leader.personality.openness = 0.9;
+    a.electionEvery = 0; // isolate the mechanic from a scheduled election
+    const leader = w.people[a.leaderId]; leader.objective = 'make peace with our neighbours'; leader.personality.openness = 0.9; leader.history.push({ day: w.day, text: 'Persuaded by an interviewer to make peace with our neighbours.' });
     let ended = false;
     for (let i = 0; i < 365 && !ended; i++) { tickDay(w, rng); ended = !a!.atWarWith.length || w.events.some((e) => e.type === 'war.ended' && /personal objective/.test(e.description)); }
     expect(ended).toBe(true);

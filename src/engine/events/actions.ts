@@ -420,7 +420,7 @@ export function disaster(world: World, rng: RNG, c: Country, kind: 'earthquake' 
     description: `A ${kind === 'meteor' ? 'meteor' : kind} ${dmg} near ${city.name}. Authorities report at least ${casualties.toLocaleString()} casualties${kind === 'drought' ? ' from famine-related causes' : ''}. ${rng.pick(['International aid is being mobilized.', 'The government has declared a state of emergency.', 'Rescue teams are working through the night.', 'Communications are down across the region.'])}`,
     location: { cityId: city.id }, actors: [ref('country', c.id), ref('city', city.id)],
     effects: [fx('country', c.id, 'gdpGrowth', -1.5 * magnitude), fx('country', c.id, 'happiness', -6 * magnitude), fx('country', c.id, 'stability', -4 * magnitude), fx('country', c.id, 'unrest', 3 * magnitude), fx('city', city.id, 'prosperity', -10 * magnitude), fx('city', city.id, 'population', -casualties), fx('country', c.id, 'population', -casualties)],
-    tags: ['disaster', kind, c.code], historic: sev >= 4, data: { kind, magnitude, casualties },
+    tags: ['disaster', kind, c.code], historic: sev >= 4, data: { kind, magnitude, casualties, shocks: kind === 'drought' ? [{ commodityId: 'grain', pct: 0.06 * magnitude }] : kind === 'flood' ? [{ commodityId: 'grain', pct: 0.03 * magnitude }] : kind === 'hurricane' ? [{ commodityId: 'oil', pct: 0.02 * magnitude }] : [] },
   });
 }
 
