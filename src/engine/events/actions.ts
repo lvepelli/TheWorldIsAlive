@@ -274,7 +274,7 @@ export function createCountry(world: World, rng: RNG, parent: Country, cause: Ca
   parent.cityIds = parent.cityIds.filter((id) => !take.has(Math.floor(world.cities[id].y) * geo.width + Math.floor(world.cities[id].x)));
   if (!parent.cityIds.includes(parent.capitalId)) { parent.capitalId = parent.cityIds[0]; world.cities[parent.capitalId].capital = true; }
   const popShare = movedCities.reduce((s, id) => s + world.cities[id].population, 0) / Math.max(1, parent.population);
-  nc.population = Math.round(parent.population * Math.max(0.15, popShare * 1.5)); parent.population -= nc.population;
+  nc.population = Math.round(parent.population * clamp(popShare * 1.5, 0.15, 0.6)); parent.population = Math.max(10_000, parent.population - nc.population);
   nc.gdp = Math.round(parent.gdp * 0.3); parent.gdp = Math.round(parent.gdp * 0.7); parent.area -= take.size;
   nc.centroid = { x: world.cities[nc.capitalId].x, y: world.cities[nc.capitalId].y };
   world.countries[nc.id] = nc;
