@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGame } from '@/state/store';
 import type { Country, City, Region, Person, Company, Organization, MediaOutlet, WorldEvent, EntityRef, World } from '@/engine/types';
 import { Flag } from './Flag';
@@ -215,6 +215,8 @@ function RegionView({ r }: { r: Region }): React.ReactElement {
   const mood = r.unrest > 60 ? 'angry' : r.unrest > 35 ? 'restless' : 'calm';
   const relation = r.unrest > 60 ? 'hostile' : r.unrest > 35 || r.autonomy < 10 && r.identity > 0.5 ? 'tense' : 'loyal';
   const faith = useMemo(() => Object.values(world.organizations).filter((o) => o.alive && o.type === 'religion' && o.countryId === r.countryId).sort((a, b) => b.support - a.support)[0], [world, version, r.countryId]);
+  const [tab, setTab] = useState<'summary' | 'cities' | 'society' | 'history' | 'events'>('summary');
+  useEffect(() => { setTab('summary'); }, [r.id]);
   return (
     <>
       <div className="hero">
@@ -223,14 +225,21 @@ function RegionView({ r }: { r: Region }): React.ReactElement {
         <button className="btn icon sm" title={t('common.focus')} aria-label={t('common.focus')} onClick={() => { useGame.getState().setOverlay('regions'); focusOn(centre.x, centre.y, 3); setScreen('world'); }}>◎</button>
       </div>
       <div className="stat-grid"><Stat k={t('stat.population')} v={fmtPop(stats.population)} /><Stat k={t('stat.prosperity')} v={stats.prosperity.toFixed(0)} bar={stats.prosperity} /><Stat k={t('stat.unrest')} v={r.unrest.toFixed(0)} bar={r.unrest} color={barColor(100 - r.unrest)} /><Stat k={t('stat.identity')} v={`${(r.identity * 100).toFixed(0)}%`} bar={r.identity * 100} /><Stat k={t('stat.autonomy')} v={r.autonomy.toFixed(0)} bar={r.autonomy} /><Stat k={t('region.relation')} v={t(`region.relation.${relation}`)} color={relation === 'hostile' ? 'var(--bad)' : relation === 'tense' ? 'var(--warn)' : 'var(--ok)'} /></div>
-      {country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={`${govLabel(country.government)} · ${t('stat.stability').toLowerCase()} ${country.stability.toFixed(0)}`} />}
-      {gov && <Section title={t('region.governor')}><EntityRow refx={{ kind: 'person', id: gov.id }} name={gov.name} sub={`${ideoLabel(gov.ideology)} · ${t('region.wants', { objective: gov.objective })}`} /></Section>}
-      {faith && <div className="dim" style={{ fontSize: 12 }}>{t('tab.religion')}: <span className="link" onClick={() => useGame.getState().select({ kind: 'organization', id: faith.id })}>{faith.name}</span> · {country?.culture.language}</div>}
-      <Section title={t('region.cities')}><div className="list">{cities.map((c) => <EntityRow key={c.id} refx={{ kind: 'city', id: c.id }} name={c.name} sub={`${fmtPop(c.population)} · ${t('stat.prosperity').toLowerCase()} ${c.prosperity.toFixed(0)}${c.capital ? ` · ${t('common.capital')}` : ''}`} />)}</div></Section>
-      {companies.length > 0 && <Section title={t('tab.companies')}><div className="list">{companies.map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section>}
-      {movements.length > 0 && <Section title={t('region.movements')}><div className="list">{movements.map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={o.agenda} right={`${o.support.toFixed(0)}%`} />)}</div></Section>}
-      {r.history.length > 0 && <Section title={t('region.story')}><HistoryList items={r.history} startYear={world.meta.startYear} /></Section>}
-      <Section title={t('region.eventsHere')}><Events list={events} /></Section>
+      <Tabs tabs={[{ id: 'summary', label: t('tab.summary') }, { id: 'cities', label: t('tab.cities') }, { id: 'society', label: t('tab.society') }, { id: 'history', label: t('tab.history') }, { id: 'events', label: t('tab.events') }]} tab={tab} setTab={setTab} />
+      {tab === 'summary' && <>
+        {country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={`${govLabel(country.government)} · ${t('stat.stability').toLowerCase()} ${country.stability.toFixed(0)}`} />}
+        {gov && <Section title={t('region.governor')}><EntityRow refx={{ kind: 'person', id: gov.id }} name={gov.name} sub={`${ideoLabel(gov.ideology)} · ${t('region.wants', { objective: gov.objective })}`} /></Section>}
+        <div className="kv"><dt>{t('region.relation')}</dt><dd style={{ color: relation === 'hostile' ? 'var(--bad)' : relation === 'tense' ? 'var(--warn)' : 'var(--ok)' }}>{t(`region.relation.${relation}`)}</dd>{faith && <><dt>{t('tab.religion')}</dt><dd><span className="link" onClick={() => useGame.getState().select({ kind: 'organization', id: faith.id })}>{faith.name}</span></dd></>}<dt>{t('country.language')}</dt><dd>{country?.culture.language}</dd></div>
+        {companies.length > 0 && <Section title={t('tab.companies')}><div className="list">{companies.slice(0, 3).map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section>}
+        <Section title={t('region.eventsHere')}><Events list={events.slice(0, 3)} /></Section>
+      </>}
+      {tab === 'cities' && <Section title={t('region.cities')}><div className="list">{cities.map((c) => <EntityRow key={c.id} refx={{ kind: 'city', id: c.id }} name={c.name} sub={`${fmtPop(c.population)} · ${t('stat.prosperity').toLowerCase()} ${c.prosperity.toFixed(0)}${c.capital ? ` · ${t('common.capital')}` : ''}`} />)}</div></Section>}
+      {tab === 'society' && <>
+        {movements.length > 0 ? <Section title={t('region.movements')}><div className="list">{movements.map((o) => <EntityRow key={o.id} refx={{ kind: 'organization', id: o.id }} name={o.name} sub={orgTypeLabel(o.type)} right={`${o.support.toFixed(0)}%`} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>}
+        {companies.length > 0 && <Section title={t('tab.companies')}><div className="list">{companies.map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section>}
+      </>}
+      {tab === 'history' && (r.history.length > 0 ? <Section title={t('region.story')}><HistoryList items={r.history} startYear={world.meta.startYear} /></Section> : <div className="dim">{t('common.empty')}</div>)}
+      {tab === 'events' && <Section title={t('region.eventsHere')}><Events list={events} /></Section>}
     </>
   );
 }
@@ -241,14 +250,22 @@ function CityView({ c }: { c: City }): React.ReactElement {
   const people = Object.values(world.people).filter((p) => p.alive && p.cityId === c.id).sort((a, b) => b.fame - a.fame).slice(0, 6);
   const companies = Object.values(world.companies).filter((x) => x.alive && x.cityId === c.id).sort((a, b) => b.value - a.value).slice(0, 5);
   const events = useRecentEvents((e) => e.location.cityId === c.id);
+  const [tab, setTab] = useState<'summary' | 'people' | 'companies' | 'events'>('summary');
+  useEffect(() => { setTab('summary'); }, [c.id]);
   return (
     <>
       <div className="hero"><span className="avatar" style={{ background: 'rgba(143,211,255,0.15)', color: 'var(--data)', width: 40, height: 40 }}>◉</span><div className="grow"><div className="title">{c.name} {c.capital && <span className="tag" style={{ color: 'var(--accent)' }}>{t('common.capital')}</span>}</div><div className="dim" style={{ fontSize: 12 }}>{country?.name}{region ? <> · <span className="link" onClick={() => useGame.getState().select({ kind: 'region', id: region.id })}>{region.name}</span></> : ''} · {c.coastal ? t('common.coastal') : t('common.inland')} · {c.specialties.map(sectorLabel).join(', ')}</div></div><button className="btn icon sm" aria-label={t('common.focus')} onClick={() => { focusOn(c.x, c.y, 4); setScreen('world'); }}>◎</button></div>
       <div className="stat-grid"><Stat k={t('stat.population')} v={fmtPop(c.population)} /><Stat k={t('stat.prosperity')} v={c.prosperity.toFixed(0)} bar={c.prosperity} /><Stat k={t('stat.unrest')} v={c.unrest.toFixed(0)} bar={c.unrest} color={barColor(100 - c.unrest)} /></div>
-      {country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={`${govLabel(country.government)} · ${t('stat.stability').toLowerCase()} ${country.stability.toFixed(0)}`} />}
-      {people.length > 0 && <Section title={t('city.peopleHere')}><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={p.title ?? profLabel(p.profession)} />)}</div></Section>}
-      {companies.length > 0 && <Section title={t('city.companiesHere')}><div className="list">{companies.map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section>}
-      <Section title={t('country.recentEvents')}><Events list={events} /></Section>
+      <Tabs tabs={[{ id: 'summary', label: t('tab.summary') }, { id: 'people', label: t('tab.people') }, { id: 'companies', label: t('tab.companies') }, { id: 'events', label: t('tab.events') }]} tab={tab} setTab={setTab} />
+      {tab === 'summary' && <>
+        {country && <EntityRow refx={{ kind: 'country', id: country.id }} name={country.name} sub={`${govLabel(country.government)} · ${t('stat.stability').toLowerCase()} ${country.stability.toFixed(0)}`} />}
+        {region && <EntityRow refx={{ kind: 'region', id: region.id }} name={region.name} sub={`${t('entity.region')} · ${t('stat.unrest').toLowerCase()} ${region.unrest.toFixed(0)}`} />}
+        {people.length > 0 && <Section title={t('city.peopleHere')}><div className="list">{people.slice(0, 3).map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={p.title ?? profLabel(p.profession)} />)}</div></Section>}
+        <Section title={t('country.recentEvents')}><Events list={events.slice(0, 3)} /></Section>
+      </>}
+      {tab === 'people' && (people.length > 0 ? <Section title={t('city.peopleHere')}><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={p.title ?? profLabel(p.profession)} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>)}
+      {tab === 'companies' && (companies.length > 0 ? <Section title={t('city.companiesHere')}><div className="list">{companies.map((co) => <EntityRow key={co.id} refx={{ kind: 'company', id: co.id }} name={co.name} sub={sectorLabel(co.sector)} right={fmtMoneyB(co.value)} />)}</div></Section> : <div className="dim">{t('common.empty')}</div>)}
+      {tab === 'events' && <Section title={t('country.recentEvents')}><Events list={events} /></Section>}
     </>
   );
 }
