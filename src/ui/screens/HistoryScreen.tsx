@@ -9,7 +9,7 @@ export function HistoryScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
   const version = useGame((s) => s.version);
   const select = useGame((s) => s.select);
-  const [tab, setTab] = useState<'timeline' | 'sagas' | 'interventions' | 'summaries'>('timeline');
+  const [tab, setTab] = useState<'timeline' | 'sagas' | 'borders' | 'interventions' | 'summaries'>('timeline');
   const [copied, setCopied] = useState(false);
   const [cat, setCat] = useState<EventCategory | 'all'>('all');
   const [country, setCountry] = useState('all');
@@ -22,6 +22,7 @@ export function HistoryScreen(): React.ReactElement {
     for (const e of evs) { const d = toDate(e.day, world.meta.startYear); const key = `${d.year}-${d.month}`; let g = groups[groups.length - 1]; if (!g || g.key !== key) { g = { key, label: `${MONTHS[d.month]} ${d.year}`, events: [] }; groups.push(g); } g.events.push(e); }
     return groups;
   }, [world, version, cat, country, year, onlyHistoric]);
+  const borderEvents = useMemo(() => world.events.filter((e) => e.type === 'country.founded' || e.type === 'region.annexed' || e.type === 'region.concession').reverse(), [world, version]);
   const sagas = useMemo(() => {
     const childOf = new Set<string>(); for (const e of world.events) for (const c of e.consequences) childOf.add(c);
     return world.events.filter((e) => !childOf.has(e.id) && e.consequences.length > 0).map((root) => { const chain = collectChain(world, root.id); return { root, chain, size: chain.length, span: Math.max(...chain.map((x) => x.day)) - root.day, sev: Math.max(...chain.map((x) => x.severity)) }; }).filter((s) => s.size >= 3).sort((a, b) => b.sev * 100 + b.size - (a.sev * 100 + a.size)).slice(0, 40);
@@ -31,7 +32,7 @@ export function HistoryScreen(): React.ReactElement {
       <div className="screen-inner">
         <div className="screen-header"><div><div className="kicker">Chronicle of {world.meta.name}</div><h2 className="screen-title">History</h2></div><div className="row"><span className="dim mono hide-mobile">seed {world.meta.seed}</span><button className="btn sm" title="Copy or share the chronicle as Markdown" onClick={() => { const md = buildChronicle(world, sagas); const nav = navigator as Navigator & { share?: (d: { title: string; text: string }) => Promise<void> }; const copy = () => navigator.clipboard?.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => prompt('Copy the chronicle', md)); if (nav.share && window.innerWidth < 900) void nav.share.call(navigator, { title: `Chronicle of ${world.meta.name}`, text: md }).catch(copy); else void copy(); }}>{copied ? '✓ Copied' : '📜 Export chronicle'}</button></div></div>
         <div className="row">
-          {(['timeline', 'sagas', 'interventions', 'summaries'] as const).map((t) => <button key={t} className={`chip clickable ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t === 'interventions' ? `Your interventions (${world.interventions.length})` : t === 'sagas' ? `Sagas (${sagas.length})` : t[0].toUpperCase() + t.slice(1)}</button>)}
+          {(['timeline', 'sagas', 'borders', 'interventions', 'summaries'] as const).map((t) => <button key={t} className={`chip clickable ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t === 'interventions' ? `Your interventions (${world.interventions.length})` : t === 'sagas' ? `Sagas (${sagas.length})` : t === 'borders' ? `Borders (${borderEvents.length})` : t[0].toUpperCase() + t.slice(1)}</button>)}
         </div>
         {tab === 'timeline' && (
           <>
@@ -63,6 +64,18 @@ export function HistoryScreen(): React.ReactElement {
               </div>
             ))}
             {!sagas.length && <div className="dim">No sagas yet. Give the world time, or start one in God Mode.</div>}
+          </div>
+        )}
+        {tab === 'borders' && (
+          <div className="list">
+            <div className="dim" style={{ fontSize: 12, marginBottom: 6 }}>{Object.keys(world.countries).length} nations today · {borderEvents.filter((e) => e.type === 'country.founded').length} founded, {borderEvents.filter((e) => e.type === 'region.annexed').length} annexations, {borderEvents.filter((e) => e.type === 'region.concession').length} devolutions on record.</div>
+            {borderEvents.map((e) => { const kind = e.type === 'country.founded' ? 'New nation' : e.type === 'region.annexed' ? 'Annexation' : 'Self-rule granted'; const colour = e.type === 'country.founded' ? 'var(--accent)' : e.type === 'region.annexed' ? 'var(--bad)' : 'var(--ok)'; return (
+              <div key={e.id} className="card clickable" onClick={() => select({ kind: 'event', id: e.id })}>
+                <div className="row"><span className="kicker" style={{ color: colour }}>{formatDate(e.day, world.meta.startYear)} · {kind}</span>{e.playerIntervention && <span className="player-badge" title="Your doing">✦</span>}</div>
+                <div style={{ fontWeight: 700, marginTop: 4 }}>{e.title}</div>
+                <div className="dim" style={{ fontSize: 12 }}>{e.description.slice(0, 160)}{e.description.length > 160 ? '…' : ''}</div>
+              </div>); })}
+            {!borderEvents.length && <div className="dim">No border has moved yet. Regions demand autonomy, states split, and wars end with annexations — give it time, or give it a push in God Mode.</div>}
           </div>
         )}
         {tab === 'interventions' && (

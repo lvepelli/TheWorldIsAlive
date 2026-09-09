@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- History: a "Borders" tab lists every founding, annexation and devolution in order, with a one-line tally of how the map has changed; tap an entry to open the event.
 - Dialogue: ask anyone "How is your region?" (new starter chip) — governors describe the region they run, its mood, its autonomy and the last thing that happened to it; regionalists state their cause; others say where they are from.
 - Narrative: a decisive war's ending notes that negotiators are still arguing over the loser's border regions when an annexation is on the table.
 - Balance: automation shocks hit a given country at most once a year (they used to recur every few weeks in high-tech states), and a universal basic dividend is introduced once per country instead of again and again. Ten years on `diag`: 158 shocks (was ~345) and 37 dividends (was 121).
