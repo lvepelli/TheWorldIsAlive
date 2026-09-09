@@ -451,7 +451,7 @@ SPAWN_RULES.push({
   id: 'partner.breakup',
   weight: () => 0.12,
   run: (w, rng) => {
-    const pool = livePeople(w).filter((p) => p.fame > 30 && p.relationships.some((r) => r.type === 'partner' && w.people[r.target.id]?.alive));
+    const pool = livePeople(w).filter((p) => p.fame > 12 && p.relationships.some((r) => r.type === 'partner' && w.people[r.target.id]?.alive));
     if (!pool.length) return null;
     // Recent scandals, feuds and downfalls strain partnerships the most.
     const strained = new Set(w.events.slice(-400).filter((e) => /scandal|feud|downfall|purge/.test(e.type)).flatMap((e) => e.actors.filter((a) => a.kind === 'person').map((a) => a.id)));

@@ -364,7 +364,8 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
     const leader = c ? w.people[c.leaderId] : undefined;
     if (!c || !leader || !leader.alive) return null;
-    const mentorRel = leader.relationships.find((r) => r.type === 'mentor' && r.strength > 0 && w.people[r.target.id]?.alive);
+    const mentorRel = leader.relationships.find((r) => r.type === 'mentor' && r.strength > 0 && w.people[r.target.id]?.alive)
+      ?? leader.relationships.find((r) => r.type === 'ally' && r.strength > 0.6 && w.people[r.target.id]?.alive && w.people[r.target.id].birthDay < leader.birthDay - 10 * 365);
     const mentor = mentorRel ? w.people[mentorRel.target.id] : undefined;
     if (!mentor) return null;
     relate(w, mentor, leader, 'mentor', 0.15);
@@ -670,9 +671,9 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type.startsWith('disaster.') && e.severity >= 4, rule: 'disaster.reconstruction', delay: [60, 150], p: 0.85 },
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
-  { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.8 },
+  { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
-  { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.8 },
+  { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },
   { match: (e) => e.type.startsWith('leader.') && e.type !== 'leader.succession', rule: 'leader.mentor-endorses', delay: [2, 15], p: 0.8 },
   { match: (e) => e.type.startsWith('leader.'), rule: 'leader.rival-opposition', delay: [15, 90], p: 0.6 },
 ];
