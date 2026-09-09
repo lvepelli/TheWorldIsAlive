@@ -5,7 +5,7 @@
 1. Open **https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html** in the phone browser (HTTPS, no server on your PC needed). Once GitHub Pages is enabled by the owner (Settings → Pages → Source: branch `gh-pages`), **https://lvepelli.github.io/TheWorldIsAlive/** is the nicer address and the one that supports full PWA install (service worker on a first-party origin).
 2. Generate a world. Use the bottom navigation; tap countries/cities; pinch to zoom; drag to pan.
 3. Install as an app: iOS Safari → Share → *Add to Home Screen*; Android Chrome → menu → *Add to Home screen* (or the install prompt). The installed app runs standalone (no browser chrome), keeps saves in IndexedDB, and works offline after the first load.
-4. Share a specific world: `?seed=<seed>` in the URL (the 🔗 button in the desktop HUD copies it).
+4. Share a specific world: `?seed=<seed>` in the URL (the 🔗 button in the desktop HUD copies it; More → *Share this world* on phones). Quick starts, one per premise: `?seed=amber-tide-6` (Cold Peace), `amber-harbor-16` (Long Boom), `amber-summit-7` (Age of Unrest), `amber-meridian-2` (After the Plague), `amber-orchard-13` (Machine Dawn), `amber-citadel-1` (Fractured Map), `amber-lantern-2` (Gilded Age), `amber-canyon-2` (Quiet Century).
 
 Deployment: `.github/workflows/deploy.yml` on every push publishes the path-relative build to the `gh-pages` branch (served by GitHub Pages when enabled, and mirrored by githack immediately). The workflow's `qa` job runs `tests/e2e/deployed.mjs` against the live URL on three phone viewports and desktop and commits screenshots and `docs/qa/REPORT.md`. Netlify/Vercel can host the same static `dist/` (see `netlify.toml`); when hosting at the domain root, build without `BASE_PATH`.
 
