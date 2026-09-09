@@ -9,7 +9,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 
 const RAW = process.env.DEPLOY_URL || 'http://localhost:4173/';
 const SITE = /\.html$/.test(RAW) ? RAW : RAW.replace(/\/?$/, '/');
-const OUT = new URL('../../docs/qa/', import.meta.url).pathname;
+const OUT = process.env.QA_OUT ? process.env.QA_OUT.replace(/\/?$/, '/') : new URL('../../docs/qa/', import.meta.url).pathname; // QA_OUT: write elsewhere for local runs so CI-owned docs/qa stays untouched
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const report = [`# Deployed QA report`, ``, `URL: ${SITE}`, `Date: ${new Date().toISOString()}`, ``];
