@@ -262,7 +262,11 @@ function pivotForObjective(world: World, rng: RNG, p: Person, co: Company): Worl
   const goal = p.objective.toLowerCase();
   const PIVOTS: [RegExp, Sector, string][] = [[/\b(cure|vaccine|disease|health|medicine|cancer|aging)\b/, 'biotech', 'drug'], [/\b(space|rocket|mars|orbit|satellite)\b/, 'aerospace', 'rocket'], [/\b(green|solar|clean|climate|renewable|fusion|battery|batteries)\b/, 'energy', 'battery'], [/\b(ai|robot|automation|software|chip|quantum|computer)\b/, 'technology', 'AI model'], [/\b(weapon|defen[cs]e|drone|missile)\b/, 'defense', 'drone'], [/\b(car|vehicle|train|transport|ship)\b/, 'transport', 'vehicle'], [/\b(farm|food|crop|agricultur)\b/, 'agriculture', 'crop'], [/\b(bank|finance|payment|money)\b/, 'finance', 'payment system']];
   const pivot = PIVOTS.find(([re]) => re.test(goal));
-  if (!pivot || co.sector === pivot[1] || !rng.bool(0.8)) return null;
+  if (!pivot || co.sector === pivot[1]) return null;
+  // A persuaded chief pivots readily; a generated ambition only sometimes, and never against the company's own name.
+  const persuaded = p.memories.some((m) => m.text.startsWith('Decided to') && world.day - m.day < 240);
+  if (co.name.toLowerCase().includes(co.sector) || /\b(bio|pharma|bank|motors|mining|energy|foods|media|steel)\b/i.test(co.name) && !persuaded) return null;
+  if (!rng.bool(persuaded ? 0.8 : 0.25)) return null;
   const from = co.sector; co.sector = pivot[1];
   p.history.push({ day: world.day, text: `Steered ${co.name} into ${pivot[1]}.` });
   const ev = createEvent(world, { category: 'corporate', type: 'company.pivot', severity: co.value > 500 ? 3 : 2, title: `${co.name} bets the company on ${pivot[1]}`, description: `${p.name} announced that ${co.name} is leaving ${from} behind to pursue "${p.objective}". ${rng.pick(['Investors were split.', 'The share price whipsawed.', 'Half the engineering staff cheered; the other half updated their résumés.'])}`, location: { cityId: co.cityId, countryId: c.id }, actors: [ref('company', co.id), ref('person', p.id)], effects: [fx('company', co.id, 'value%', rng.float(-15, 10)), fx('company', co.id, 'reputation', 4)], tags: ['pivot', 'corporate', c.code], data: { shocks: [{ sector: pivot[1], pct: 0.02 }] } });

@@ -104,7 +104,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Balance snapshot (seed `diag`, 15 years)
 
-*Update (v0.5.0):* after 10 years, unrest is below 20 in ~22 of 32 countries and polarization below 40 in ~24 (both mean-revert weekly in `systems.ts`); ~58 movements are alive with a support histogram of roughly 31/9/5/10/3 across 20-point buckets; ~48 elections per decade, 0–3 won by movement leaders. Global GDP ≈ 155–175 T after 20 years, market index 5–12 k, top company $4–8 T.
+*Update (v0.5.0):* after 10 years, unrest is below 20 in ~22 of 32 countries and polarization below 40 in ~24 (both mean-revert weekly in `systems.ts`); ~58 movements are alive with a support histogram of roughly 31/9/5/10/3 across 20-point buckets; ~48 elections per decade, 0–3 won by movement leaders; objective-driven leader actions are rare without player conversations (a handful of reform packages per decade). Global GDP ≈ 155–175 T after 20 years, market index 5–12 k, top company $4–8 T.
 
 Per year: ~900 events, 1–7 wars declared, 0–2 coups, 1–6 revolutions, 0–10 elections, ~50–70 breakthroughs (after tuning), 8–20 severity-5 and 60–100 severity-4 events, 35–90 protests, 7–16 disasters; average unrest 8–15, stability 55–62; pending consequences hover around 70–95. Use the throwaway diagnostic pattern from git history (`tests/_diag.test.ts`) if you retune: count with `world.stats.eventsGenerated` and `e.day`, not array slices (the event cap trims the array).
 
