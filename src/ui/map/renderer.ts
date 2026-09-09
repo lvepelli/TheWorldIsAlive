@@ -3,7 +3,7 @@
  * Static layers (ocean, land, tints) are pre-rendered to an offscreen canvas;
  * dynamic layers (borders, cities, routes, events, labels) are drawn per frame.
  */
-import type { World, Country, City, WorldEvent, EntityRef, ID } from '@/engine/types';
+import type { World, Country, City, WorldEvent, EntityRef, ID, Region } from '@/engine/types';
 import { tradeVolume, tradeShare } from '@/engine/simulation/trade';
 import { stormCells } from '@/engine/simulation/weather';
 import { buildContours, type Shapes, polygonArea } from './contours';
@@ -189,12 +189,68 @@ export class MapRenderer {
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
       g.drawImage(t, 0, 0, c.width, c.height); g.restore();
     } catch { /* texture optional */ }
+    // Regions: dotted seams inside countries (faint on the political map), per-cell unrest fills on the Regions overlay.
+    if (overlay === 'regions') {
+      const { idx, regions } = this.regionCells(world);
+      {
+        for (let i = 0; i < W * H; i++) { const r = idx[i]; if (r < 0) continue; const rg = regions[r]; g.fillStyle = ramp(1 - rg.unrest / 100, [350, 40, 150]); g.globalAlpha = 0.85; g.fillRect((i % W) * PX, Math.floor(i / W) * PX, PX, PX); }
+        g.globalAlpha = 1;
+      }
+    }
     this.staticCanvas = c; this.staticOverlay = overlay;
+  }
+
+  /** Region seams as world-space segments [x1,y1,x2,y2,...], cached until the region map changes. Drawn per frame so they stay crisp at any zoom. */
+  private seamCache: { key: string; segs: Float32Array } | null = null;
+  private regionSeams(world: World): Float32Array {
+    const geo = world.geography; const W = geo.width, H = geo.height;
+    const key = `${Object.keys(world.regions ?? {}).length}:${geo.countryOrder.length}:${Object.keys(world.cities).length}`;
+    if (this.seamCache?.key === key) return this.seamCache.segs;
+    const { idx } = this.regionCells(world); const out: number[] = [];
+    for (let i = 0; i < W * H; i++) {
+      const r = idx[i]; if (r < 0) continue; const x = i % W, y = Math.floor(i / W); const ci = geo.cells[i];
+      if (x < W - 1) { const j = i + 1; if (geo.cells[j] === ci && idx[j] >= 0 && idx[j] !== r) out.push(x + 1, y, x + 1, y + 1); }
+      if (y < H - 1) { const k = i + W; if (geo.cells[k] === ci && idx[k] >= 0 && idx[k] !== r) out.push(x, y + 1, x + 1, y + 1); }
+    }
+    this.seamCache = { key, segs: Float32Array.from(out) };
+    return this.seamCache.segs;
+  }
+  private drawRegionSeams(world: World, offsets: number[], overlay: MapOverlay): void {
+    const cam = this.camera; const strong = overlay === 'regions';
+    if (!strong && cam.scale < 3.2) return; // too small to read on the political map
+    const segs = this.regionSeams(world); if (!segs.length) return;
+    const g = this.ctx; g.save(); g.beginPath();
+    for (const ox of offsets) {
+      for (let i = 0; i < segs.length; i += 4) {
+        const [ax, ay] = this.worldToScreen(segs[i] + ox, segs[i + 1]); const [bx, by] = this.worldToScreen(segs[i + 2] + ox, segs[i + 3]);
+        if ((ax < 0 && bx < 0) || (ax > this.width && bx > this.width) || (ay < 0 && by < 0) || (ay > this.height && by > this.height)) continue;
+        g.moveTo(ax, ay); g.lineTo(bx, by);
+      }
+    }
+    const fade = strong ? 0.6 : clamp((cam.scale - 3.2) / 4, 0, 1) * 0.22;
+    g.strokeStyle = `rgba(255,255,255,${fade})`; g.lineWidth = strong ? 1.2 : 1; g.setLineDash([3, 4]); g.stroke(); g.restore();
+  }
+
+  /** Region index per grid cell (Voronoi of each country's cities, seam-aware); -1 for sea or countries without regions. */
+  private regionCells(world: World): { idx: Int32Array; regions: Region[] } {
+    const geo = world.geography; const W = geo.width, H = geo.height;
+    const regions = Object.values(world.regions ?? {}); const rIndex = new Map(regions.map((r, i) => [r.id, i] as const));
+    const idx = new Int32Array(W * H).fill(-1);
+    const perCountry = new Map<number, { x: number; y: number; r: number }[]>();
+    geo.countryOrder.forEach((id, ci) => { const c = world.countries[id]; if (!c) return; perCountry.set(ci, c.cityIds.map((cid) => { const ct = world.cities[cid]; return { x: ct?.x ?? 0, y: ct?.y ?? 0, r: ct?.regionId ? (rIndex.get(ct.regionId) ?? -1) : -1 }; }).filter((o) => o.r >= 0)); });
+    for (let i = 0; i < W * H; i++) {
+      const ci = geo.cells[i]; if (ci < 0) continue; const cs = perCountry.get(ci); if (!cs || cs.length < 2) { if (cs && cs.length === 1) idx[i] = cs[0].r; continue; }
+      const x = (i % W) + 0.5, y = Math.floor(i / W) + 0.5; let best = -1, bd = Infinity;
+      for (const o of cs) { let dx = Math.abs(o.x - x); dx = Math.min(dx, W - dx); const d = dx * dx + (o.y - y) ** 2; if (d < bd) { bd = d; best = o.r; } }
+      idx[i] = best;
+    }
+    return { idx, regions };
   }
 
   private fillFor(c: Country, overlay: MapOverlay): string {
     switch (overlay) {
       case 'political': return `hsl(${c.hue.toFixed(0)} 28% 17%)`;
+      case 'regions': return `hsl(${c.hue.toFixed(0)} 18% 14%)`;
       case 'stability': return ramp(c.stability / 100, [340, 40, 150]);
       case 'economy': { const pc = (c.gdp * 1e9) / Math.max(1, c.population); return ramp(clamp(Math.log10(pc + 1) / 5.2, 0, 1), [220, 200, 170]); }
       case 'tension': { const worst = Math.max(0, ...Object.values(c.relations).map((r) => -r)) / 100; const war = c.atWarWith.length ? 1 : 0; return ramp(1 - Math.max(worst, war), [0, 30, 150]); }
@@ -240,6 +296,7 @@ export class MapRenderer {
       const [sx, sy] = this.worldToScreen(ox, 0);
       g.drawImage(this.staticCanvas!, sx, sy, W * cam.scale, this.H * cam.scale);
     }
+    if (opts.overlay === 'political' || opts.overlay === 'regions') this.drawRegionSeams(world, offsets, opts.overlay);
     const t = opts.now / 1000;
     if (!(window as unknown as { __twiaNoNight?: boolean }).__twiaNoNight) this.drawNight(world, offsets, opts.now, opts.reducedMotion);
     const selCountry = opts.selection?.kind === 'country' ? opts.selection.id : opts.selection?.kind === 'city' ? world.cities[opts.selection.id]?.countryId : null;

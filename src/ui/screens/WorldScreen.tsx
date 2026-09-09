@@ -8,7 +8,7 @@ import { Modal } from '../components/Modal';
 import { SaveManager } from './SaveManager';
 
 const OVERLAYS: { id: MapOverlay; label: string }[] = [
-  { id: 'political', label: 'Political' }, { id: 'stability', label: 'Stability' }, { id: 'economy', label: 'Wealth' }, { id: 'tension', label: 'Tension' }, { id: 'happiness', label: 'Mood' }, { id: 'tech', label: 'Tech' }, { id: 'trade', label: 'Trade' }, { id: 'climate', label: 'Climate' }, { id: 'harvest', label: 'Harvest' },
+  { id: 'political', label: 'Political' }, { id: 'stability', label: 'Stability' }, { id: 'economy', label: 'Wealth' }, { id: 'tension', label: 'Tension' }, { id: 'happiness', label: 'Mood' }, { id: 'tech', label: 'Tech' }, { id: 'trade', label: 'Trade' }, { id: 'climate', label: 'Climate' }, { id: 'harvest', label: 'Harvest' }, { id: 'regions', label: 'Regions' },
 ];
 
 export function WorldScreen(): React.ReactElement {

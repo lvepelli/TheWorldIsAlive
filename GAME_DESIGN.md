@@ -28,7 +28,7 @@ The player is an observer with divine powers. The world has no win condition; th
 
 | Section | Purpose |
 | --- | --- |
-| World | Living map; overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest); war fronts, trade arcs, day/night; tap to inspect; keyboard navigation; ticker |
+| World | Living map; overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest, regions); war fronts, region seams, trade arcs, day/night; tap to inspect; keyboard navigation; ticker |
 | Live | Daily and period summaries, developing-story cards (active causal chains), chronological event stream with category/severity filters |
 | News | Outlets with bias, style, credibility, audience; multiple outlets spin the same event differently |
 | Social | Posts, replies, likes/reposts, viral flag, trending hashtags, global mood |
