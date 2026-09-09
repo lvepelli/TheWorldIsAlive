@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- God Mode: region fields in the Create Country, Grant Autonomy, Annex Region and Regional Referendum forms autocomplete with the regions of the chosen country.
 - Tests: `tests/prompts.test.ts` checks that every prompt in `prompts.ts` has a markdown twin with the same placeholders.
 - Secession referendums driven by independence movements now split off the region the movement grew in (named in its title, or its leader's home region) instead of a distance-from-capital wedge; the old split remains the fallback.
 - Tests: the 20-year balance run also asserts the world does not slide into misery (mean unrest < 35, debt < 200 %, freedom > 40, happiness > 40).
