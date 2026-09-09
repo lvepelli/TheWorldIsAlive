@@ -258,6 +258,7 @@ export class MapRenderer {
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     // Links: alliances (faint gold), trade for selected, wars (red)
     if (opts.links !== 'none') this.drawLinks(world, offsets, t, selCountry, opts.reducedMotion, opts.links === 'all');
+    this.drawClouds(offsets, t, opts.reducedMotion);
     this.drawZones(world, offsets, t, opts.reducedMotion);
     this.drawFlows(world, offsets, t, opts.reducedMotion);
     // Cities
@@ -321,6 +322,26 @@ export class MapRenderer {
       }
     }
     g.restore();
+  }
+
+  /** Slow drifting cloud shadows: a handful of soft blobs on fixed wrap-around tracks. Purely atmospheric. */
+  private drawClouds(offsets: number[], t: number, reduced: boolean): void {
+    const g = this.ctx; const W = this.W, H = this.H; const cam = this.camera;
+    if (cam.scale > this.fitScale() * 4) return; // hidden when zoomed far in
+    const CLOUDS = 9;
+    for (let i = 0; i < CLOUDS; i++) {
+      const speed = 0.6 + (i % 3) * 0.35; // grid units per minute
+      const x = ((i * 53.7) + (reduced ? 0 : (t / 60) * speed * 60)) % W;
+      const y = 12 + ((i * 37.1) % (H - 24)) + Math.sin(t * 0.05 + i) * 3;
+      const rx = (14 + (i % 4) * 6) * cam.scale, ry = (7 + (i % 3) * 4) * cam.scale;
+      for (const ox of offsets) {
+        const [sx, sy] = this.worldToScreen(x + ox, y);
+        if (sx + rx < 0 || sx - rx > this.width || sy + ry < 0 || sy - ry > this.height) continue;
+        const grad = g.createRadialGradient(sx, sy, 0, sx, sy, 1);
+        grad.addColorStop(0, 'rgba(255,255,255,0.055)'); grad.addColorStop(0.55, 'rgba(255,255,255,0.03)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+        g.save(); g.translate(sx, sy); g.scale(rx, ry); g.translate(-sx, -sy); g.fillStyle = grad; g.beginPath(); g.arc(sx, sy, 1, 0, Math.PI * 2); g.fill(); g.restore();
+      }
+    }
   }
 
   /** Decaying impact zones for disasters, epidemics and battles (last 60 days). */

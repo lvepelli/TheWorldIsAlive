@@ -21,6 +21,9 @@
 - News: journalist bylines (articles are written by characters who gain fame; profiles list bylines); more specific hashtags.
 - Consequences: post-election honeymoon policies; disputed elections in corrupt states.
 - Mobile: Share-this-world button (Web Share API) in the More sheet.
+- Map: drifting cloud shadows. Countries show a motto and language. Yearly reviews are named by what dominated them ("The Year of Fire").
+- Accessibility: live region announces the inspected entity.
+- QA: pinch-zoom check; host-interstitial handling; content-type recorded.
 
 ## 0.3.0 — living details
 

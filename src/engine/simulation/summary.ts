@@ -12,7 +12,7 @@ export function summarize(world: World, period: 'day' | 'month' | 'year'): World
   const major = evs.filter((e) => e.severity >= 4).sort((a, b) => b.severity - a.severity);
   const lines: string[] = [];
   const dt = toDate(world.day, world.meta.startYear);
-  const title = period === 'day' ? `Today in the world — ${formatDate(world.day, world.meta.startYear)}` : period === 'month' ? `This month: ${MONTHS[dt.month]} ${dt.year}` : `Year ${dt.year - 1} in review`;
+  const title = period === 'day' ? `Today in the world — ${formatDate(world.day, world.meta.startYear)}` : period === 'month' ? `This month: ${MONTHS[dt.month]} ${dt.year}` : `${dt.year - 1}: ${eraName(evs)}`;
   if (!evs.length) lines.push('A quiet period. The world held its breath.');
   for (const e of major.slice(0, period === 'day' ? 2 : 5)) lines.push(`${e.title}.`);
   const wars = Object.values(world.countries).reduce((s, c) => s + c.atWarWith.length, 0) / 2;
@@ -37,4 +37,12 @@ export function summarize(world: World, period: 'day' | 'month' | 'year'): World
     for (const e of minor) lines.push(e.title + '.');
   }
   return { period, day: world.day, title, lines };
+}
+
+/** Names a year by what dominated it, e.g. "The Year of Fire". */
+export function eraName(evs: { category: string; type: string; severity: number }[]): string {
+  const score: Record<string, number> = {};
+  for (const e of evs) { const k = e.type === 'war.declared' || e.type === 'battle' ? 'war' : e.type.startsWith('disaster.') ? 'disaster' : e.type === 'tech.breakthrough' || e.type === 'discovery' || e.type === 'space.milestone' ? 'wonder' : e.type.startsWith('economy.') || e.type === 'company.bankrupt' ? 'money' : e.type.startsWith('leader.') || e.type === 'government.collapse' ? 'thrones' : e.type.startsWith('protest') || e.type.startsWith('movement') ? 'streets' : e.type.startsWith('health.') ? 'plague' : e.type === 'scandal' || e.type === 'feud' ? 'whispers' : 'quiet'; score[k] = (score[k] ?? 0) + e.severity * e.severity; }
+  const top = Object.entries(score).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'quiet';
+  return { war: 'The Year of Fire', disaster: 'The Year the Earth Shook', wonder: 'The Year of Wonders', money: 'The Year of Ledgers', thrones: 'The Year of Falling Thrones', streets: 'The Year of the Streets', plague: 'The Year of Fever', whispers: 'The Year of Whispers', quiet: 'A Quiet Year' }[top] ?? 'A Year Like Any Other';
 }
