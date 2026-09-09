@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Tests: the 20-year balance run also asserts the world does not slide into misery (mean unrest < 35, debt < 200 %, freedom > 40, happiness > 40).
 - Balance (long run): freedom now drifts back toward what each form of government sustains (democracy 78 … junta 16, nudged by happiness, minus 8 at war), so crackdowns and security laws fade unless renewed; public debt consolidates above 90 % of GDP instead of spiralling for decades; automation shocks are capped at eight a year world-wide; autonomy demands and crackdowns push national unrest a little less and concessions calm it a little more. Twenty years on `diag` now end with mean unrest 18 (was 31), happiness 55 (was 38), freedom 57 (was 38), inflation 4.8 % (was 8.5), growth 2.1 % (was 0.2) and debt 128 % (was 254 %).
 - Calendar: a yearly climate conference every December, hosted where the seas bite hardest (recent coastal losses weigh in), attended by the biggest economies; it is a summit on climate finance, so the existing accord / collapse machinery decides whether a climate fund follows.
 - Fix: a schism of a schism no longer produces "New New …" names; the splinter takes a prefix the parent does not already carry.

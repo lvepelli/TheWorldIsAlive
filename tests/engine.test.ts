@@ -299,6 +299,8 @@ describe('long-run balance', () => {
     expect(pop1 / pop0).toBeGreaterThan(0.5);
     expect(pop1 / pop0).toBeLessThan(3);
     expect(cs.length).toBeLessThanOrEqual(45); // secessions and annexations are spaced out; the map must not fragment
+    const mean = (f: (c: (typeof cs)[number]) => number) => cs.reduce((s, c) => s + f(c), 0) / cs.length;
+    expect(mean((c) => c.unrest)).toBeLessThan(35); expect(mean((c) => c.debt)).toBeLessThan(200); expect(mean((c) => c.freedom)).toBeGreaterThan(40); expect(mean((c) => c.happiness)).toBeGreaterThan(40); // the world must not slide into misery over two decades
     for (const c of cs) for (const id of c.cityIds) { const r = w.cities[id].regionId ? w.regions[w.cities[id].regionId!] : undefined; expect(r?.countryId, `${w.cities[id].name} region`).toBe(c.id); }
     for (const c of cs) {
       expect(Number.isFinite(c.gdp) && c.gdp > 0).toBe(true);
