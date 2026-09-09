@@ -13,6 +13,7 @@ export function summarize(world: World, period: 'day' | 'month' | 'year'): World
   const lines: string[] = [];
   const dt = toDate(world.day, world.meta.startYear);
   const title = period === 'day' ? `Today in the world — ${formatDate(world.day, world.meta.startYear)}` : period === 'month' ? `This month: ${MONTHS[dt.month]} ${dt.year}` : `${dt.year - 1}: ${eraName(evs)}`;
+  if (world.meta.premise && (period === 'day' ? world.day < 7 : world.day <= 400)) lines.push(`${world.meta.premise.title}: ${world.meta.premise.blurb}`);
   if (!evs.length) lines.push('A quiet period. The world held its breath.');
   for (const e of major.slice(0, period === 'day' ? 2 : 5)) lines.push(`${e.title}.`);
   const wars = Object.values(world.countries).reduce((s, c) => s + c.atWarWith.length, 0) / 2;
