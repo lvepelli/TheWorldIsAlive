@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/86c06e787c9b694ae75f2ae2bc718126b02802b4/index.html
-Date: 2026-09-09T03:42:00.939Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/1eb44be07ab568ed80abeeee5c1a7d36f4c8caf3/index.html
+Date: 2026-09-09T03:49:03.989Z
 
 ## android-360 (360×800)
 
@@ -10,7 +10,7 @@ Date: 2026-09-09T03:42:00.939Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9692 bright samples)
+- ✅ map is painted (9694 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -38,7 +38,7 @@ Date: 2026-09-09T03:42:00.939Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8083 bright samples)
+- ✅ map is painted (8089 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -66,7 +66,7 @@ Date: 2026-09-09T03:42:00.939Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8379 bright samples)
+- ✅ map is painted (8382 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -94,7 +94,7 @@ Date: 2026-09-09T03:42:00.939Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8147 bright samples)
+- ✅ map is painted (8144 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
