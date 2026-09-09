@@ -129,7 +129,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
           const worst = Object.entries(c.relations).sort((a, b) => a[1] - b[1])[0]; const other = worst && worst[1] < -20 ? world.countries[worst[0]] : undefined;
           if (other) { const ev = A.shiftTension(world, rng, c, other, -25, 'simulation', false, `an olive branch from ${p.name}`); p.objective = 'secure a legacy'; return ev; }
         }
-        if (/\b(election|vote|polls)\b/.test(goal) && !/survive/.test(goal) && rng.bool(0.5)) {
+        if (/\b(call|hold|allow|free|first|early|snap|let the people|give the people)\b[^.]*\b(election|elections|vote|polls)\b|\bgo to the polls\b|\bdemand new elections\b/.test(goal) && !/\b(win|survive)\b/.test(goal) && rng.bool(0.5)) {
           if (!c.electionEvery) c.electionEvery = 5;
           c.nextElectionYear = yearOf(world.day, world.meta.startYear);
           p.objective = 'survive the next election';

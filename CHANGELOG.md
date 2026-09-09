@@ -38,6 +38,7 @@
 - Dialogue: a "You should make peace." starter chip makes persuasion discoverable.
 - Hardening: persuaded objectives are sanitized (no quotes, angle brackets or newlines) and capped at 80 characters; advice spanning lines still counts.
 - Chronicle export gains a "Conversations that mattered" section: who you persuaded and what they did.
+- Fix: the leader "call an election" behaviour only fires for objectives that actually ask for one ("hold free elections", "call a snap election", "demand new elections"), never for the common generated goal "win the next election".
 
 ## 0.5.0 — rivals, fronts and editorials
 

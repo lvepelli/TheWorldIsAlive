@@ -173,6 +173,18 @@ describe('simulation', () => {
     expect(p.objective).toBe(goal);
     expect(rememberConversation(w, p, 'You should ', 'ok').persuaded).toBeUndefined();
   });
+  it('"win the next election" does not make a leader call a snap election', () => {
+    const w = generateWorld({ seed: 'no-snap' });
+    const rng = RNG.fromState(w.rngState);
+    for (const c of Object.values(w.countries)) { const l = w.people[c.leaderId]; if (l) l.objective = 'win the next election'; }
+    for (let i = 0; i < 365; i++) tickDay(w, rng);
+    expect(w.events.filter((e) => e.type === 'election.called').length).toBe(0);
+    const w2 = generateWorld({ seed: 'no-snap' });
+    const rng2 = RNG.fromState(w2.rngState);
+    const auto = Object.values(w2.countries).find((c) => !c.electionEvery)!; w2.people[auto.leaderId].objective = 'hold free elections'; w2.people[auto.leaderId].memories.push({ day: 0, text: 'Decided to hold free elections after an unusual conversation.', weight: 0.5 });
+    for (let i = 0; i < 365; i++) tickDay(w2, rng2);
+    expect(w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)).toBe(true);
+  }, 30000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
