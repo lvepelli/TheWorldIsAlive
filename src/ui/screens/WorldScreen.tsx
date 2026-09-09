@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { WorldMap } from '../map/WorldMap';
 import { useGame, type MapOverlay, type Speed } from '@/state/store';
 import { formatDate } from '@/engine/time';
@@ -96,6 +96,8 @@ function PickBanner(): React.ReactElement | null {
 
 function HudBottom(): React.ReactElement {
   const overlay = useGame((s) => s.overlay);
+  const [hint, setHint] = useState<string | null>(null); // mobile: a few words about the overlay just picked
+  useEffect(() => { if (!hint) return; const t = setTimeout(() => setHint(null), 3500); return () => clearTimeout(t); }, [hint]);
   const setOverlay = useGame((s) => s.setOverlay);
   const links = useGame((s) => s.links);
   const setLinks = useGame((s) => s.setLinks);
@@ -111,10 +113,11 @@ function HudBottom(): React.ReactElement {
       <Onboarding />
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', gap: 6 }}>
         <div className="panel overlay-picker" role="tablist" aria-label="Map overlay" style={{ overflowX: 'auto', maxWidth: '100%' }}>
-          {OVERLAYS.map((o) => <button key={o.id} className={overlay === o.id ? 'active' : ''} onClick={() => setOverlay(o.id)} role="tab" aria-selected={overlay === o.id}>{o.label}</button>)}
+          {OVERLAYS.map((o) => <button key={o.id} className={overlay === o.id ? 'active' : ''} title={OVERLAY_HINTS[o.id]} onClick={() => { setOverlay(o.id); setHint(`${o.label}: ${OVERLAY_HINTS[o.id]}`); }} role="tab" aria-selected={overlay === o.id}>{o.label}</button>)}
           <span style={{ width: 1, background: 'var(--line)', margin: '0 2px' }} />
           <button className={links !== 'none' ? 'active' : ''} title="Toggle alliance/trade/war links" onClick={() => setLinks(links === 'auto' ? 'all' : links === 'all' ? 'none' : 'auto')} aria-label="Links mode">{links === 'auto' ? 'Links' : links === 'all' ? 'All links' : 'No links'}</button>
         </div>
+        {hint && <div className="overlay-hint" role="status">{hint}</div>}
         <div className="panel map-legend hide-mobile">
           <span>{Object.keys(world.countries).length} nations</span><span>·</span><span>{wars} war{wars === 1 ? '' : 's'}</span><span>·</span><span>{world.events.length} events</span>{OVERLAY_HINTS[overlay] && <><span>·</span><span className="dim hint">{OVERLAY_HINTS[overlay]}</span></>}
         </div>

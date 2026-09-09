@@ -406,3 +406,7 @@ html[data-high-contrast] .btn, html[data-high-contrast] .chip { border-color: va
 /* Desktop map legend: keep it compact so it never collides with the overlay bar. */
 .map-legend { flex-wrap: wrap; justify-content: flex-end; max-width: 380px; row-gap: 2px; }
 @media (max-width: 1279px) { .map-legend .hint { display: none; } }
+/* Mobile: a short line about the overlay just chosen, shown above the overlay bar for a few seconds. */
+.overlay-hint { display: none; }
+@media (max-width: 899px) { .overlay-hint { display: block; position: absolute; left: 12px; right: 12px; bottom: 100%; margin-bottom: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(8, 12, 22, 0.85); color: var(--text-2); font-size: 12px; text-align: center; pointer-events: none; animation: fade-in var(--t-med) ease; } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
