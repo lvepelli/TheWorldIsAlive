@@ -14,6 +14,8 @@ import { appointGovernor } from '../generator/world';
 export type ConsequenceRule = (world: World, rng: RNG, source: WorldEvent, payload: Record<string, unknown>) => WorldEvent | null | void;
 
 const c$ = (w: World, id?: ID) => (id ? w.countries[id] : undefined);
+/** True when a new nation was founded within `days` — used to space secessions out world-wide. */
+function recentFounding(w: World, days: number): boolean { for (let i = w.events.length - 1; i >= 0; i--) { const e = w.events[i]; if (w.day - e.day > days) return false; if (e.type === 'country.founded') return true; } return false; }
 
 export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
   // ---- War chain ----
@@ -455,6 +457,7 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     if (!c || !r || r.countryId !== c.id) return null;
     if (r.unrest < 70 || c.stability > 55) { if (r.unrest > 50 && rng.bool(0.5)) schedule(w, 'region.secession', src.id, rng.int(120, 300)); return null; }
     if (c.history.some((h) => /broke away/.test(h.text) && w.day - h.day < 3 * 365)) return null; // one lost region per three years: the state digs in after a split
+    if (recentFounding(w, 730)) { if (rng.bool(0.5)) schedule(w, 'region.secession', src.id, rng.int(200, 400)); return null; } // the world digests one new border at a time
     const ev = A.createCountry(w, rng, c, src.id, false, undefined, r.id);
     if (ev) { c.history.push({ day: w.day, text: `${r.name} broke away.`, eventId: ev.id }); ev.title = `${r.name} breaks away from ${c.name}`; ev.description = `After ${rng.pick(['months of strikes', 'a referendum the capital refused to recognise', 'the regional assembly voted for independence and'])}, ${r.name} declared itself a sovereign state. ${ev.description}`; }
     return ev;
@@ -804,7 +807,7 @@ Object.assign(CONSEQUENCE_RULES, {
     const org = src.actors.find((a) => a.kind === 'organization'); const o = org ? w.organizations[org.id] : undefined;
     if (!c || !o || !o.alive) return null;
     if (o.support < 30 || c.stability > 60) { if (rng.bool(0.5)) schedule(w, 'secession.referendum', src.id, rng.int(120, 300)); return null; }
-    if (rng.bool(0.5)) return A.createCountry(w, rng, c, src.id, false);
+    if (rng.bool(0.5) && !recentFounding(w, 730)) return A.createCountry(w, rng, c, src.id, false);
     return createEvent(w, { category: 'political', type: 'referendum.blocked', severity: 3, causedBy: src.id, title: `${c.name} bans independence referendum`, description: `The ${c.adjective} government declared the separatist vote illegal and deployed police to polling stations. ${o.name} vowed to continue.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('organization', o.id)], effects: [fx('country', c.id, 'unrest', 10), fx('country', c.id, 'freedom', -5), fx('organization', o.id, 'support', 5)], tags: ['secession', c.code] });
   },
   'succession.crisis': (w: World, rng: RNG, src: WorldEvent) => {
@@ -944,7 +947,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'festival.film' && !!e.data?.political, rule: 'festival.banned', delay: [1, 12], p: 0.7 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.response', delay: [15, 90], p: 0.9 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.movement', delay: [5, 40], p: 0.5 },
-  { match: (e) => e.type === 'region.crackdown', rule: 'region.secession', delay: [60, 240], p: 0.5 },
+  { match: (e) => e.type === 'region.crackdown', rule: 'region.secession', delay: [60, 240], p: 0.4 },
   { match: (e) => e.type === 'festival.film' && !!e.data?.maker, rule: 'festival.rights', delay: [10, 45], p: 0.55 },
   { match: (e) => e.type === 'trade.fair' && (e.data?.deal as unknown[] | undefined)?.length === 2, rule: 'fair.venture', delay: [10, 45], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },
