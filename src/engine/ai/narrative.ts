@@ -144,6 +144,9 @@ export function hashtagsFor(world: World, ev: WorldEvent, rng: RNG): string[] {
     'leader.revolution': ['Revolution', 'PowerToThePeople'], scandal: ['Scandal', 'Resign'], 'protest.mass': ['Protest', 'Enough'], protest: ['Protest'], 'government.collapse': ['Collapse', 'Anarchy'],
     'health.pandemic': ['Pandemic', 'StayHome'], 'health.epidemic': ['Outbreak'], 'company.bankrupt': ['Bankrupt', 'RIP'], 'product.launch': ['Launch', 'Innovation'], cyberattack: ['CyberAttack', 'Hacked'],
     'movement.founded': ['Movement', 'Rise'], 'country.founded': ['Independence', 'NewNation'], discovery: ['Discovery', 'Science'], 'death.assassination': ['Assassination', 'Justice'],
+    policy: ['NewLaw', 'Politics'], battle: ['Frontline', 'War'], summit: ['Summit', 'Diplomacy'], strike: ['GeneralStrike', 'Workers'], 'election.incumbent': ['Election', 'FourMoreYears'], 'automation.shock': ['Automation', 'Jobs'],
+    'space.milestone': ['Space', 'GiantLeap'], feud: ['Feud', 'Drama'], sanctions: ['Sanctions'], espionage: ['Espionage', 'TradeSecrets'], 'tension.rise': ['Tensions', 'Diplomacy'], 'alliance.formed': ['Alliance', 'Pact'], 'migration.wave': ['Refugees', 'Borders'],
+    'resource.discovery': ['Resources', 'Boom'], 'market.reaction': ['Markets', 'Stocks'], 'crime.major': ['Crime', 'Justice'], 'culture.moment': ['Culture', 'Viral'], viral: ['Viral', 'Trending'], partnership: ['Love', 'Couple'], reconstruction: ['Rebuild', 'Hope'],
   };
   const kind = ev.type.startsWith('disaster.') ? ['PrayFor' + (country?.name.replace(/\s+/g, '') ?? 'Them'), 'Disaster'] : byType[ev.type] ?? [ev.category.charAt(0).toUpperCase() + ev.category.slice(1)];
   tags.push(...kind);
