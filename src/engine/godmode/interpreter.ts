@@ -50,6 +50,7 @@ const INTENTS: Intent[] = [
   { action: 'meteor', test: /\b(meteor|asteroid|comet)\b/i },
   { action: 'pandemic', test: /\b(pandemic|plague spreads worldwide|global outbreak)\b/i },
   { action: 'epidemic', test: /\b(epidemic|outbreak|virus|plague|disease)\b/i },
+  { action: 'rains', test: /\b(make it rain|rains? (return|come|fall)|end (the|a) drought|break (the|a) drought|monsoon arrives|let it rain)\b/i },
   { action: 'disaster', test: /\b(earthquake|flood|hurricane|typhoon|drought|wildfire|volcano|eruption|tsunami|storm)s?\b/i, params: (m) => ({ kind: normalizeDisaster(m[1]) }) },
   { action: 'end-war', test: /\b(end|stop|cease|halt)s?\b.*\b(war|fighting|conflict)\b|\b(ceasefire|peace treaty|armistice)\b/i },
   { action: 'start-war', test: /\b(declare|start|launch|begin|wage)s?\b.*\bwar\b|\b(invade|invasion|attack)s?\b/i },

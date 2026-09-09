@@ -387,7 +387,9 @@ export class MapRenderer {
     const g = this.ctx; const cam = this.camera;
     const zones = world.events.filter((e) => world.day - e.day <= 60 && (e.type.startsWith('disaster.') || e.type.startsWith('health.') || e.type === 'battle' || e.type === 'crackdown')).slice(-24);
     for (const ev of zones) {
-      const life = 1 - (world.day - ev.day) / 60;
+      const endedAt = ev.data?.ended as number | undefined;
+      const life = endedAt !== undefined ? Math.max(0, 0.3 - (world.day - endedAt) / 20) : 1 - (world.day - ev.day) / 60; // an ended drought fades within days
+      if (life <= 0) continue;
       const kind = ev.type.startsWith('health.') ? 'health' : ev.type === 'battle' || ev.type === 'crackdown' ? 'war' : 'disaster';
       const col = kind === 'health' ? '163,230,53' : kind === 'war' ? '255,77,77' : /meteor|volcano|wildfire|drought/.test(ev.type) ? '255,140,60' : '96,180,255';
       const radius = (3 + ev.severity * 2.2) * (kind === 'health' && ev.data?.pandemic ? 3 : 1) * cam.scale;

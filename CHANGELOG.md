@@ -53,6 +53,7 @@
 - Map: Harvest overlay colours nations by their last harvest's yield ratio (potential before the first report).
 - Policies: leaders can launch irrigation programs (water +6) and agritech subsidies (farmland +4), and reach for them first after a poor harvest — about six such policies a year world-wide, enough to offset the yearly climate drain on water.
 - Famine migration: a food crisis can send people from a hungry nation to a better-fed neighbour ("Hunger, not war, drove them"), feeding the existing migration politics.
+- God Mode: Rains Return preset breaks a drought (water +12, cheer, grain eases, the drought zone fades within days); the interpreter understands "end the drought in X", "make it rain", "let it rain".
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.5.0 — rivals, fronts and editorials
