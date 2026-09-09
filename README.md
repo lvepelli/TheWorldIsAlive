@@ -63,7 +63,7 @@ Requirements: Node 20+ and npm. Playwright uses the system/bundled Chromium; set
 ## How to play
 
 1. **Generate** a world (or type a seed). Watch the initialization sequence and the reveal.
-2. **Observe**: the map is the heart of the game. Tap a country or a glowing city to open the inspector. Switch map overlays (political, stability, wealth, tension, mood, tech).
+2. **Observe**: the map is the heart of the game. Tap a country or a glowing city to open the inspector. Switch map overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest, regions).
 3. **Advance time**: pause / 1× / 5× / 20× / fast-forward, or jump a day, week, month or year.
 4. **Follow the world**: LIVE (event stream + daily summary), NEWS (outlets with bias), SOCIAL (posts, replies, trending), MARKETS (indexes, commodities, companies), PEOPLE, ORGS, HISTORY (timeline, your interventions, period summaries).
 5. **Intervene**: GOD → describe what you want, or pick a preset. Then open the resulting event and read *Why did this happen?* to follow the causal chain as consequences unfold over the following days and months.
