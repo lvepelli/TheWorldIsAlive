@@ -192,10 +192,13 @@ export class MapRenderer {
     // Regions: dotted seams inside countries (faint on the political map), per-cell unrest fills on the Regions overlay.
     if (overlay === 'regions') {
       const { idx, regions } = this.regionCells(world);
-      {
-        for (let i = 0; i < W * H; i++) { const r = idx[i]; if (r < 0) continue; const rg = regions[r]; g.fillStyle = ramp(1 - rg.unrest / 100, [350, 40, 150]); g.globalAlpha = 0.85; g.fillRect((i % W) * PX, Math.floor(i / W) * PX, PX, PX); }
-        g.globalAlpha = 1;
-      }
+      try { // one pixel per cell, upscaled without smoothing: ~1 ms instead of ~29k rectangles per rebuild
+        const t = document.createElement('canvas'); t.width = W; t.height = H; const tg = t.getContext('2d')!; const img = tg.createImageData(W, H);
+        const rgb = regions.map((rg) => { const t = clamp(1 - rg.unrest / 100, 0, 1); return hslToRgb(rampHue(t, [350, 40, 150]), 0.5, 0.17 + t * 0.14); }); // same ramp as the other overlays, a touch more saturated
+        for (let i = 0; i < W * H; i++) { const r = idx[i]; if (r < 0) continue; const o = i * 4; const c3 = rgb[r]; img.data[o] = c3[0]; img.data[o + 1] = c3[1]; img.data[o + 2] = c3[2]; img.data[o + 3] = 217; }
+        tg.putImageData(img, 0, 0);
+        g.save(); g.imageSmoothingEnabled = false; g.drawImage(t, 0, 0, c.width, c.height); g.restore();
+      } catch { /* overlay optional */ }
     }
     this.staticCanvas = c; this.staticOverlay = overlay;
   }
@@ -657,6 +660,13 @@ export class MapRenderer {
   }
 }
 
+/** Hue for a 0..1 value along a three-stop hue ramp (mirrors `ramp`). */
+function rampHue(v: number, hues: [number, number, number]): number { const t = clamp(v, 0, 1); return t < 0.5 ? hues[0] + (hues[1] - hues[0]) * (t / 0.5) : hues[1] + (hues[2] - hues[1]) * ((t - 0.5) / 0.5); }
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  const k = (n: number) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
 function ramp(v: number, hues: [number, number, number]): string {
   const t = clamp(v, 0, 1);
   const h = t < 0.5 ? hues[0] + (hues[1] - hues[0]) * (t / 0.5) : hues[1] + (hues[2] - hues[1]) * ((t - 0.5) / 0.5);
