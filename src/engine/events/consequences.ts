@@ -286,10 +286,12 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     if (!person || !person.alive) return null;
     const c = w.countries[person.countryId];
     const isLeader = c?.leaderId === person.id;
-    const survives = rng.next() < 0.45 + person.personality.charisma * 0.3 - (isLeader ? (100 - c.approval) / 300 : 0);
+    const allies = person.relationships.filter((r) => r.strength > 0.4 && w.people[r.target.id]?.alive).length;
+    const enemies = person.relationships.filter((r) => r.strength < -0.4 && w.people[r.target.id]?.alive).length;
+    const survives = rng.next() < 0.45 + person.personality.charisma * 0.3 - (isLeader ? (100 - c.approval) / 300 : 0) + allies * 0.05 - enemies * 0.06;
     if (survives) return createEvent(w, {
       category: 'political', type: 'scandal.survived', severity: 2, causedBy: src.id, title: `${person.name} weathers the scandal`,
-      description: `Despite weeks of headlines, ${person.name} ${rng.pick(['kept the support of key allies', 'rode out the storm', 'turned the story into an attack on the media'])}. The accusations remain unresolved.`,
+      description: `Despite weeks of headlines, ${person.name} ${allies > 0 ? `kept the support of ${allies} key all${allies > 1 ? 'ies' : 'y'}` : rng.pick(['rode out the storm', 'turned the story into an attack on the media'])}. The accusations remain unresolved.`,
       location: { cityId: person.cityId }, actors: [ref('person', person.id)], effects: [fx('person', person.id, 'reputation', 10)], tags: ['scandal'],
     });
     if (isLeader && c) return A.changeLeader(w, rng, c, 'resignation', src.id);
