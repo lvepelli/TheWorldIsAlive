@@ -52,7 +52,7 @@ npm test           # engine unit tests (vitest)
 npm run e2e        # headless browser smoke test on desktop + mobile viewports (requires `npm run build` first)
 DEPLOY_URL=https://lvepelli.github.io/TheWorldIsAlive/ node tests/e2e/deployed.mjs   # QA a deployed site (writes docs/qa)
 node tests/e2e/serve.mjs 4173                                                         # serve dist/ locally with SPA fallback
-npm run package    # zip the whole project (without node_modules/dist) → the-world-is-alive.zip
+npm run package    # zip the whole project (without node_modules/dist and the CI screenshots in docs/qa) → the-world-is-alive.zip (~3.5 MB)
 node scripts/icons.mjs   # regenerate PNG icons from public/icons/icon.svg
 ```
 
