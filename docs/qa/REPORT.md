@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/df0d2ad998d2b57d2393f02de947dfc53f5ddb64/index.html
-Date: 2026-09-09T04:21:21.539Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/9e74b98dfa2a51ffa18bb6317aed3a64d523f22f/index.html
+Date: 2026-09-09T04:29:06.505Z
 
 ## android-360 (360×800)
 
@@ -10,8 +10,8 @@ Date: 2026-09-09T04:21:21.539Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9698 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (9674 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -38,8 +38,8 @@ Date: 2026-09-09T04:21:21.539Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8157 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8051 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -66,8 +66,8 @@ Date: 2026-09-09T04:21:21.539Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8405 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8380 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -94,8 +94,8 @@ Date: 2026-09-09T04:21:21.539Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8172 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8143 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
