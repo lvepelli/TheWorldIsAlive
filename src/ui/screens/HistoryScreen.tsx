@@ -107,6 +107,8 @@ export function buildChronicle(world: World, sagas: { root: WorldEvent; chain: W
   const historic = world.events.filter((e) => e.historic && e.severity >= 4);
   if (historic.length) { L.push('## Historic events', ''); for (const e of historic.slice(-40)) L.push(`- ${formatDate(e.day, y, 'short')} — ${e.title}${e.playerIntervention ? ' ✦' : ''}`); L.push(''); }
   if (world.interventions.length) { L.push('## Divine interventions', ''); for (const i of world.interventions.slice(-30)) L.push(`- ${formatDate(i.day, y, 'short')} — ${i.interpretation ?? i.command}`); L.push(''); }
+  const swayed = Object.values(world.people).map((p) => ({ p, h: p.history.filter((x) => x.text.startsWith('Persuaded by an interviewer') || x.text.startsWith('Steered ') || x.text.startsWith('Ended the war')) })).filter((x) => x.h.length);
+  if (swayed.length) { L.push('## Conversations that mattered', ''); for (const { p, h } of swayed.slice(0, 20)) for (const e of h) L.push(`- ${formatDate(e.day, y, 'short')} — ${p.name}: ${e.text}`); L.push(''); }
   const cs = Object.values(world.countries).sort((a, b) => b.gdp - a.gdp);
   L.push('## The world today', '', `${cs.length} nations, ${(cs.reduce((a, c) => a + c.population, 0) / 1e9).toFixed(1)} billion people. Largest economy: ${cs[0]?.name}. Most fragile: ${cs.slice().sort((a, b) => a.stability - b.stability)[0]?.name}.`, '');
   return L.join('\n');

@@ -37,6 +37,7 @@
 - People: a "Changed course" panel lists characters you persuaded and what they did about it; the inspector marks an objective that came from an interview.
 - Dialogue: a "You should make peace." starter chip makes persuasion discoverable.
 - Hardening: persuaded objectives are sanitized (no quotes, angle brackets or newlines) and capped at 80 characters; advice spanning lines still counts.
+- Chronicle export gains a "Conversations that mattered" section: who you persuaded and what they did.
 
 ## 0.5.0 — rivals, fronts and editorials
 
