@@ -28,14 +28,14 @@ The player is an observer with divine powers. The world has no win condition; th
 
 | Section | Purpose |
 | --- | --- |
-| World | Living map; overlays (political, stability, wealth, tension, mood, tech); tap to inspect; ticker |
-| Live | Chronological event stream with category/severity filters and the latest world summary |
+| World | Living map; overlays (political, stability, wealth, tension, mood, tech, trade); war fronts, trade arcs, day/night; tap to inspect; keyboard navigation; ticker |
+| Live | Daily and period summaries, developing-story cards (active causal chains), chronological event stream with category/severity filters |
 | News | Outlets with bias, style, credibility, audience; multiple outlets spin the same event differently |
 | Social | Posts, replies, likes/reposts, viral flag, trending hashtags, global mood |
 | Markets | World composite, national indexes, commodities, listed companies, movers |
 | People | Searchable/sortable figures; profiles with personality, objectives, life story, memories, sentiment |
 | Orgs | Governments, parties, movements, companies, research, military, alliances, NGOs, unions, religions, criminal networks, media |
-| History | Timeline by month with filters (year, country, category), your interventions with downstream counts, period summaries |
+| History | Timeline by month with filters (year, country, category), named sagas, your interventions with downstream counts, period summaries, Markdown chronicle export |
 | God | Freeform command with live interpretation preview; delayed commands ("In 3 months, …") recorded as omens and carried out on the day; 37 presets in 7 groups; intervention log |
 
 ## God Mode
