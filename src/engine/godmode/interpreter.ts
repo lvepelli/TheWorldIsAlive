@@ -20,6 +20,8 @@ export interface GodPlan {
   customTitle?: string;
   customDescription?: string;
   magnitude?: number;
+  /** Days from now to carry out the plan (0/undefined = immediately). Parsed from "in 3 months", "next year", "after two weeks". */
+  delayDays?: number;
   targets: EntityRef[];
 }
 
@@ -98,6 +100,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     const people = findPeople(world, lower);
     const sector = findSector(lower);
     const magnitude = findMagnitude(lower);
+    const delayDays = findDelay(lower);
     let intent: Intent | undefined; let match: RegExpMatchArray | null = null;
     for (const i of INTENTS) { const m = t.match(i.test); if (m) { intent = i; match = m; break; } }
     const params: Record<string, string> = intent?.params && match ? intent.params(match) : {};
@@ -139,6 +142,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
 
     const interpretation = [
       `Intent: ${labelFor(action)}${magnitude !== 1 ? ` (magnitude ×${magnitude})` : ''}.`,
+      delayDays ? `Scheduled: in ${describeDelay(delayDays)}.` : '',
       countries.length ? `Countries: ${countries.map((c) => c.name).join(', ')}.` : '',
       companies.length ? `Company: ${companies[0].name}.` : '',
       people.length ? `${people.length > 1 ? 'People' : 'Person'}: ${people.slice(0, 2).map((p) => p.name).join(' and ')}.` : '',
@@ -146,10 +150,29 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
       ...notes,
     ].filter(Boolean).join(' ');
 
-    return { action, params, interpretation, confidence: Math.min(1, confidence), magnitude, targets, customTitle: undefined, customDescription: t.length > 20 ? capitalize(t.replace(/\s+/g, ' ')) : undefined };
+    return { action, params, interpretation, confidence: Math.min(1, confidence), magnitude, delayDays: delayDays || undefined, targets, customTitle: undefined, customDescription: t.length > 20 ? capitalize(t.replace(/\s+/g, ' ')) : undefined };
   }
 }
 
+const NUM_WORDS: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
+/** "in 3 months", "after two weeks", "next year", "a decade from now" → days. 0 when absent. */
+export function findDelay(lower: string): number {
+  const unit = (u: string) => (u.startsWith('day') ? 1 : u.startsWith('week') ? 7 : u.startsWith('month') ? 30 : u.startsWith('year') ? 365 : u.startsWith('decade') ? 3650 : 0);
+  const m = lower.match(/\b(?:in|after|within)\s+(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+(days?|weeks?|months?|years?|decades?)\b/);
+  if (m) { const n = NUM_WORDS[m[1]] ?? parseInt(m[1], 10); return Math.max(1, Math.round(n * unit(m[2]))); }
+  const m2 = lower.match(/\b(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+(days?|weeks?|months?|years?|decades?)\s+from\s+now\b/);
+  if (m2) { const n = NUM_WORDS[m2[1]] ?? parseInt(m2[1], 10); return Math.max(1, Math.round(n * unit(m2[2]))); }
+  const m3 = lower.match(/\bnext\s+(week|month|year|decade)\b/);
+  if (m3) return unit(m3[1]);
+  if (/\b(tomorrow)\b/.test(lower)) return 1;
+  return 0;
+}
+export function describeDelay(days: number): string {
+  if (days % 365 === 0) return `${days / 365} year${days === 365 ? '' : 's'}`;
+  if (days % 30 === 0) return `${days / 30} month${days === 30 ? '' : 's'}`;
+  if (days % 7 === 0) return `${days / 7} week${days === 7 ? '' : 's'}`;
+  return `${days} day${days === 1 ? '' : 's'}`;
+}
 function labelFor(action: string): string {
   return { 'company-breakthrough': 'new company with a breakthrough', breakthrough: 'technological breakthrough' }[action] ?? action.replace(/-/g, ' ');
 }

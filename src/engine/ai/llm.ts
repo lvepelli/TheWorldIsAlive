@@ -83,7 +83,7 @@ export class LLMGodInterpreter implements GodCommandInterpreter {
       const vars = { actions, countries, companies, people, command: text };
       const out = parseJSON<Partial<GodPlan>>(await chat(this.cfg, fill(PROMPTS.god_command.system, vars), fill(PROMPTS.god_command.user, vars), 400));
       if (!out?.action || (!GOD_PRESETS.some((p) => p.id === out.action) && out.action !== 'company-breakthrough')) return local;
-      return { action: out.action, params: out.params ?? {}, interpretation: out.interpretation ?? local.interpretation, confidence: typeof out.confidence === 'number' ? out.confidence : 0.8, magnitude: out.magnitude ?? local.magnitude, customDescription: out.customDescription ?? local.customDescription, targets: local.targets };
+      return { action: out.action, params: out.params ?? {}, interpretation: out.interpretation ?? local.interpretation, confidence: typeof out.confidence === 'number' ? out.confidence : 0.8, magnitude: out.magnitude ?? local.magnitude, delayDays: typeof out.delayDays === 'number' && out.delayDays > 0 ? Math.round(out.delayDays) : local.delayDays, customDescription: out.customDescription ?? local.customDescription, targets: local.targets };
     } catch (e) { console.warn('[llm] god interpretation failed, using local', e); return local; }
   }
 }

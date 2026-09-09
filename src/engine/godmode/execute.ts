@@ -6,7 +6,9 @@ import type { World, WorldEvent, Intervention } from '../types';
 import { presetById } from './presets';
 import type { GodPlan } from './interpreter';
 import * as A from '../events/actions';
-import { react } from '../events/consequences';
+import { react, CONSEQUENCE_RULES } from '../events/consequences';
+import { createEvent, schedule } from '../events/engine';
+import { describeDelay } from './interpreter';
 import { nextId } from '../ids';
 import { generateNews, generateSocial, updateTrending } from '../simulation/information';
 import { tickMarkets } from '../simulation/markets';
@@ -50,3 +52,33 @@ export function executePlan(world: World, rng: RNG, plan: GodPlan, rawCommand: s
   world.rngState = rng.state();
   return { ok: true, event: ev, intervention, message: plan.interpretation };
 }
+
+/**
+ * Delayed interventions: "In 3 months, X declares war on Y" records a prophecy event now and
+ * carries the plan out when the day comes (via the consequence engine, so it survives saves).
+ */
+export function scheduleIntervention(world: World, rng: RNG, plan: GodPlan, rawCommand: string): GodResult {
+  const days = Math.max(1, Math.round(plan.delayDays ?? 0));
+  const when = describeDelay(days);
+  const targetRef = plan.targets[0];
+  const country = targetRef?.kind === 'country' ? world.countries[targetRef.id] : targetRef?.kind === 'person' ? world.countries[world.people[targetRef.id]?.countryId] : targetRef?.kind === 'company' ? world.countries[world.companies[targetRef.id]?.countryId] : undefined;
+  const omen = createEvent(world, {
+    category: 'cultural', type: 'prophecy', severity: 2, causedBy: 'player', playerIntervention: true,
+    title: `An omen: ${rawCommand.replace(/^\s*(in|after|within)\s+[^,]+,\s*/i, '').replace(/[.!]$/, '')}`,
+    description: `Seers, algorithms and drunk prophets agree: in ${when}, something is going to happen. ${country ? `${country.adjective} officials dismissed the rumours.` : 'Nobody in power is listening.'}`,
+    location: country ? { countryId: country.id } : {}, actors: plan.targets.slice(0, 3), effects: [], tags: ['prophecy', 'omen'],
+    data: { delayDays: days },
+  });
+  schedule(world, 'god.scheduled', omen.id, days, { plan: { ...plan, delayDays: 0 }, raw: rawCommand });
+  world.rngState = rng.state();
+  return { ok: true, event: omen, message: `${plan.interpretation} The world will feel it in ${when}.` };
+}
+
+CONSEQUENCE_RULES['god.scheduled'] = (world, rng, src, payload) => {
+  const plan = payload.plan as GodPlan | undefined; const raw = (payload.raw as string | undefined) ?? plan?.interpretation ?? 'scheduled intervention';
+  if (!plan) return null;
+  const res = executePlan(world, rng, plan, raw);
+  if (!res.ok || !res.event) return null;
+  res.event.causedBy = src.id;
+  return res.event;
+};

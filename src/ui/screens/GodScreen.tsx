@@ -24,6 +24,8 @@ function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['wor
     people[1] && people[2] ? `${people[1].name} and ${people[2].name} become bitter rivals.` : `${weak.name} calls a snap election.`,
     people[3] && people[4] ? `${people[3].name} falls in love with ${people[4].name}.` : `The people of ${weak.name} go to the polls.`,
     `${cs.find((c) => !c.electionEvery)?.name ?? weak.name} holds its first free election.`,
+    `In 3 months, ${a.name} declares war on ${b.name}.`,
+    `Next year, a pandemic begins in ${weak.name}.`,
     co ? `${co.name} invents a working fusion reactor.` : `${a.adjective} scientists discover life on another world.`,
     `${weak.name} erupts in revolution.`,
     `Oil is discovered in ${b.name}.`,

@@ -9,7 +9,7 @@ import { RNG } from '@/engine/rng';
 import { generateWorld } from '@/engine/generator/world';
 import { tickDay } from '@/engine/simulation/tick';
 import { createStore, serialize, deserialize, type SaveMeta } from '@/engine/persistence/storage';
-import { executePlan } from '@/engine/godmode/execute';
+import { executePlan, scheduleIntervention } from '@/engine/godmode/execute';
 import type { GodPlan } from '@/engine/godmode/interpreter';
 import { godInterpreter, narrativeEnhancer } from '@/engine/ai';
 import { audio } from '@/ui/audio';
@@ -174,7 +174,7 @@ export const useGame = create<GameState>((set, get) => ({
   },
   runGodPlan(plan, raw) {
     const { world, rng } = get(); if (!world || !rng) return null;
-    const res = executePlan(world, rng, plan, raw);
+    const res = plan.delayDays && plan.delayDays > 0 ? scheduleIntervention(world, rng, plan, raw) : executePlan(world, rng, plan, raw);
     if (res.ok && res.event) {
       audio.play('god');
       const ev = res.event;

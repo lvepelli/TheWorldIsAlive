@@ -36,7 +36,7 @@ The player is an observer with divine powers. The world has no win condition; th
 | People | Searchable/sortable figures; profiles with personality, objectives, life story, memories, sentiment |
 | Orgs | Governments, parties, movements, companies, research, military, alliances, NGOs, unions, religions, criminal networks, media |
 | History | Timeline by month with filters (year, country, category), your interventions with downstream counts, period summaries |
-| God | Freeform command with live interpretation preview; 37 presets in 7 groups; intervention log |
+| God | Freeform command with live interpretation preview; delayed commands ("In 3 months, …") recorded as omens and carried out on the day; 37 presets in 7 groups; intervention log |
 
 ## God Mode
 
