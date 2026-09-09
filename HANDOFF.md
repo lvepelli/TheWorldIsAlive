@@ -42,7 +42,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 - **LLM path is tested only against a mocked endpoint** (`tests/llm.test.ts`); no live provider was available during development. `chat()` parsing supports OpenAI and Anthropic shapes.
 - **Audio** is a small synthesized set; no ambient music assets.
 - **Service worker** caches the shell only; hashed assets are cached on first fetch (cache-first). Bump `CACHE` in `sw.js` when you need to force refresh.
-- **Save size** grows with events (cap 4000) — ~1–4 MB JSON. Fine for IndexedDB; consider compression for cloud sync.
+- **Save size**: ~1 MB at start, ~7–8 MB after ten simulated years (events cap 3000, yearly `compact()` in `simulation/tick.ts` strips stale detail). Fine for IndexedDB; the autosave serializes on the main thread every 45 s of activity — move it to a worker or compress if phones show jank. Dead people still keep full profiles (~2 KB each).
 - **No i18n**; all text is English and template-generated.
 
 ## Known bugs / rough edges
