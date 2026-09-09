@@ -175,6 +175,32 @@ export function yearlyTick(world: World, rng: RNG): WorldEvent[] {
       actors: worst.map((c) => ref('country', c.id)), effects: worst.map((c) => fx('country', c.id, 'climateRisk', 2)), tags: ['climate', 'environment', 'global'],
     }));
   }
+  // Harvest report: farmland, water, climate stress and this year's droughts and floods decide each country's yield;
+  // the world's shortfall or surplus moves grain, and the worst- and best-fed nations feel it.
+  {
+    const cs = Object.values(world.countries);
+    const yearEvents = world.events.filter((e) => world.day - e.day < 365 && e.type.startsWith('disaster.'));
+    const results = cs.map((c) => {
+      const drought = yearEvents.some((e) => e.type === 'disaster.drought' && e.location.countryId === c.id);
+      const flood = yearEvents.some((e) => e.type === 'disaster.flood' && e.location.countryId === c.id);
+      const potential = (c.resources.farmland ?? 50) / 100 * (0.5 + (c.resources.water ?? 50) / 200);
+      const actual = potential * (1 - c.climateRisk / 300) * (drought ? 0.6 : 1) * (flood ? 0.85 : 1) * (0.85 + rng.next() * 0.3) * (1 + c.technology / 500);
+      return { c, ratio: actual / Math.max(0.05, potential), weight: c.population };
+    });
+    const totalW = results.reduce((s, r) => s + r.weight, 0);
+    const worldRatio = results.reduce((s, r) => s + r.ratio * r.weight, 0) / Math.max(1, totalW);
+    const poor = results.filter((r) => r.ratio < 0.72).sort((a, b) => a.ratio - b.ratio);
+    const bumper = results.filter((r) => r.ratio > 1.12).sort((a, b) => b.ratio - a.ratio);
+    const grainPct = clamp((1 - worldRatio) * 0.6, -0.12, 0.25);
+    out.push(createEvent(world, {
+      category: 'economic', type: 'harvest.report', severity: poor.length >= 4 || grainPct > 0.12 ? 3 : 2,
+      title: worldRatio < 0.85 ? `${year} harvest: the world's granaries fall short` : worldRatio > 1.05 ? `${year} harvest: a bumper year` : `${year} harvest: an ordinary year`,
+      description: `${poor.length ? `Poor harvests in ${poor.slice(0, 3).map((r) => r.c.name).join(', ')}${poor.length > 3 ? ` and ${poor.length - 3} more` : ''}.` : 'No major shortfalls.'} ${bumper.length ? `Bumper crops in ${bumper.slice(0, 2).map((r) => r.c.name).join(' and ')}.` : ''} World output ${worldRatio < 1 ? `${((1 - worldRatio) * 100).toFixed(0)}% below` : `${((worldRatio - 1) * 100).toFixed(0)}% above`} expectations; grain ${grainPct > 0 ? 'firmed' : 'eased'}.`,
+      location: poor[0] ? { countryId: poor[0].c.id } : {}, actors: [...poor.slice(0, 3), ...bumper.slice(0, 2)].map((r) => ref('country', r.c.id)),
+      effects: [...poor.map((r) => fx('country', r.c.id, 'happiness', -2)), ...poor.map((r) => fx('country', r.c.id, 'unrest', 2)), ...bumper.map((r) => fx('country', r.c.id, 'happiness', 2))],
+      tags: ['harvest', 'food', 'economy'], data: { worldRatio, shocks: [{ commodityId: 'grain', pct: grainPct }, { sector: 'agriculture', pct: grainPct > 0 ? 0.03 : -0.01 }] },
+    }));
+  }
   // World Games every four years: a global cultural moment with a host and a champion.
   if (year % 4 === 0) {
     const cs = Object.values(world.countries);

@@ -49,6 +49,7 @@
 - Weather and food: droughts and wildfires favour dry, front-free regions in the dry season (half of them now land there); droughts push grain prices up (about 6% per magnitude), floods a little, hurricanes nudge oil.
 - Food-price crisis chain: when grain rises more than 25% in two months a global "Food prices spiral" event hits the poorest third of nations (happiness, unrest, inflation), followed by bread riots in one of them and emergency grain shipments from a rich country that ease prices and relations. About four such crises a decade organically; droughts, floods and wars feed them.
 - God Mode: Famine preset (harvests fail, grain spikes, the food-crisis chain follows); the interpreter understands "a famine strikes X", "harvests fail", "food prices spiral". Sagas rooted in a food crisis are named ("The hungry year").
+- Harvests: a yearly harvest report — each nation's yield follows farmland, water, climate stress, technology and this year's droughts and floods; poor harvests cost happiness and add unrest, bumper crops cheer, and the world's shortfall or surplus moves grain (and so the food-crisis chain).
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.5.0 — rivals, fronts and editorials
