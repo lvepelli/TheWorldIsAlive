@@ -122,7 +122,9 @@ export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
       }
     }
     // Coup / collapse risk for very unstable states
-    if (c.stability < 25 && rng.next() < 0.06) out.push(c.military > 40 && rng.bool(0.6) ? A.changeLeader(world, rng, c, 'coup') : A.collapseGovernment(world, rng, c));
+    // Upheaval: a state at the edge collapses or suffers a coup, but not twice within two years — transitional regimes get a chance.
+    const recentUpheaval = c.history.some((h) => /Government collapsed|Coup\.|Revolution\./.test(h.text) && world.day - h.day < 730);
+    if (c.stability < 25 && !recentUpheaval && rng.next() < 0.06) out.push(c.military > 40 && rng.bool(0.6) ? A.changeLeader(world, rng, c, 'coup') : A.collapseGovernment(world, rng, c));
     else if (c.unrest > 75 && c.stability < 40 && rng.next() < 0.08) out.push(A.changeLeader(world, rng, c, 'revolution'));
   }
   // Organizations: support tracks agenda relevance

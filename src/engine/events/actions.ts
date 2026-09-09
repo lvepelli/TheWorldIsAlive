@@ -147,6 +147,7 @@ export function changeLeader(world: World, rng: RNG, c: Country, how: 'election'
     if (how === 'coup' && rng.bool(0.3)) { old.alive = false; old.history.push({ day: world.day, text: 'Killed during the coup.' }); }
   }
   if (how === 'coup') { c.government = 'military-junta'; c.freedom = clamp(c.freedom - 25, 0, 100); c.electionEvery = 0; }
+  if (how === 'coup' || how === 'revolution') c.history.push({ day: world.day, text: how === 'coup' ? 'Coup.' : 'Revolution.' });
   if (how === 'revolution') { c.government = rng.pick(['republic', 'democracy', 'council', 'autocracy']); c.electionEvery = c.government === 'autocracy' ? 0 : 5; c.nextElectionYear = yearOf(world.day, world.meta.startYear) + c.electionEvery; }
   const wasActivist = next.profession === 'activist';
   if (old) shiftRelationships(world, old.id, how === 'coup' || how === 'revolution' ? -0.3 : -0.1, (r) => r.type !== 'family');
@@ -189,7 +190,8 @@ export function changeLeader(world: World, rng: RNG, c: Country, how: 'election'
 
 export function collapseGovernment(world: World, rng: RNG, c: Country, cause: Cause = 'simulation', player = false): WorldEvent {
   const old = leaderOf(world, c);
-  c.stability = clamp(c.stability - 30, 0, 100);
+  c.stability = clamp(Math.max(15, c.stability - 30), 0, 100); // a transitional council restores basic order
+  c.history.push({ day: world.day, text: 'Government collapsed.' });
   c.unrest = clamp(c.unrest + 25, 0, 100);
   c.gdpGrowth -= 4;
   c.government = 'council';
