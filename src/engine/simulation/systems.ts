@@ -175,6 +175,26 @@ export function yearlyTick(world: World, rng: RNG): WorldEvent[] {
       actors: worst.map((c) => ref('country', c.id)), effects: worst.map((c) => fx('country', c.id, 'climateRisk', 2)), tags: ['climate', 'environment', 'global'],
     }));
   }
+  // Rising seas: in the most climate-stressed nations, coastal cities lose ground each year; big losses become a migration source.
+  {
+    const stressed = Object.values(world.countries).filter((c) => c.climateRisk > 65);
+    for (const c of stressed) {
+      const coastal = c.cityIds.map((id) => world.cities[id]).filter((x) => x && x.coastal);
+      if (!coastal.length || rng.next() > (c.climateRisk - 65) / 60) continue;
+      const city = rng.pickWeighted(coastal, (x) => x.population);
+      const share = rng.float(0.01, 0.04) * (c.climateRisk / 80);
+      const displaced = Math.round(city.population * share);
+      city.population = Math.max(1000, city.population - displaced); city.prosperity = clamp(city.prosperity - 4, 1, 100);
+      c.population = Math.max(10_000, c.population - Math.round(displaced * 0.3));
+      out.push(createEvent(world, {
+        category: 'environmental', type: 'sea.rise', severity: displaced > 500_000 ? 3 : 2,
+        title: `${city.name} loses ground to the sea`,
+        description: `${rng.pick(['King tides', 'Storm surges', 'A winter of floods'])} drove ${(displaced / 1e3).toFixed(0)},000 people out of low-lying districts of ${city.name}. ${rng.pick(['Sea walls are years behind schedule.', 'Insurers have stopped writing policies there.', `${c.name} asked for international help.`])}`,
+        location: { cityId: city.id, countryId: c.id }, actors: [ref('country', c.id), ref('city', city.id)],
+        effects: [fx('country', c.id, 'happiness', -2), fx('country', c.id, 'debt', 2), fx('city', city.id, 'unrest', 3)], tags: ['climate', 'sea', c.code], data: { displaced },
+      }));
+    }
+  }
   // Harvest report: farmland, water, climate stress and this year's droughts and floods decide each country's yield;
   // the world's shortfall or surplus moves grain, and the worst- and best-fed nations feel it.
   {

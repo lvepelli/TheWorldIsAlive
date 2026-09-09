@@ -34,6 +34,7 @@
 - Grain export bans: during a food crisis a breadbasket nation may seal its silos (grain +4%, importers' inflation and relations suffer, domestic relief); also a God preset and interpreter phrasing ("X bans grain exports").
 - Water disputes: a thirsty nation (water under 35) with a water-rich neighbour sees relations sour over dams, diversions and shared aquifers (about two flare-ups a year world-wide), feeding the existing border-clash and war logic.
 - History → Sagas: chains rooted in a tension rise are named ("The water war", "Rivers and grudges", "The road to war in X").
+- Rising seas: each year the most climate-stressed nations (risk above 65) can lose a coastal district — "X loses ground to the sea" displaces people, dents prosperity and, when large, sends climate migrants to a safer neighbour. About one such loss a year world-wide, most of them chaining into migration.
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.6.0 — weather, premises and the long game

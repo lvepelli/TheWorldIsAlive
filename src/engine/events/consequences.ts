@@ -351,6 +351,16 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     const c = rng.pickWeighted(exporters, (x) => (x.resources.farmland ?? 50) + (100 - x.freedom) / 2);
     return A.grainExportBan(w, rng, c, src.id);
   },
+  'sea.migration': (w, rng, src) => {
+    const c = c$(w, src.location.countryId); const displaced = (src.data?.displaced as number | undefined) ?? 0;
+    if (!c || displaced < 200_000) return null;
+    const dest = c.neighbors.map((id) => w.countries[id]).filter((x) => x && x.climateRisk < c.climateRisk - 10 && !x.atWarWith.includes(c.id));
+    if (!dest.length) return null;
+    const to = rng.pickWeighted(dest, (x) => x.stability + x.gdp / 20);
+    const ev = A.migrationWave(w, rng, c, to, displaced * rng.float(0.3, 0.6), src.id);
+    ev.description += ' They are the first climate migrants the border has seen.';
+    return ev;
+  },
   // ---- Summits with agendas ----
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
@@ -838,6 +848,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'food.crisis', rule: 'food.aid', delay: [10, 40], p: 0.7 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.migration', delay: [20, 70], p: 0.6 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.exportban', delay: [3, 25], p: 0.45 },
+  { match: (e) => e.type === 'sea.rise', rule: 'sea.migration', delay: [15, 60], p: 0.6 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
   { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },
