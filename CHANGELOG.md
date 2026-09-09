@@ -24,6 +24,7 @@
 - Characters: an executive passed over for the CEO job becomes the new chief's rival (with a new objective), feeding the feud, scandal and funding rules.
 - Culture: yearly Laurel Prizes for art and science (fame, wealth and influence for the laureates; a `prize.laurels` event), alongside the four-yearly World Games.
 - Politics: movements grow over several rounds, fade when the mood calms (monthly support drift), and a surging movement fields its leader as the main election challenger — protest movements can now win power. A country sustains at most four movements; new energy merges into the strongest.
+- News: an "Editorials" filter chip surfaces the weekly opinion pieces (they were buried under daily coverage).
 - Balance: polarization now mean-reverts toward what unrest, war and mood sustain (it used to pin at 97 in a third of countries after a decade); movement support boosts from rallies, protests and tycoons reduced. After 10 years on the `diag` seed: 58 live movements (was 226), 2 of 32 countries above 80 polarization (was 14).
 - Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.

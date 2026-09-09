@@ -10,7 +10,7 @@ export function NewsScreen(): React.ReactElement {
   const [outlet, setOutlet] = useState<string>('all');
   const [limit, setLimit] = useState(40);
   const outlets = useMemo(() => Object.values(world.outlets).sort((a, b) => b.audience - a.audience), [world]);
-  const articles = useMemo(() => world.news.filter((n) => outlet === 'all' || n.outletId === outlet).slice(-limit).reverse(), [world, version, outlet, limit]);
+  const articles = useMemo(() => world.news.filter((n) => outlet === 'all' || (outlet === 'editorials' ? n.editorial : n.outletId === outlet)).slice(-limit).reverse(), [world, version, outlet, limit]);
   const lead = articles.find((a) => (world.events.find((e) => e.id === a.eventId)?.severity ?? 0) >= 4) ?? articles[0];
   return (
     <div className="screen">
@@ -21,6 +21,7 @@ export function NewsScreen(): React.ReactElement {
         </div>
         <div className="chips scroll">
           <button className={`chip clickable ${outlet === 'all' ? 'active' : ''}`} onClick={() => setOutlet('all')}>All outlets</button>
+          <button className={`chip clickable ${outlet === 'editorials' ? 'active' : ''}`} onClick={() => setOutlet('editorials')} title="Weekly opinion pieces, one per outlet, spun through its bias">Editorials</button>
           {outlets.map((o) => <button key={o.id} className={`chip clickable ${outlet === o.id ? 'active' : ''}`} onClick={() => setOutlet(o.id)}><span className="outlet-dot" style={{ background: o.color }} />{o.name}</button>)}
         </div>
         {outlet !== 'all' && (() => { const o = world.outlets[outlet]; return o ? (
