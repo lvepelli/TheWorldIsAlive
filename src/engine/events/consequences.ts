@@ -493,6 +493,18 @@ Object.assign(CONSEQUENCE_RULES, {
     const c = rng.pickWeighted(Object.values(w.countries), (x) => x.polarization + (100 - x.happiness));
     return createEvent(w, { category: 'social', type: 'protest', severity: 2, causedBy: src.id, title: `Anti-lockdown protests spread in ${c.name}`, description: `Months into the pandemic, crowds in ${A.capitalOf(w, c).name} defied restrictions, chanting against "medical tyranny". ${rng.pick(['Police stood back.', 'Clashes left dozens injured.', 'The government blamed foreign disinformation.'])}`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'polarization', 5), fx('country', c.id, 'unrest', 4), fx('country', c.id, 'approval', -3)], tags: ['protest', 'pandemic', c.code] });
   },
+  'election.honeymoon': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id); const leader = c ? w.people[c.leaderId] : undefined;
+    if (!c || !leader) return null;
+    const promise = rng.pick(['a 100-day reform program', 'an anti-corruption commission', 'a national infrastructure plan', 'tax relief for families', 'a green industrial strategy', 'a crackdown on crime']);
+    return createEvent(w, { category: 'political', type: 'policy', severity: 2, causedBy: src.id, title: `${leader.name} launches ${promise}`, description: `Fresh from victory, ${leader.name} used the honeymoon to announce ${promise}. ${rng.pick(['Approval ticked up.', 'The opposition called it theatre.', 'Markets liked what they heard.'])}`, location: { countryId: c.id }, actors: [ref('person', leader.id), ref('country', c.id)], effects: [fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', 2), fx('country', c.id, 'debt', 2)], tags: ['policy', 'election', c.code], data: { policy: promise } });
+  },
+  'election.disputed': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c || c.corruption < 60) return null;
+    const city = A.capitalOf(w, c);
+    return createEvent(w, { category: 'social', type: 'protest.mass', severity: 3, causedBy: src.id, title: `Crowds in ${city.name} reject "stolen" election`, description: `Opposition supporters flooded ${city.name} claiming the vote was rigged. International observers reported ${rng.pick(['ballot-box stuffing', 'blocked polling stations', 'a suspiciously fast count', 'intimidation of monitors'])}.`, location: { cityId: city.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'unrest', 8), fx('country', c.id, 'approval', -6), fx('country', c.id, 'polarization', 6)], tags: ['protest', 'election', c.code] });
+  },
   'espionage.tension': (w: World, rng: RNG, src: WorldEvent) => {
     const [a, b] = src.actors.filter((x) => x.kind === 'country').map((x) => w.countries[x.id]);
     if (!a || !b) return null;
@@ -545,6 +557,8 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'espionage', rule: 'espionage.tension', delay: [5, 30], p: 0.6 },
   { match: (e) => e.type === 'automation.shock', rule: 'automation.politics', delay: [20, 120], p: 0.9 },
   { match: (e) => e.type === 'leader.coup', rule: 'coup.sanctions', delay: [7, 40], p: 0.75 },
+  { match: (e) => e.type === 'leader.election', rule: 'election.honeymoon', delay: [10, 60], p: 0.8 },
+  { match: (e) => e.type === 'election.incumbent', rule: 'election.disputed', delay: [2, 12], p: 0.7 },
   { match: (e) => e.type === 'tech.breakthrough' && e.severity >= 4, rule: 'tech.startups', delay: [30, 150], p: 0.8 },
   { match: (e) => e.type.startsWith('disaster.') && e.severity >= 4, rule: 'disaster.reconstruction', delay: [60, 150], p: 0.85 },
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
