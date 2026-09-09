@@ -51,7 +51,7 @@ export function weeklyTick(world: World, rng: RNG): void {
     c.inflation = clamp(c.inflation, -3, 200);
     c.unemployment += ((8 - c.gdpGrowth * 1.2 + (c.stability < 40 ? 4 : 0)) - c.unemployment) * 0.05 + rng.gauss(0, 0.1);
     c.unemployment = clamp(c.unemployment, 1, 55);
-    c.debt += (-(c.gdpGrowth - 2) * 0.05 + (c.atWarWith.length ? 0.6 : 0)) + rng.gauss(0, 0.05);
+    c.debt += (-(c.gdpGrowth - 2) * 0.05 + (c.atWarWith.length ? 0.6 : 0)) - Math.max(0, c.debt - 90) * 0.004 + rng.gauss(0, 0.05); // consolidation bites above 90 % of GDP so debt cannot spiral for decades
     c.debt = clamp(c.debt, 0, 400);
     // Happiness follows economy, freedom, stability and war
     const targetHappy = 50 + (c.gdpGrowth * 2) - (c.unemployment - 8) * 1.2 - Math.max(0, c.inflation - 4) * 1.2 + (c.freedom - 50) / 4 + (c.stability - 50) / 5 - (c.atWarWith.length ? 12 : 0) - (c.corruption - 40) / 6;
@@ -108,6 +108,10 @@ export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
     // Military slowly tracks GDP & threat
     const threat = c.neighbors.reduce((s, n) => s + ((c.relations[n] ?? 0) < -30 ? 1 : 0), 0) + c.atWarWith.length * 2;
     c.military = clamp(c.military + (threat * 0.4 + Math.log10(c.gdp + 1) * 0.15 - 0.5) * 0.4, 1, 100);
+    // Freedom drifts back toward what the form of government sustains (crackdowns and security laws fade unless renewed; content, stable publics win rights back).
+    const freedomBase: Record<string, number> = { democracy: 78, republic: 68, federation: 72, council: 56, technocracy: 50, monarchy: 45, oligarchy: 36, autocracy: 26, junta: 16, theocracy: 30 };
+    const freedomTarget = clamp((freedomBase[c.government] ?? 50) + (c.happiness - 50) * 0.15 - (c.atWarWith.length ? 8 : 0), 5, 95);
+    c.freedom = clamp(c.freedom + (freedomTarget - c.freedom) * 0.02, 0, 100);
     // Corruption drifts: freedom reduces it, unrest & low stability raise it
     c.corruption = clamp(c.corruption + (-(c.freedom - 50) / 100 + (50 - c.stability) / 150) * 0.5 + rng.gauss(0, 0.3), 1, 99);
     // Climate risk creeps up

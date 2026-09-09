@@ -37,7 +37,7 @@ export function regionsTick(world: World, rng: RNG): WorldEvent[] {
           title: `${r.name} demands autonomy from ${c.name}`,
           description: `${gov && leads ? `Governor ${gov.name} and ${rng.pick(['tens of thousands', 'a general strike', 'the regional council'])}` : rng.pick(['Tens of thousands', 'A general strike', 'Regional councillors', 'A petition signed by half the region'])} in ${anchor?.name ?? r.name} demanded self-rule for ${r.name}, citing ${rng.pick(['neglect by the capital', 'a language nobody in the capital speaks', 'taxes that flow one way', 'decades of broken promises'])}. ${rng.pick([`${c.name}'s government called it a matter for the courts.`, 'The regional flag flew from the town hall.', 'The capital sent negotiators — and police.'])}`,
           location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(gov && leads ? [ref('person', gov.id)] : [])],
-          effects: [fx('country', c.id, 'unrest', 3), fx('country', c.id, 'stability', -2)], tags: ['region', 'autonomy', c.code], data: { regionId: r.id, region: r.name, governorLed: !!(gov && leads) },
+          effects: [fx('country', c.id, 'unrest', 2), fx('country', c.id, 'stability', -1)], tags: ['region', 'autonomy', c.code], data: { regionId: r.id, region: r.name, governorLed: !!(gov && leads) },
         }));
       }
     }

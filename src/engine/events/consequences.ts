@@ -464,7 +464,7 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
         category: 'political', type: 'region.concession', severity: 2, causedBy: src.id, title: `${c.name} grants ${r.name} self-rule`,
         description: `A devolution law gives ${r.name} its own assembly, control of ${rng.pick(['schools and language', 'its tax revenue', 'policing', 'its ports and roads'])}. ${rng.pick(['Hardliners in the capital called it the beginning of the end.', 'The regional council met the same week.', 'Nationalists in the region said it was not enough — but they said it quietly.'])}`,
         location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id)],
-        effects: [fx('country', c.id, 'stability', 3), fx('country', c.id, 'freedom', 1), fx('country', c.id, 'unrest', -2)], tags: ['region', 'autonomy', c.code], data: { regionId: r.id, region: r.name },
+        effects: [fx('country', c.id, 'stability', 3), fx('country', c.id, 'freedom', 1), fx('country', c.id, 'unrest', -3)], tags: ['region', 'autonomy', c.code], data: { regionId: r.id, region: r.name },
       });
     }
     r.unrest = clamp(r.unrest + 12, 0, 100); r.autonomy = clamp(r.autonomy - 10, 0, 100); r.history.push({ day: w.day, text: `Crackdown ordered by ${c.name}.` });
@@ -474,7 +474,7 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       category: 'political', type: 'region.crackdown', severity: 3, causedBy: src.id, title: `${c.name} sends troops into ${r.name}`,
       description: `${c.name} answered the autonomy demand with ${rng.pick(['a curfew and mass arrests', 'soldiers on every square', 'the dissolution of the regional council', 'a ban on the regional language in schools'])}. ${dismissed ? `Governor ${dismissed} was dismissed and marched out of the regional palace. ` : ''}${rng.pick(['The region went quiet, and angrier.', 'Videos from ' + (anchor?.name ?? r.name) + ' spread faster than the censors.', 'Neighbours called for restraint.'])}`,
       location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(dismissed && gov ? [ref('person', gov.id)] : [])],
-      effects: [fx('country', c.id, 'freedom', -3), fx('country', c.id, 'unrest', 5), fx('country', c.id, 'approval', -3)], tags: ['region', 'crackdown', c.code], data: { regionId: r.id, region: r.name },
+      effects: [fx('country', c.id, 'freedom', -3), fx('country', c.id, 'unrest', 4), fx('country', c.id, 'approval', -3)], tags: ['region', 'crackdown', c.code], data: { regionId: r.id, region: r.name },
     });
   },
   'region.referendum.result': (w, rng, src) => {

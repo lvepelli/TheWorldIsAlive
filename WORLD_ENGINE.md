@@ -31,6 +31,8 @@ Years are 365 days (no leap years) for determinism; `time.ts` converts day index
 - Elections: if `electionEvery` and the year matches, incumbent wins with `p = approval/100 + 0.15·charisma − 0.1 (+0.15 if corruption>70)`, else `changeLeader('election')`.
 - Coups/collapse: stability < 25 → 6%/month; unrest > 75 & stability < 40 → 8%/month revolution.
 
+Monthly, freedom drifts 2 % toward a government baseline (democracy 78, federation 72, republic 68, council 56, technocracy 50, monarchy 45, oligarchy 36, theocracy 30, autocracy 26, junta 16) + 0.15·(happiness − 50) − 8 at war; weekly, debt above 90 % of GDP is consolidated at 0.4 % of the excess per week.
+
 ## Events
 
 Spontaneous rules (`spawn.ts`) with state-dependent weights: protest, scandal, tech breakthrough, company founded/bankrupt, corporate launch/flop, disaster, border clash, war declared/battle/ended, diplomacy (alliance/breakdown/tension), cyberattack, discovery, culture moment, crime, movement founded, epidemic, resource discovery, economic shock, person rise, summit, strike, assassination.

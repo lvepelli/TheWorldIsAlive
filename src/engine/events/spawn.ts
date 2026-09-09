@@ -414,14 +414,14 @@ SPAWN_RULES.push(
 );
 
 /** Countries hit by an automation shock in the last year. */
-function recentShocks(w: World): Set<string> { const out = new Set<string>(); for (let i = w.events.length - 1; i >= 0; i--) { const e = w.events[i]; if (w.day - e.day > 365) break; if (e.type === 'automation.shock' && e.location.countryId) out.add(e.location.countryId); } return out; }
+function recentShocks(w: World): Set<string> { const out = new Set<string>(); let n = 0; for (let i = w.events.length - 1; i >= 0; i--) { const e = w.events[i]; if (w.day - e.day > 365) break; if (e.type === 'automation.shock') { n++; if (e.location.countryId) out.add(e.location.countryId); } } if (n >= 8) out.add('*'); return out; } // '*' = world-wide cap of eight shocks a year reached
 
 SPAWN_RULES.push({
   id: 'automation.shock',
   // One shock per country per year: the same economy does not get 'disrupted' every few weeks.
-  weight: (w) => { const recent = recentShocks(w); return countries(w).reduce((s, c) => s + (c.technology > 78 && !recent.has(c.id) ? (c.technology - 78) / 120 : 0), 0); },
+  weight: (w) => { const recent = recentShocks(w); if (recent.has('*')) return 0; return countries(w).reduce((s, c) => s + (c.technology > 78 && !recent.has(c.id) ? (c.technology - 78) / 120 : 0), 0); },
   run: (w, rng) => {
-    const recent = recentShocks(w);
+    const recent = recentShocks(w); if (recent.has('*')) return null;
     const c = pickCountry(w, rng, (x) => (recent.has(x.id) ? 0 : Math.max(0, x.technology - 78)));
     if (c.technology <= 78 || recent.has(c.id)) return null;
     const cos = A.companiesOf(w, c.id).filter((x) => x.sector === 'technology');
