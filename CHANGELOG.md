@@ -28,6 +28,7 @@
 - Intro: "featured worlds" chips — one curated seed per premise (The Cold Peace, The Fractured Map, …) that fills the seed box; the premise tag under the preview updates as you pick.
 - Social: characters you interviewed talk about it on the feed the next day (hashtag Interview), quoting the question and their answer.
 - Organizations: movements, parties and religions show public support instead of influence in the list.
+- Dialogue: advice sticks — telling a character "you should …" can persuade an open-minded one (openness vs caution) to adopt it as a new objective, recorded in their life story and shown as "✦ took it to heart" in the conversation; cautious characters refuse in character.
 
 ## 0.5.0 — rivals, fronts and editorials
 

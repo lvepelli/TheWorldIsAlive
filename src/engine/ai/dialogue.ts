@@ -25,6 +25,12 @@ export class LocalDialogueProvider implements DialogueProvider {
     const tone = p.personality.charisma > 0.6 ? 'warm' : p.personality.caution > 0.6 ? 'guarded' : 'blunt';
     const prefix = tone === 'warm' ? voice(['Ah, a good question. ', 'I am glad you asked. ', '']) : tone === 'guarded' ? voice(['I will choose my words carefully. ', 'Off the record? ', '']) : voice(['Fine. ', 'Straight answer: ', '']);
     if (!p.alive) return voice(['(No answer comes. The dead keep their counsel.)', '(Silence.)']);
+    if (/\b(you should|you must|why don't you|i advise|i urge|please)\b/.test(q)) {
+      const open = p.personality.openness > 0.55 && p.personality.caution < 0.7;
+      const ask = question.replace(/^.*?\b(you should|you must|why don't you|i advise you to|i urge you to|please)\b\s*/i, '').replace(/[?.!]+$/, '').trim();
+      if (!ask) return prefix + voice(['Should what? Say it plainly.', 'Advice is cheap. Finish the sentence.']);
+      return prefix + (open ? voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}… You are not the first to say it. I will think about it — seriously.`, `Maybe you are right. If I ${ask}, the people who matter will notice. Let me consider it.`]) : voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}? No. I did not get here by taking advice from strangers.`, `I hear you. I will do the opposite, and you will see why.`]));
+    }
     if (/want|goal|objective|ambition|plan/.test(q)) return prefix + voice([`I want to ${p.objective}. Everything else is noise.`, `To ${p.objective}. ${p.personality.ambition > 0.7 ? 'And I will not stop until it is done.' : 'If the world allows it.'}`, `${p.personality.integrity > 0.6 ? 'Honestly?' : 'Officially?'} To ${p.objective}.`]);
     if (/country|nation|government|leader|state|home/.test(q) && c) {
       const leader = world.people[c.leaderId];
@@ -62,8 +68,22 @@ export const localDialogue = new LocalDialogueProvider();
  * Characters remember being interviewed: a low-weight memory that later answers,
  * social posts and the local provider can draw on. Shared by every provider.
  */
-export function rememberConversation(world: World, p: Person, question: string, answer: string): void {
+export function rememberConversation(world: World, p: Person, question: string, answer: string): { persuaded?: string } {
   const text = `Was asked "${question.slice(0, 60)}" and answered: ${answer.slice(0, 80)}`;
   p.memories.push({ day: world.day, text, weight: 0.15 });
   if (p.memories.length > 12) p.memories.splice(0, p.memories.length - 12);
+  // Persuasion: an open-minded character sometimes adopts a suggestion as a new objective.
+  const m = question.match(/\b(?:you should|you must|why don't you|i advise you to|i urge you to|please)\s+(.{4,80}?)[?.!]*$/i);
+  if (m) {
+    const rng = new RNG(`${p.id}:persuade:${world.day}:${question}`);
+    const chance = 0.15 + p.personality.openness * 0.35 - p.personality.caution * 0.2 + (/\bwar|peace|ceasefire|election|resign|reform\b/i.test(m[1]) && p.personality.ambition > 0.7 ? -0.1 : 0);
+    if (rng.next() < chance) {
+      const goal = m[1].trim().replace(/^to\s+/i, '');
+      p.objective = goal;
+      p.history.push({ day: world.day, text: `Persuaded by an interviewer to ${goal}.` });
+      p.memories.push({ day: world.day, text: `Decided to ${goal} after an unusual conversation.`, weight: 0.5 });
+      return { persuaded: goal };
+    }
+  }
+  return {};
 }

@@ -316,12 +316,12 @@ function Dialogue({ p }: { p: Person }): React.ReactElement {
   const world = useGame((s) => s.world)!;
   const [log, setLog] = useState<{ q: string; a: string }[]>([]);
   const [q, setQ] = useState('');
-  const ask = async (question: string) => { if (!question.trim()) return; const a = await dialogueProvider.answer(world, p, question); rememberConversation(world, p, question, a); setLog((l) => [...l.slice(-5), { q: question, a }]); setQ(''); };
+  const ask = async (question: string) => { if (!question.trim()) return; const a = await dialogueProvider.answer(world, p, question); const r = rememberConversation(world, p, question, a); setLog((l) => [...l.slice(-5), { q: question, a: r.persuaded ? `${a}\n✦ ${p.firstName} took it to heart: new objective “${r.persuaded}”.` : a }]); setQ(''); };
   return (
     <Section title="Talk to them">
       <div className="chips scroll" style={{ marginBottom: 6 }}>{SUGGESTED_QUESTIONS.map((s) => <button key={s} className="chip clickable" onClick={() => void ask(s)}>{s}</button>)}</div>
       <div className="row"><input className="input" style={{ minHeight: 36 }} placeholder={`Ask ${p.firstName} anything…`} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void ask(q); }} /><button className="btn sm" onClick={() => void ask(q)}>Ask</button></div>
-      {log.length > 0 && <div className="list" style={{ marginTop: 8 }}>{log.slice().reverse().map((x, i) => <div key={i} className="card"><div className="dim" style={{ fontSize: 12 }}>You: {x.q}</div><div style={{ fontSize: 13, marginTop: 3, fontStyle: 'italic' }}>“{x.a}”</div></div>)}</div>}
+      {log.length > 0 && <div className="list" style={{ marginTop: 8 }}>{log.slice().reverse().map((x, i) => <div key={i} className="card"><div className="dim" style={{ fontSize: 12 }}>You: {x.q}</div><div style={{ fontSize: 13, marginTop: 3, fontStyle: 'italic', whiteSpace: 'pre-line' }}>“{x.a}”</div></div>)}</div>}
     </Section>
   );
 }

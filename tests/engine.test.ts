@@ -120,6 +120,24 @@ describe('simulation', () => {
     expect(posted || p.memories.every((m) => !m.text.startsWith('Was asked'))).toBe(true);
     expect(w.social.some((s) => s.hashtags.includes('Interview') && /What do you want\?/.test(s.text)) || p.socialActivity < 0.3).toBe(true);
   });
+  it('interviews can persuade open characters, rarely cautious ones', async () => {
+    const { rememberConversation, localDialogue } = await import('../src/engine/ai/dialogue');
+    const w = generateWorld({ seed: 'persuade' });
+    const people = Object.values(w.people).filter((x) => x.alive);
+    const open = people.slice().sort((a, b) => (b.personality.openness - b.personality.caution) - (a.personality.openness - a.personality.caution))[0];
+    const shut = people.slice().sort((a, b) => (a.personality.openness - a.personality.caution) - (b.personality.openness - b.personality.caution))[0];
+    let openHits = 0, shutHits = 0;
+    for (let i = 0; i < 40; i++) {
+      w.day = i;
+      if (rememberConversation(w, open, `You should found a hospital in city ${i}`, 'Maybe.').persuaded) openHits++;
+      if (rememberConversation(w, shut, `You should found a hospital in city ${i}`, 'No.').persuaded) shutHits++;
+    }
+    expect(openHits).toBeGreaterThan(shutHits);
+    expect(openHits).toBeGreaterThan(3);
+    expect(open.history.some((h) => h.text.startsWith('Persuaded by an interviewer'))).toBe(true);
+    const a = localDialogue.answer(w, open, 'You should make peace with your rivals');
+    expect(a.length).toBeGreaterThan(10);
+  });
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
