@@ -32,6 +32,7 @@
 - Leaders act on their objectives: one talked into peace seeks a ceasefire or sends an olive branch, one set on elections calls a vote, one set on reform loosens the state's grip, one set on stepping down resigns — so persuading a leader in conversation changes the world.
 - Fix: a leader whose home city seceded could be assassinated without any succession (the throne stayed with a dead person); succession now covers every country a person led, and a sitting leader stays with the old capital when their city breaks away.
 - Companies act on their CEO's objectives: a chief persuaded toward a field (a cure, space, clean energy, AI, defense, transport, food, finance) pivots the company into that sector, sometimes with a breakthrough to match; freshly adopted objectives are pursued with urgency for about eight months.
+- Journalists quote your interviews: a famous character you questioned may get a profile piece ("…: X speaks") built on what they told you, with fame and reputation effects; researchers persuaded toward a field chase breakthroughs in it.
 
 ## 0.5.0 — rivals, fronts and editorials
 

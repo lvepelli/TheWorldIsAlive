@@ -111,7 +111,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
       const co = p.affiliations.map((id) => world.companies[id]).find((x) => x?.alive);
       if (co && co.ceoId === p.id) { const pv = pivotForObjective(world, rng, p, co); if (pv) return pv; }
       if (co && co.value > 50 && p.objective !== 'dominate the industry' && !/\b(cure|space|green|ai |robot|clean|climate)\b/.test(p.objective.toLowerCase()) && rng.bool(0.5)) p.objective = 'dominate the industry';
-      if (co && rng.bool(0.15)) { const ev = A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5); if (rng.bool(0.5)) p.objective = rng.pick(['turn the breakthrough into an empire', 'win the highest prize', 'keep the discovery out of military hands']); return ev; }
+      if (co && rng.bool(0.15)) { const ev = A.techBreakthrough(world, rng, co, c, fieldFromObjective(p.objective) ?? rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5); if (rng.bool(0.5)) p.objective = rng.pick(['turn the breakthrough into an empire', 'win the highest prize', 'keep the discovery out of military hands']); return ev; }
       return null;
     }
     case 'politician': {
@@ -172,6 +172,17 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     case 'journalist': {
       const targets = Object.values(world.people).filter((t) => t.alive && t.id !== p.id && t.fame > 30 && (t.countryId === p.countryId || t.fame > 70));
       if (!targets.length || c.freedom < 25) return null;
+      // Journalists quote what famous people told the player: a profile piece built on the interview.
+      const quoted = targets.filter((x) => x.memories.some((m) => m.text.startsWith('Was asked') && world.day - m.day < 60));
+      if (quoted.length && rng.bool(0.6)) {
+        const t = rng.pickWeighted(quoted, (x) => x.fame);
+        const m = t.memories.filter((x) => x.text.startsWith('Was asked') && world.day - x.day < 60).slice(-1)[0];
+        const q = m.text.match(/Was asked "([^"]+)"/)?.[1] ?? 'a question'; const a = m.text.split('answered: ')[1] ?? '';
+        const outlet = Object.values(world.outlets).filter((o) => o.countryId === p.countryId)[0] ?? Object.values(world.outlets)[0];
+        const ev = createEvent(world, { category: 'cultural', type: 'profile', severity: t.fame > 70 ? 3 : 2, title: `"${a ? a.slice(0, 48).replace(/[.…]+$/, '') : 'I have nothing to hide'}": ${t.name} speaks`, description: `In a wide-ranging profile by ${p.name}${outlet ? ` for ${outlet.name}` : ''}, ${t.name} was pressed on "${q}". ${a ? `Their answer — "${a}" — ` : 'Their answer '}${rng.pick(['has been quoted all week', 'drew a sharp response from rivals', 'was read as a message to the leadership', 'surprised even their allies'])}.`, location: { cityId: t.cityId, countryId: t.countryId }, actors: [ref('person', t.id), ref('person', p.id)], effects: [fx('person', t.id, 'fame', 4), fx('person', p.id, 'fame', 3), fx('person', t.id, 'reputation', t.personality.integrity > 0.5 ? 3 : -2)], tags: ['profile', 'media', 'interview'] });
+        t.memories = t.memories.filter((x) => x !== m);
+        return ev;
+      }
       const t = rng.pickWeighted(targets, (x) => x.fame * (1.3 - x.personality.integrity));
       if (rng.next() < 0.5 * (1.2 - t.personality.integrity)) return A.scandal(world, rng, t);
       return null;
@@ -257,4 +268,11 @@ function pivotForObjective(world: World, rng: RNG, p: Person, co: Company): Worl
   const ev = createEvent(world, { category: 'corporate', type: 'company.pivot', severity: co.value > 500 ? 3 : 2, title: `${co.name} bets the company on ${pivot[1]}`, description: `${p.name} announced that ${co.name} is leaving ${from} behind to pursue "${p.objective}". ${rng.pick(['Investors were split.', 'The share price whipsawed.', 'Half the engineering staff cheered; the other half updated their résumés.'])}`, location: { cityId: co.cityId, countryId: c.id }, actors: [ref('company', co.id), ref('person', p.id)], effects: [fx('company', co.id, 'value%', rng.float(-15, 10)), fx('company', co.id, 'reputation', 4)], tags: ['pivot', 'corporate', c.code], data: { shocks: [{ sector: pivot[1], pct: 0.02 }] } });
   if (rng.bool(0.5)) A.techBreakthrough(world, rng, co, c, pivot[2], ev.id, false, 0.8);
   return ev;
+}
+
+/** Research field implied by an objective ("cure cancer" → drug, "reach Mars" → rocket), or undefined. */
+export function fieldFromObjective(objective: string): string | undefined {
+  const g = objective.toLowerCase();
+  const table: [RegExp, string][] = [[/\b(cure|vaccine|disease|medicine|cancer|aging|health)\b/, 'drug'], [/\b(space|rocket|mars|orbit|satellite)\b/, 'rocket'], [/\b(solar|clean|climate|renewable|fusion|battery|batteries|energy)\b/, 'battery'], [/\b(ai|robot|automation|software|quantum|computer)\b/, 'AI model'], [/\b(chip|semiconductor|processor)\b/, 'chip'], [/\b(material|alloy|graphene)\b/, 'material'], [/\b(reactor|nuclear)\b/, 'reactor'], [/\b(drone|weapon|missile)\b/, 'drone']];
+  return table.find(([re]) => re.test(g))?.[1];
 }
