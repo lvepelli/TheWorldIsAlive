@@ -66,6 +66,7 @@ const INTENTS: Intent[] = [
   { action: 'religion', test: /\b(religion|cult|faith|church|prophet|belief movement)\b/i },
   { action: 'bankrupt', test: /\b(bankrupt|goes? under|collapse|insolven|liquidat)/i },
   { action: 'crash', test: /\b(market|stock|stocks|exchange)\b.*\b(crash|plunge|collapse|tank)|\b(crash|plunge)\b.*\b(market|stock)/i },
+  { action: 'famine', test: /\b(famine|harvests? fail|crop failure|food (prices?|shortage|crisis)|starv|hunger)\b/i },
   { action: 'energy-crisis', test: /\b(energy|fuel|oil|power|electricity)\b.*\b(crisis|shortage|blackout|rationing)|\bblackouts?\b/i },
   { action: 'crisis', test: /\b(recession|depression|economic crisis|financial crisis|economy\b.*\b(collapse|crash|crisis)|debt crisis|bank run)/i },
   { action: 'boom', test: /\b(boom|prosperity|economic miracle|golden age|economy\b.*\b(surge|soar|thrive))/i },

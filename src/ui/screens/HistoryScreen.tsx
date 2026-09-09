@@ -129,6 +129,7 @@ export function sagaTitle(world: { countries: Record<string, { name: string }> }
   if (root.type === 'scandal') { const people = root.actors.filter((a) => a.kind === 'person'); const who = people[0] ? (world as { people?: Record<string, { lastName: string }> }).people?.[people[0].id]?.lastName : undefined; if (types.has('rival.ascends')) return `The fall of ${who ?? 'a name'}, the rise of a rival`; if (types.has('downfall') || types.has('leader.resignation')) return who ? `The ${who} affair` : 'A scandal and a fall'; if (types.has('rival.attack') && types.has('ally.rally')) return who ? `${who} against the world` : 'A scandal, rivals and allies'; return who ? `${who} survives the storm` : 'A scandal survived'; }
   if (root.type === 'premise.opening') return root.title;
   if (root.type === 'summit') return types.has('summit.accord') ? `The ${c ?? ''} accord`.replace('  ', ' ') : types.has('summit.collapse') ? `The talks that failed in ${c ?? '?'}` : `The ${c ?? ''} summit`.replace('  ', ' ');
+  if (root.type === 'food.crisis') return types.has('protest.mass') ? 'The hungry year' : 'When bread cost too much';
   if (root.type === 'feud') return 'A feud for the ages';
   if (root.type === 'election.called') return types.has('leader.election') ? `The ${c ?? ''} upset`.replace('  ', ' ') : `${c ?? 'A nation'} votes`;
   if (root.type.startsWith('leader.') && (types.has('purge') || types.has('opposition.leader'))) return types.has('purge') ? `The purge in ${c ?? '?'}` : `${c ?? 'A nation'} divided`;
