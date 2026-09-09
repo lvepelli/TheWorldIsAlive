@@ -144,6 +144,23 @@ export function hashtagsFor(world: World, ev: WorldEvent, rng: RNG): string[] {
 
 function composePost(world: World, ev: WorldEvent, p: Person, stance: number, rng: RNG): string {
   const short = ev.title.length > 80 ? ev.title.slice(0, 77) + '…' : ev.title;
+  // Personal ties first: people react to what happens to family, partners, allies and enemies.
+  const negative = isNegative(ev);
+  for (const a of ev.actors) {
+    if (a.kind !== 'person' || a.id === p.id) continue;
+    const rel = p.relationships.find((r) => r.target.id === a.id); const o = world.people[a.id];
+    if (!rel || !o) continue;
+    const first = o.firstName;
+    if (rel.type === 'family' || rel.type === 'partner') return negative
+      ? rng.pick([`Please respect our family's privacy right now. ${first} needs us, not headlines.`, `I have nothing to say about ${first} except this: I am here.`, `To everyone sending love for ${first}: thank you. It matters.`])
+      : rng.pick([`So proud of ${first} today. ${short}`, `${first} did it. I always knew. ❤️`, `Family dinner is going to be insufferable now. Congratulations ${first}.`]);
+    if (rel.strength < -0.3) return negative
+      ? rng.pick([`Not surprised about ${o.name}. Some of us said this years ago.`, `Imagine my shock. ${short}.`, `I won't gloat about ${first}. Actually, yes I will.`, `Consequences finally arrive for ${o.name}. About time.`])
+      : rng.pick([`Let's not pretend ${o.name} earned this.`, `${short}. Funny how these things get decided.`, `Congratulations to ${o.name}, I suppose. We all know the truth.`]);
+    if (rel.strength > 0.3) return negative
+      ? rng.pick([`Standing with ${o.name}. Anyone who knows them knows the truth.`, `${first} has my full support. Judge the facts, not the noise.`, `Thinking of ${first} tonight.`])
+      : rng.pick([`Nobody deserves this more than ${o.name}. ${short}`, `Called it. ${first} is the real thing.`, `Raising a glass to ${first} tonight.`]);
+  }
   const lc = short; // keep proper nouns intact inside sentences
   const country = ev.location.countryId ? world.countries[ev.location.countryId] : undefined;
   const isActor = ev.actors.some((a) => a.kind === 'person' && a.id === p.id);
