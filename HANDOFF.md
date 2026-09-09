@@ -65,7 +65,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Files that are safe vs. delicate
 
-- Safe to extend: `spawn.ts`, `consequences.ts`, `actions.ts`, `presets.ts`, screens, `global.css`.
+- Safe to extend: `spawn.ts`, `consequences.ts`, `actions.ts`, `presets.ts`, `objectives.ts` (regex tables), `weather.ts` (cells, seasons), `trade.ts` (volume formula), `anniversaries.ts`, `premise.ts` (append to `PREMISES` and `FEATURED_SEEDS`), screens, `global.css`.
 - Objectives are behaviour: `simulation/objectives.ts` matches `person.objective` text against regexes (peace/election/reform/resign for leaders, field words for CEOs via `pivotForObjective`, research fields via `fieldFromObjective`). Any code that sets an objective string is therefore steering the simulation; keep the phrases human-readable and check those regexes when adding new ones.
 - Anything that mutates the world outside a tick (dialogue persuasion, presets executed from the UI) must call `useGame.getState().bump()` afterwards or screens keep showing stale memoized data until the next day.
 - Polish candidate: war fronts (`renderer.ts` `frontsFor`) trace raw grid-cell edges, so at high zoom a front looks stair-stepped next to the smoothed borders; deriving fronts from the shared edges of the Chaikin-smoothed contour polygons would fix it.
