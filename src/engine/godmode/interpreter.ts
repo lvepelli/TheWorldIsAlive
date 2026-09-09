@@ -82,6 +82,7 @@ const INTENTS: Intent[] = [
   { action: 'accelerate-tech', test: /\b(accelerat|speed up|golden age of (science|technology|invention)|rapid progress)/i },
   { action: 'create-company', test: /\b(found|start|launch|creat|establish|open)s?\b.*\b(company|startup|firm|corporation|business|venture)\b|\b(company|startup|firm)\b.*\b(is )?(founded|created|launched)\b/i },
   { action: 'remove-figure', test: /\b(assassinat|killed|dies|death of|murder|vanish|disappear|kidnap)/i, params: (m) => ({ how: /assassin|murder|kill/i.test(m[0]) ? 'assassination' : /vanish|disappear|kidnap/i.test(m[0]) ? 'disappearance' : 'accident' }) },
+  { action: 'referendum', test: /\b(referendum|plebiscite|vote on (its |their )?(status|independence|autonomy|future))\b/i },
   { action: 'election', test: /\b(snap election|early election|calls? (an )?election|hold(s|ing)? (an |free )?elections?|go(es)? to the polls|let the people vote|free elections?)\b/i },
   { action: 'romance', test: /\b(fall in love|falls in love|in love with|marr(y|ies|ied)|wedding|romance|become a couple|get together|date(s)?\b.*\bwith)\b/i },
   { action: 'feud', test: /\b(feud|rivals?|rivalry|sworn enem|turn against each other|hate each other|fall(s|ing)? out with|bitter enemies)\b/i },

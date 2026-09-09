@@ -65,4 +65,15 @@ describe('god mode', () => {
     const ev = GOD_PRESETS.find((p) => p.id === 'annex')!.run(w, rng, plan.params)!;
     expect(ev.type).toBe('region.annexed'); expect(r.countryId).toBe(to.id); expect(ev.playerIntervention).toBe(true);
   });
+  it('calls a regional referendum on command and the result follows', async () => {
+    const w = generateWorld({ seed: 'regions' }); const rng = new RNG('regions'); const interp = new LocalGodInterpreter();
+    const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const r = (c.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(c.capitalId))!;
+    const plan = await interp.interpret(w, `Hold a referendum in ${r.name}`);
+    expect(plan.action).toBe('referendum'); expect(plan.params.region).toBe(r.id);
+    const ev = GOD_PRESETS.find((p) => p.id === 'referendum')!.run(w, rng, plan.params)!; expect(ev.type).toBe('region.referendum');
+    react(w, rng, ev); expect(w.pending.some((q) => q.ruleId === 'region.referendum.result' && q.sourceEventId === ev.id)).toBe(true);
+    for (let i = 0; i < 70; i++) tickDay(w, rng);
+    expect(w.events.some((e) => e.type === 'region.referendum.yes' || e.type === 'region.referendum.no' || (e.type === 'country.founded' && e.causedBy === ev.id))).toBe(true);
+  });
 });
