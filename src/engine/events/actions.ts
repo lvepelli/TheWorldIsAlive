@@ -229,6 +229,20 @@ export function changeGovernment(world: World, rng: RNG, c: Country, gov: Govern
 export function createMovement(world: World, rng: RNG, c: Country, cause: Cause = 'simulation', player = false, ideology?: Ideology, name?: string, agenda?: string): WorldEvent {
   const fam = familyOf(world, c);
   const ideo = ideology ?? rng.pick(IDEOS);
+  // A country sustains only a handful of movements; new energy folds into the strongest existing one unless a god insists.
+  const existing = c.movements.map((id) => world.organizations[id]).filter((o) => o && o.alive);
+  if (!player && !name && existing.length >= 4) {
+    const org = rng.pickWeighted(existing, (o) => o.support + 5);
+    const gain = clamp(4 + c.unrest * 0.1 + rng.gauss(0, 2), 1, 12);
+    org.support = clamp(org.support + gain, 0, 100);
+    const leader = org.leaderId ? world.people[org.leaderId] : undefined;
+    return createEvent(world, {
+      category: 'social', type: 'movement.merged', severity: 1, ...base(cause, player),
+      title: `${org.name} absorbs a rival ${ideo} current in ${c.name}`,
+      description: `Rather than found yet another group, activists in ${c.name} threw in with ${org.name}${leader ? ` under ${leader.name}` : ''}. Support rose by about ${gain.toFixed(0)} points.`,
+      location: { countryId: c.id }, actors: [ref('organization', org.id), ref('country', c.id), ...(leader ? [ref('person', leader.id)] : [])], effects: [], tags: ['movement', c.code],
+    });
+  }
   const leaderCands = peopleOf(world, c.id).filter((p) => ['activist', 'journalist', 'artist', 'citizen', 'religious-leader'].includes(p.profession) && p.affiliations.length === 0);
   const leader = leaderCands.length ? rng.pick(leaderCands) : makePerson(world, rng, fam, c, pickCity(world, rng, c), 'activist', 2);
   const org = makeOrg(world, rng, fam, c, 'movement', name ?? N.orgName(rng, fam, 'movement', c.adjective), leader.id, ideo, agenda ?? rng.pick(['demand new elections', 'fight corruption', 'protect the climate', 'restore national pride', 'end inequality', 'defend digital freedom']));

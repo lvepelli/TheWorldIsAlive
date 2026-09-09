@@ -90,7 +90,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
         const parties = Object.values(world.organizations).filter((o) => o.alive && o.countryId === c.id && (o.type === 'party' || o.type === 'movement'));
         if (parties.length && rng.bool(0.35)) {
           const party = rng.pickWeighted(parties, (o) => (o.ideology === p.ideology ? 3 : 1));
-          party.support = clamp(party.support + 4, 0, 100); party.influence = clamp(party.influence + 6, 0, 100);
+          party.support = clamp(party.support + 2, 0, 100); party.influence = clamp(party.influence + 6, 0, 100);
           if (!p.affiliations.includes(party.id)) p.affiliations.push(party.id);
           return createEvent(world, { category: 'political', type: 'donation', severity: 2, title: `${p.name} pours a fortune into ${party.name}`, description: `The ${c.adjective} billionaire ${p.name} announced $${Math.round(p.wealth * 0.02)}M in funding for ${party.name}, calling it "an investment in the country's future". Critics called it buying a government.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('organization', party.id), ref('country', c.id)], effects: [fx('person', p.id, 'influence', 8), fx('person', p.id, 'reputation', -4), fx('country', c.id, 'corruption', 1.5), fx('country', c.id, 'polarization', 2)], tags: ['money', 'politics', c.code] });
         }
@@ -152,14 +152,14 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
       return null;
     }
     case 'activist': {
-      if (p.affiliations.length === 0 && rng.bool(0.5)) return A.createMovement(world, rng, c, 'simulation', false, p.ideology);
+      if (p.affiliations.length === 0 && rng.bool(0.15) && Object.values(world.organizations).filter((o) => o.alive && o.type === 'movement' && o.countryId === c.id).length < 3) return A.createMovement(world, rng, c, 'simulation', false, p.ideology);
       const org = p.affiliations.map((id) => world.organizations[id]).find((o) => o?.alive && o.type === 'movement');
       if (!org) return null;
       const city = A.pickCity(world, rng, c);
       return createEvent(world, {
         category: 'social', type: 'protest', severity: org.support > 40 ? 3 : 2, title: `${p.name} leads ${org.name} rally in ${city.name}`,
         description: `${p.name} addressed ${rng.pick(['a packed square', 'tens of thousands', 'a defiant crowd'])} in ${city.name}: "${rng.pick(['They cannot ignore us forever.', 'This is only the beginning.', 'History is on our side.', 'We will not be silenced.'])}"`,
-        location: { cityId: city.id }, actors: [ref('person', p.id), ref('organization', org.id), ref('country', c.id)], effects: [fx('organization', org.id, 'support', 3), fx('person', p.id, 'fame', 4), fx('country', c.id, 'unrest', 1)], tags: ['protest', 'movement', c.code],
+        location: { cityId: city.id }, actors: [ref('person', p.id), ref('organization', org.id), ref('country', c.id)], effects: [fx('organization', org.id, 'support', 1.5), fx('person', p.id, 'fame', 4), fx('country', c.id, 'unrest', 1)], tags: ['protest', 'movement', c.code],
       });
     }
     case 'general': {
@@ -204,7 +204,7 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     }
     case 'religious-leader': {
       const org = p.affiliations.map((id) => world.organizations[id]).find((o) => o?.alive);
-      if (org && rng.bool(0.4)) { org.support = clamp(org.support + 3, 0, 100); return createEvent(world, { category: 'cultural', type: 'sermon', severity: 1, title: `${p.name} draws record crowds in ${world.cities[p.cityId]?.name}`, description: `${p.name} preached to a vast gathering, calling for ${org.agenda}. The government ${rng.pick(['took note', 'sent observers', 'welcomed the message', 'looked nervous'])}.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('organization', org.id)], effects: [fx('person', p.id, 'influence', 2), fx('organization', org.id, 'influence', 2)], tags: ['religion', 'culture', c.code] }); }
+      if (org && rng.bool(0.4)) { org.support = clamp(org.support + (org.support < 60 ? 1.2 : 0.3), 0, 100); return createEvent(world, { category: 'cultural', type: 'sermon', severity: 1, title: `${p.name} draws record crowds in ${world.cities[p.cityId]?.name}`, description: `${p.name} preached to a vast gathering, calling for ${org.agenda}. The government ${rng.pick(['took note', 'sent observers', 'welcomed the message', 'looked nervous'])}.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('organization', org.id)], effects: [fx('person', p.id, 'influence', 2), fx('organization', org.id, 'influence', 2)], tags: ['religion', 'culture', c.code] }); }
       return null;
     }
     case 'citizen': {

@@ -40,7 +40,7 @@ export const SPAWN_RULES: SpawnRule[] = [
         title: big ? `Hundreds of thousands march in ${city.name}` : `Protests erupt in ${city.name} over ${cause}`,
         description: `${big ? 'The largest demonstration in a generation' : 'Crowds'} filled the streets of ${city.name} demanding action on ${cause}. ${org ? `${org.name} called for the rallies.` : ''} ${rng.pick(['Police used tear gas.', 'The march stayed peaceful.', 'Several ministers cancelled travel.', 'Shops closed early across the city.'])}`,
         location: { cityId: city.id }, actors: [ref('country', c.id), ref('city', city.id), ...(org ? [ref('organization', org.id)] : [])],
-        effects: [fx('country', c.id, 'approval', big ? -5 : -2), fx('country', c.id, 'stability', big ? -4 : -1), fx('city', city.id, 'unrest', 5), ...(org ? [fx('organization', org.id, 'support', 4), fx('organization', org.id, 'influence', 3)] : [])],
+        effects: [fx('country', c.id, 'approval', big ? -5 : -2), fx('country', c.id, 'stability', big ? -4 : -1), fx('city', city.id, 'unrest', 5), ...(org ? [fx('organization', org.id, 'support', 2), fx('organization', org.id, 'influence', 3)] : [])],
         tags: ['protest', 'unrest', c.code], data: { cause },
       });
     },

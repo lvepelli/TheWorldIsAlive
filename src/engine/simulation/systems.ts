@@ -48,7 +48,9 @@ export function weeklyTick(world: World, rng: RNG): void {
     c.approval += ((c.happiness * 0.7 + 15) - c.approval) * 0.03 + rng.gauss(0, 0.5);
     c.approval = clamp(c.approval, 2, 98);
     // Polarization slowly relaxes unless unrest is high
-    c.polarization += ((c.unrest > 40 ? 1 : -0.6) + rng.gauss(0, 0.2)) * 0.5;
+    // Polarization mean-reverts toward what unrest, freedom and inequality of mood can sustain; events push it, calm heals it.
+    const targetPol = clamp(30 + (c.unrest - 20) * 0.6 + (c.freedom > 60 ? 6 : 0) - (c.happiness - 50) * 0.3 + (c.atWarWith.length ? 8 : 0), 5, 95);
+    c.polarization += (targetPol - c.polarization) * 0.04 + rng.gauss(0, 0.3);
     c.polarization = clamp(c.polarization, 3, 97);
     // Cities follow the country
     for (const id of c.cityIds) {
@@ -72,6 +74,14 @@ export function weeklyTick(world: World, rng: RNG): void {
 export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
   const out: WorldEvent[] = [];
   const year = yearOf(world.day, world.meta.startYear);
+  // Movement support drifts toward what the country's mood can sustain; unrest feeds it, calm starves it.
+  for (const o of Object.values(world.organizations)) {
+    if (!o.alive || o.type !== 'movement' || !o.countryId) continue;
+    const c = world.countries[o.countryId]; if (!c) continue;
+    const target = 6 + c.unrest * 0.45 + c.polarization * 0.15 - (c.happiness - 50) * 0.25;
+    o.support = clamp(o.support + (target - o.support) * 0.06 + rng.gauss(0, 1.5), 0, 100);
+    if (o.support < 3 && rng.bool(0.3)) { o.alive = false; o.history.push({ day: world.day, text: 'Faded away.' }); }
+  }
   for (const c of Object.values(world.countries)) {
     // Technology progress: investment scales with GDP per capita and freedom
     const gdpPc = (c.gdp * 1e9) / Math.max(1, c.population);
@@ -94,7 +104,9 @@ export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
     if (c.electionEvery && year >= c.nextElectionYear && world.day % 30 < 7) {
       c.nextElectionYear = year + c.electionEvery;
       const incumbent = world.people[c.leaderId];
-      const winProb = clamp(c.approval / 100 + (incumbent?.personality.charisma ?? 0.5) * 0.15 - 0.1 + (c.corruption > 70 ? 0.15 : 0), 0.05, 0.95);
+      // A surging movement fields its leader as the main challenger.
+      const movement = Object.values(world.organizations).filter((o) => o.alive && o.type === 'movement' && o.countryId === c.id && o.support > 30 && o.leaderId && world.people[o.leaderId]?.alive && o.leaderId !== c.leaderId).sort((a, b) => b.support - a.support)[0];
+      const winProb = clamp(c.approval / 100 + (incumbent?.personality.charisma ?? 0.5) * 0.15 - 0.1 + (c.corruption > 70 ? 0.15 : 0) - (movement ? (movement.support - 30) / 150 : 0), 0.05, 0.95);
       if (rng.next() < winProb) {
         c.approval = clamp(c.approval + 5, 0, 100);
         out.push(createEvent(world, {
@@ -103,7 +115,10 @@ export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
           location: { countryId: c.id }, actors: [ref('country', c.id), ...(incumbent ? [ref('person', incumbent.id)] : [])], effects: [fx('country', c.id, 'stability', 3), fx('country', c.id, 'polarization', 2)], tags: ['election', 'politics', c.code],
         }));
       } else {
-        out.push(A.changeLeader(world, rng, c, 'election'));
+        const challenger = movement && rng.bool(0.7) ? world.people[movement.leaderId!] : undefined;
+        const ev = A.changeLeader(world, rng, c, 'election', 'simulation', false, challenger);
+        if (challenger && movement) { movement.influence = clamp(movement.influence + 20, 0, 100); movement.history.push({ day: world.day, text: `${challenger.name} won the ${year} election on the movement's platform.` }); ev.description += ` The victory caps the rise of ${movement.name}, which began as a protest movement.`; ev.tags.push('movement'); }
+        out.push(ev);
       }
     }
     // Coup / collapse risk for very unstable states

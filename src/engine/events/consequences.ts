@@ -504,11 +504,15 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     return null;
   },
   // ---- Movement chain ----
-  'movement.growth': (w, rng, src) => {
+  'movement.growth': (w, rng, src, payload) => {
     const o = src.actors.find((a) => a.kind === 'organization'); const org = o ? w.organizations[o.id] : undefined;
     const c = c$(w, org?.countryId ?? undefined);
     if (!org || !c || !org.alive) return null;
-    org.support = clamp(org.support + rng.float(-5, 15) + c.unrest / 10, 0, 100);
+    org.support = clamp(org.support + rng.float(-6, 10) + c.unrest / 12, 0, 100);
+    // Movements keep growing (or fading) for a few rounds before they either surge or dissolve.
+    const round = (payload.round as number | undefined) ?? 0;
+    if (org.support <= 45 && round < 3) { schedule(w, 'movement.growth', src.id, rng.int(60, 200), { round: round + 1 }); return null; }
+    if (org.support <= 45) { if (org.support < 8) { org.alive = false; org.history.push({ day: w.day, text: 'Dissolved for lack of support.' }); } return null; }
     if (org.support > 45 && rng.bool(0.4)) {
       const leader = org.leaderId ? w.people[org.leaderId] : undefined;
       if (leader && c.electionEvery && rng.bool(0.5)) { leader.profession = 'politician'; leader.objective = 'win the next election'; }
@@ -611,7 +615,7 @@ Object.assign(CONSEQUENCE_RULES, {
     if (!c || !o || !o.alive) return null;
     if (o.support < 30 || c.stability > 60) { if (rng.bool(0.5)) schedule(w, 'secession.referendum', src.id, rng.int(120, 300)); return null; }
     if (rng.bool(0.5)) return A.createCountry(w, rng, c, src.id, false);
-    return createEvent(w, { category: 'political', type: 'referendum.blocked', severity: 3, causedBy: src.id, title: `${c.name} bans independence referendum`, description: `The ${c.adjective} government declared the separatist vote illegal and deployed police to polling stations. ${o.name} vowed to continue.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('organization', o.id)], effects: [fx('country', c.id, 'unrest', 10), fx('country', c.id, 'freedom', -5), fx('organization', o.id, 'support', 8)], tags: ['secession', c.code] });
+    return createEvent(w, { category: 'political', type: 'referendum.blocked', severity: 3, causedBy: src.id, title: `${c.name} bans independence referendum`, description: `The ${c.adjective} government declared the separatist vote illegal and deployed police to polling stations. ${o.name} vowed to continue.`, location: { countryId: c.id }, actors: [ref('country', c.id), ref('organization', o.id)], effects: [fx('country', c.id, 'unrest', 10), fx('country', c.id, 'freedom', -5), fx('organization', o.id, 'support', 5)], tags: ['secession', c.code] });
   },
   'succession.crisis': (w: World, rng: RNG, src: WorldEvent) => {
     const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
