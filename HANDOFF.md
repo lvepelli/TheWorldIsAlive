@@ -2,13 +2,13 @@
 
 Read this first. Everything needed to continue lives in this repository; nothing depends on the original chat session.
 
-## Status (v0.4.0)
+## Status (v0.5.0)
 
 **Playable, complete first version.** Builds, passes unit + browser smoke tests, works on desktop and 360–430 px phones, installs as a PWA, saves to IndexedDB, exports/imports JSON.
 
 ```bash
 npm install && npm run dev      # play
-npm test                        # engine tests (vitest, ~3 s)
+npm test                        # engine tests (vitest, ~25 s incl. the 20-year balance run)
 npm run build && npm run e2e    # production build + headless desktop/mobile smoke run with screenshots in tests/e2e/output
 ```
 
@@ -37,7 +37,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Incomplete / simplified (honest list)
 
-- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes and feuds (`simulation/relations.ts`); more event types could use `shiftRelationships`/`relate`.
+- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes, feuds, breakups and funding withdrawals (`simulation/relations.ts`), and they drive consequences (`consequences.ts`: rival pounce, ally rally, rival ascends, mentor endorsement, purge/opposition). Weekly editorials live in `information.ts` (`generateEditorials`).
 - **Regions** (country → region → city) are collapsed to country → city. `Region` type exists but is unused.
 - **Trade routes on the map** are shown only for the selected country; there is no trade-volume simulation beyond `tradePartners` relation effects.
 - **Weather** is not simulated; disasters/epidemics/battles show as decaying zones, migrations as particle flows, wars as pulsing borders/arcs.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 — rivals, fronts and editorials
+
+- Map: burning war fronts — borders shared by countries at war glow with a marching hot line and sparks when zoomed in.
+- Companies: when a CEO dies, retires or moves on, the board appoints a successor (an existing executive or a newly generated one) with a `ceo.change` event and a small valuation shock.
+- Relationship-driven consequences: rivals pounce on scandals, allies rally, rivals rise after a downfall, mentors endorse new leaders, and new leaders purge or face old rivals as opposition.
+- Personal life: partners separate under the strain of scandals and feuds; funders pull their backing from soured entrepreneurs (hitting their companies).
+- God Mode: Snap Election (forces a vote, even in autocracies), Spark Rivalry and Matchmaker presets; the interpreter understands "calls a snap election", "become bitter rivals" and "falls in love with"; two people can be named in one command.
+- News: weekly editorials — a few outlets publish opinion pieces on the story of the week, each spun through its bias (marked "editorial").
+- History → Sagas: names for scandal rivalries ("The Okoro affair", "Vidal against the world"), feuds, snap elections and purges.
+- Balance: rival pile-ons capped, breakups reachable for less famous couples, senior allies can act as mentors.
+
 ## 0.4.0 — deployed & turning
 
 - Deployment: GitHub Pages via `.github/workflows/deploy.yml` (gh-pages branch), base-path-aware build, post-deploy Playwright QA on three phone viewports + desktop committed to `docs/qa`. Live: https://lvepelli.github.io/TheWorldIsAlive/
@@ -22,15 +33,9 @@
 - Consequences: post-election honeymoon policies; disputed elections in corrupt states.
 - Mobile: Share-this-world button (Web Share API) in the More sheet.
 - Map: drifting cloud shadows. Countries show a motto and language. Yearly reviews are named by what dominated them ("The Year of Fire").
-- Map: burning war fronts — borders shared by countries at war glow with a marching hot line and sparks when zoomed in.
 - Accessibility: live region announces the inspected entity.
 - QA: pinch-zoom check; host-interstitial handling; content-type recorded.
 - Emergent stories: tycoon arc (billionaires fund parties, then run for office); World Games every four years with a champion athlete; scandal survival depends on a character's allies and enemies.
-- Companies: when a CEO dies, retires or moves on, the board appoints a successor (an existing executive or a newly generated one) with a `ceo.change` event and a small valuation shock.
-- Relationship-driven consequences: rivals pounce on scandals, allies rally, rivals rise after a downfall, mentors endorse new leaders, and new leaders purge or face old rivals as opposition.
-- Personal life: partners separate under the strain of scandals and feuds; funders pull their backing from soured entrepreneurs (hitting their companies).
-- God Mode: Snap Election (forces a vote, even in autocracies), Spark Rivalry and Matchmaker presets; the interpreter understands "calls a snap election", "become bitter rivals" and "falls in love with"; two people can be named in one command.
-- News: weekly editorials — a few outlets publish opinion pieces on the story of the week, each spun through its bias (marked "editorial").
 
 ## 0.3.0 — living details
 
