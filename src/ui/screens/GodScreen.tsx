@@ -91,7 +91,7 @@ export function GodScreen(): React.ReactElement {
           </div>
           {result && (
             <div className="card" style={{ marginTop: 10, borderColor: result.ok ? 'rgba(88,214,141,0.4)' : 'rgba(255,93,93,0.4)' }}>
-              <div style={{ fontWeight: 700, color: result.ok ? 'var(--ok)' : 'var(--bad)' }}>{result.ok ? 'It is done.' : 'The world resisted.'}</div>
+              <div style={{ fontWeight: 700, color: result.ok ? 'var(--ok)' : 'var(--bad)' }}>{result.ok ? (/will feel it in/.test(result.message) ? 'It is written.' : 'It is done.') : 'The world resisted.'}</div>
               <div className="muted" style={{ fontSize: 13 }}>{result.message}</div>
               {result.eventId && <div className="row" style={{ marginTop: 6 }}><button className="btn sm" onClick={() => select({ kind: 'event', id: result.eventId! })}>Inspect event</button><button className="btn sm ghost" onClick={() => setScreen('world')}>Watch on map</button></div>}
             </div>

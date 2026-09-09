@@ -90,7 +90,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 1. **Enable GitHub Pages** (owner, one click) so the clean URL and first-party PWA install work; CI then prefers it automatically.
 2. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
-3. **More relationship-driven rules**: rival pounce / ally rally / mentor endorsement / purge exist in `consequences.ts`; add funders withdrawing money, family feuds, and partner breakups as personal events.
+3. **More relationship-driven rules**: rival pounce / ally rally / mentor endorsement / purge (`consequences.ts`), breakups and funder withdrawals (`spawn.ts`) exist; next: family feuds over inheritance, mentors turning on protégés, and characters remembering who helped them (use `memories`).
 4. **Weather fronts / climate visualization** on the map (trade volume and a Trade overlay exist; weather is the missing piece).
 5. **More calendar events** (film festivals, summits with agendas, anniversaries of historic events). The World Games (4-yearly) and Laurel Prizes (yearly) live in `systems.ts` `yearlyTick`. Passed-over executives already become rivals of the new CEO (`characters.ts`). Religious revival/decline and schisms now live in `spawn.ts` (`religion.tide`, `religion.schism`); a state-religion / theocracy consequence would extend them.
 6. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
