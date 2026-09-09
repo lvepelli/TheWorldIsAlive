@@ -4,6 +4,7 @@
  * personality, objective, memories, relationships and current national mood.
  * An LLM implementation can use prompts/character_dialogue.md.
  */
+import { regionOf } from '../generator/regions';
 import { RNG } from '../rng';
 import type { World, Person } from '../types';
 import { ageOf } from '../time';
@@ -13,7 +14,7 @@ export interface DialogueProvider {
   answer(world: World, person: Person, question: string): Promise<string> | string;
 }
 
-export const SUGGESTED_QUESTIONS = ['What do you want?', 'How do you feel about your country?', 'What happened recently?', 'Who do you trust?', 'What are you afraid of?', 'Tell me about yourself.', 'You should make peace.'];
+export const SUGGESTED_QUESTIONS = ['What do you want?', 'How is your region?', 'How do you feel about your country?', 'What happened recently?', 'Who do you trust?', 'What are you afraid of?', 'Tell me about yourself.', 'You should make peace.'];
 
 export class LocalDialogueProvider implements DialogueProvider {
   readonly id = 'local';
@@ -32,6 +33,19 @@ export class LocalDialogueProvider implements DialogueProvider {
       return (open ? voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}… You are not the first to say it. I will think about it — seriously.`, `Maybe you are right. If I ${ask}, the people who matter will notice. Let me consider it.`]) : voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}? No. I did not get here by taking advice from strangers.`, `I hear you. I will do the opposite, and you will see why.`]));
     }
     if (/want|goal|objective|ambition|plan/.test(q)) return prefix + voice([`I want to ${p.objective}. Everything else is noise.`, `To ${p.objective}. ${p.personality.ambition > 0.7 ? 'And I will not stop until it is done.' : 'If the world allows it.'}`, `${p.personality.integrity > 0.6 ? 'Honestly?' : 'Officially?'} To ${p.objective}.`]);
+    if (/region|province|autonomy|independence|self-rule|your people|where you live|hometown/.test(q)) {
+      const r = regionOf(world, p.cityId);
+      if (r) {
+        const governs = p.title === `Governor of ${r.name}`; const country = world.countries[r.countryId];
+        const mood = r.unrest > 60 ? 'angry' : r.unrest > 35 ? 'restless' : 'quiet';
+        const last = r.history.length ? r.history[r.history.length - 1].text.replace(/\.$/, '').toLowerCase() : '';
+        const stance = /autonomy|independence|free|liberate/i.test(p.objective) ? `I want ${r.name} to decide its own future${/independence|free|liberate/i.test(p.objective) ? ' — as a nation' : ''}.` : governs ? `My job is to keep ${r.name} inside ${country?.name ?? 'the country'} and make that worth it.` : `${r.name} is where I am from; it is not a cause.`;
+        return prefix + voice([
+          `${governs ? `I govern ${r.name}.` : `I am from ${r.name}.`} It is ${mood} these days${r.autonomy >= 50 ? ', with its own assembly' : r.autonomy > 0 ? `, with ${r.autonomy.toFixed(0)}% of the powers it asks for` : ', and the capital decides everything'}. ${stance}${last ? ` The last thing that happened to us: ${last}.` : ''}`,
+          `${r.name}: ${r.cityIds.length} ${r.cityIds.length === 1 ? 'city' : 'cities'}, ${(r.identity * 100).toFixed(0)}% of us feel more ${r.name.split(' ')[0]} than ${country?.adjective ?? 'anything else'}. ${mood === 'angry' ? 'People have stopped waiting for the capital to listen.' : mood === 'restless' ? 'Nobody is in the streets yet. Yet.' : 'We are content, or tired; from the capital it looks the same.'} ${stance}`,
+        ]);
+      }
+    }
     if (/country|nation|government|leader|state|home/.test(q) && c) {
       const leader = world.people[c.leaderId];
       const isLeader = c.leaderId === p.id;

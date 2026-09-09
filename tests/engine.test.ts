@@ -403,4 +403,10 @@ describe('regions', () => {
     const rally = regionalistActsOnObjective(w, rng, ousted, true)!;
     expect(rally.type).toBe('region.rally');
   });
+  it('governors talk about their region', () => {
+    const w = generateWorld({ seed: 'regions' });
+    const r = Object.values(w.regions).find((x) => x.governorId && w.people[x.governorId])!; const gov = w.people[r.governorId!];
+    const answer = localDialogue.answer(w, gov, 'How is your region?');
+    expect(answer).toContain(r.name); expect(/govern/i.test(answer)).toBe(true);
+  });
 });
