@@ -89,3 +89,28 @@ export function optionLabel(prm: PresetParam, o: { value: string; label: string 
   if (prm.type === 'profession') return t(`prof.${o.value}`) === `prof.${o.value}` ? o.label : t(`prof.${o.value}`);
   return OPTION_ES[o.value] ?? o.label;
 }
+
+const ACTION_ES: Record<string, string> = { 'company-breakthrough': 'nueva empresa con un avance', breakthrough: 'avance tecnológico' };
+/** Spanish rendering of a free-text plan: what the interpreter understood, built from the plan itself rather than its English notes. */
+export function describePlan(plan: { action: string; params: Record<string, string>; magnitude?: number; delayDays?: number; targets: { kind: string; id: string }[]; interpretation: string }, world: { countries: Record<string, { name: string }>; companies: Record<string, { name: string }>; people: Record<string, { name: string }> }): string {
+  if (getLang() !== 'es') return plan.interpretation;
+  const preset = GOD_PRESET_LABELS[plan.action] ?? ACTION_ES[plan.action] ?? plan.action.replace(/-/g, ' ');
+  const parts: string[] = [`Intención: ${preset}${plan.magnitude && plan.magnitude !== 1 ? ` (magnitud ×${plan.magnitude.toFixed(1)})` : ''}.`];
+  if (plan.delayDays) parts.push(`Programado: dentro de ${delayEs(plan.delayDays)}.`);
+  const cs = plan.targets.filter((x) => x.kind === 'country').map((x) => world.countries[x.id]?.name).filter(Boolean);
+  const cos = plan.targets.filter((x) => x.kind === 'company').map((x) => world.companies[x.id]?.name).filter(Boolean);
+  const ps = plan.targets.filter((x) => x.kind === 'person').map((x) => world.people[x.id]?.name).filter(Boolean);
+  if (cs.length) parts.push(`${cs.length > 1 ? 'Países' : 'País'}: ${cs.join(', ')}.`);
+  if (cos.length) parts.push(`Empresa: ${cos[0]}.`);
+  if (ps.length) parts.push(`${ps.length > 1 ? 'Personas' : 'Persona'}: ${ps.slice(0, 2).join(' y ')}.`);
+  if (plan.params.sector) parts.push(`Sector: ${t(`sector.${plan.params.sector}`)}.`);
+  if (plan.params.region) parts.push(`Región: ${plan.params.region}.`);
+  return parts.join(' ');
+}
+function delayEs(days: number): string {
+  if (days % 365 === 0) return `${days / 365} año${days === 365 ? '' : 's'}`;
+  if (days % 30 === 0) return `${days / 30} mes${days === 30 ? '' : 'es'}`;
+  if (days % 7 === 0) return `${days / 7} semana${days === 7 ? '' : 's'}`;
+  return `${days} día${days === 1 ? '' : 's'}`;
+}
+const GOD_PRESET_LABELS: Record<string, string> = Object.fromEntries(Object.entries(ES).map(([k, v]) => [k, v.label.toLowerCase()]));

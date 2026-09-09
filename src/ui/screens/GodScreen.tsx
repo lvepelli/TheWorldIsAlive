@@ -8,7 +8,7 @@ import { getLang } from '@/engine/i18n/lang';
 import { catLabel, catVar, sevLabel , personTitle } from '../format';
 import { useT } from '../i18n';
 import { audio } from '../audio';
-import { UI_GOD_GROUPS, type UiGodGroup, uiGroupOf, uiGroupLabel, presetLabel, presetDescription, paramLabel, optionLabel } from '../godmode/labels';
+import { UI_GOD_GROUPS, type UiGodGroup, uiGroupOf, uiGroupLabel, presetLabel, presetDescription, paramLabel, optionLabel, describePlan } from '../godmode/labels';
 
 type W = NonNullable<ReturnType<typeof useGame.getState>['world']>;
 
@@ -124,7 +124,7 @@ export function GodScreen(): React.ReactElement {
           {preview && (
             <div className="card" style={{ marginTop: 8, borderColor: 'rgba(240,179,90,0.35)' }} data-testid="god-preview">
               <div className="kicker">{t('god.understands')}</div>
-              <div style={{ fontSize: 13, marginTop: 2, whiteSpace: 'pre-line' }}>{preview.interpretation}</div>
+              <div style={{ fontSize: 13, marginTop: 2, whiteSpace: 'pre-line' }}>{describePlan(preview, world)}</div>
               <div className="row" style={{ marginTop: 4 }}><div className="bar grow"><i style={{ width: `${preview.confidence * 100}%`, background: 'var(--accent)' }} /></div><span className="dim mono" style={{ fontSize: 11 }}>{(preview.confidence * 100).toFixed(0)}% {t('god.confidence')}</span></div>
               {t(`god.eff.${preview.action}`) !== `god.eff.${preview.action}` && <div className="muted" style={{ fontSize: 12, marginTop: 6 }}><b>{t('god.effectsNow')}:</b> {t(`god.eff.${preview.action}`)}</div>}
             </div>
