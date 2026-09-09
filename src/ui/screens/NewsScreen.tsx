@@ -39,7 +39,7 @@ export function NewsScreen(): React.ReactElement {
                 <div className="outlet-mast"><span className="outlet-dot" style={{ background: o?.color }} /><span className="outlet-name" style={{ fontSize: 13 }}>{o?.name}</span><span className="dim" style={{ fontSize: 11 }}>· {daysAgo(a.day, world.day)}</span>{a.tone === 'alarmist' && <span className="tag" style={{ color: 'var(--bad)' }}>alarm</span>}</div>
                 <div className="headline">{a.headline}</div>
                 <div className="body">{a.body}</div>
-                <div className="byline"><span>Reach {fmtNum(a.reach * 1e6)}</span><span>Tone: {a.tone}</span>{ev && <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{ev.category}</span>}</div>
+                <div className="byline">{a.authorId && world.people[a.authorId] && <span className="link" onClick={(e) => { e.stopPropagation(); select({ kind: 'person', id: a.authorId! }); }}>by {world.people[a.authorId].name}</span>}<span>Reach {fmtNum(a.reach * 1e6)}</span><span>Tone: {a.tone}</span>{ev && <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{ev.category}</span>}</div>
               </article>
             );
           })}

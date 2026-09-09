@@ -17,6 +17,15 @@ export function getNarrativeProvider(): NarrativeProvider { return provider; }
 export function generateNews(world: World, rng: RNG, todays: WorldEvent[]): NewsArticle[] {
   const out: NewsArticle[] = [];
   const outlets = Object.values(world.outlets);
+  const journalists = Object.values(world.people).filter((p) => p.alive && !p.retired && p.profession === 'journalist');
+  const byline = (o: MediaOutlet, ev: WorldEvent): string | undefined => {
+    const pool = journalists.filter((j) => (o.countryId ? j.countryId === o.countryId : j.fame > 40));
+    const pick = pool.length ? pool : journalists;
+    if (!pick.length || rng.next() > 0.7) return undefined;
+    const j = rng.pickWeighted(pick, (x) => x.fame + 10 + (ev.location.countryId === x.countryId ? 20 : 0));
+    j.fame = Math.min(100, j.fame + 0.3 * ev.severity);
+    return j.id;
+  };
   for (const ev of todays) {
     if (ev.severity < 2 && rng.next() > 0.35) continue;
     // Which outlets cover it? Home outlets always for sev>=2; internationals for sev>=3; others by relevance.
@@ -30,7 +39,7 @@ export function generateNews(world: World, rng: RNG, todays: WorldEvent[]): News
     const chosen = covering.length > 5 ? rng.sample(covering, 5) : covering;
     for (const o of chosen) {
       const h = provider.headline(world, ev, o, rng);
-      out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, eventId: ev.id, headline: h.headline, body: h.body, tone: h.tone, reach: Math.round(o.audience * (0.3 + ev.severity / 5) * 10) / 10 });
+      out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: byline(o, ev), eventId: ev.id, headline: h.headline, body: h.body, tone: h.tone, reach: Math.round(o.audience * (0.3 + ev.severity / 5) * 10) / 10 });
     }
   }
   world.news.push(...out);

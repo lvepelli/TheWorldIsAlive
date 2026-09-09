@@ -225,6 +225,7 @@ export interface NewsArticle {
   id: ID;
   day: number;
   outletId: ID;
+  authorId?: ID;   // journalist character who wrote it
   eventId: ID;
   headline: string;
   body: string;
