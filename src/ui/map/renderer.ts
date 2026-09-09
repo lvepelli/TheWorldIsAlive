@@ -33,6 +33,7 @@ export class MapRenderer {
   width = 0; height = 0;
   camera: Camera = { x: 120, y: 60, scale: 4 };
   private recentEvents: WorldEvent[] = [];
+  private nightCenterX = 0; // grid x of the darkest longitude (updated by drawNight)
   private recentVersion = -1;
   private shapeVersionKey = '';
 
@@ -277,6 +278,7 @@ export class MapRenderer {
     // One rotation per simulated day; interpolate with wall-clock so it glides between ticks.
     const phase = reduced ? 0.25 : ((world.day * 0.37 + (nowMs / 60000)) % 1);
     const centerX = phase * W; // sub-solar longitude in grid units
+    this.nightCenterX = this.wrapX(centerX + W / 2);
     void offsets;
     {
       for (const k of [-2, -1, 0, 1, 2]) {
@@ -395,9 +397,15 @@ export class MapRenderer {
         if (sx < -40 || sx > this.width + 40 || sy < -40 || sy > this.height + 40) continue;
         let r = this.cityRadius(city) * Math.sqrt(zoomFactor) * 0.9;
         if (city.unrest > 55 && !opts.reducedMotion) r *= 1 + 0.15 * Math.sin(t * 6 + city.x);
+        // Lights come on at night: cities near the dark longitude glow larger and brighter.
+        let dn = Math.abs(city.x - this.nightCenterX); dn = Math.min(dn, this.W - dn);
+        const night = clamp(1 - dn / (this.W * 0.3), 0, 1);
+        r *= 1 + 0.45 * night;
+        g.globalAlpha = 0.62 + 0.38 * night;
         const warm = city.prosperity / 100;
         const spr = this.sprite(city.capital ? 'capital' : 'city', Math.round(r * 2) / 2, Math.round(warm * 2) / 2);
         g.drawImage(spr, sx - spr.width / 2, sy - spr.height / 2);
+        g.globalAlpha = 1;
         if (city.unrest > 55) { g.strokeStyle = `rgba(255,120,60,${0.3 + 0.3 * Math.sin(t * 6 + city.y)})`; g.lineWidth = 1; g.beginPath(); g.arc(sx, sy, r * 1.8, 0, Math.PI * 2); g.stroke(); }
         if (selCity === city.id) { g.strokeStyle = 'rgba(255,210,122,0.95)'; g.lineWidth = 2; g.beginPath(); g.arc(sx, sy, r * 2.2 + 3 + Math.sin(t * 4) * 1.5, 0, Math.PI * 2); g.stroke(); }
       }
