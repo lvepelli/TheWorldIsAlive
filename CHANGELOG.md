@@ -1,30 +1,7 @@
 # Changelog
 
-## 0.6.0 — weather, premises and the long game
+## 0.7.0 — bread, water and consequences
 
-- World premises: every seed opens on a starting situation (The Cold Peace, The Long Boom, The Age of Unrest, After the Plague, The Machine Dawn, The Fractured Map, The Gilded Age, The Quiet Century) applied at generation, shown on the intro under the seed preview and on the onboarding card.
-- Premise arcs: each premise also schedules its own opening storyline (a border incident in the Cold Peace, a bubble warning and possible crash after the Long Boom, mass marches in the Age of Unrest, an outbreak scare After the Plague, an automation shock at the Machine Dawn, peace talks on the Fractured Map, a tycoon scandal in the Gilded Age, a resource find in the Quiet Century), all chained to a historic "premise.opening" event.
-- Trade model: trade volume between partners is derived from the smaller economy, relations, adjacency, alliance and openness (`simulation/trade.ts`); it feeds growth potential (open economies grow faster, losing partners hurts), scales the trade arcs on the map, and the country inspector lists top partners with yearly volume.
-- Map: Trade overlay colours nations by trade as a share of GDP.
-- Accessibility: "larger text" and "high contrast" settings in the More sheet (persisted); the desktop side nav gains a ⚙ more button for settings, saves, share and install.
-- Mobile: on list screens (Live, News, Social, …) toasts dock above the bottom nav instead of covering the screen header.
-- History: 📜 Export chronicle — the world's story as Markdown (premise, year reviews, sagas, historic events, interventions, the world today), copied to the clipboard or shared via the Web Share sheet on phones.
-- Fix: yearly reviews were almost always titled "A Quiet Year" because unclassified events counted toward "quiet"; years are now named by what actually dominated them.
-- Live: "Developing stories" strip — causal chains still producing events, named like sagas, each card jumping to the latest event.
-- God Mode: delayed interventions — "In 3 months, X declares war on Y", "next year a pandemic begins", "two weeks from now…" record an omen event now and carry out the plan on the day (through the consequence engine, so it survives saves); the resulting event is chained to the omen.
-- Religion: faiths rise in hard times and ebb in prosperity ("revival"/"decline" events) and split in schisms — a breakaway leader founds a Reformed/True/Orthodox splinter with part of the faithful, the two leaders become enemies, polarization jumps.
-- Characters: an executive passed over for the CEO job becomes the new chief's rival (with a new objective), feeding the feud, scandal and funding rules.
-- Culture: yearly Laurel Prizes for art and science (fame, wealth and influence for the laureates; a `prize.laurels` event), alongside the four-yearly World Games.
-- Politics: movements grow over several rounds, fade when the mood calms (monthly support drift), and a surging movement fields its leader as the main election challenger — protest movements can now win power. A country sustains at most four movements; new energy merges into the strongest.
-- News: an "Editorials" filter chip surfaces the weekly opinion pieces (they were buried under daily coverage).
-- AI: `LLMDialogueProvider` — character conversations go through the configured LLM endpoint (prompt `character_dialogue`, with personality, objective, memories, relationships, national mood and the running thread), falling back to the local provider on any failure; characters remember being interviewed (low-weight memories) whichever provider answers.
-- Map: weather fronts — storm cells that darken and flicker with lightning over climate-stressed land; a Climate overlay colours nations by climate risk.
-- Weather with consequences: storm cells are simulation-time objects (`simulation/weather.ts`) shared by the engine and the map, with seasons (hurricane season in the tropics in the second half of the year, winter storms in mid-latitudes); half of all hurricanes and floods now strike countries sitting under a front, so the map foreshadows disasters.
-- Balance: polarization now mean-reverts toward what unrest, war and mood sustain (it used to pin at 97 in a third of countries after a decade); movement support boosts from rallies, protests and tycoons reduced. After 10 years on the `diag` seed: 58 live movements (was 226), 2 of 32 countries above 80 polarization (was 14).
-- Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
-- Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
-- Summaries: the daily summary carries a storm forecast line when fronts sit over land.
-- Tests: JSON round-trip mid-story (pending omens, premise), premise arcs, God delay parsing, LLM dialogue mock.
 - Intro: "featured worlds" chips — one curated seed per premise (The Cold Peace, The Fractured Map, …) that fills the seed box; the premise tag under the preview updates as you pick.
 - Social: characters you interviewed talk about it on the feed the next day (hashtag Interview), quoting the question and their answer.
 - Organizations: movements, parties and religions show public support instead of influence in the list.
@@ -58,6 +35,32 @@
 - Water disputes: a thirsty nation (water under 35) with a water-rich neighbour sees relations sour over dams, diversions and shared aquifers (about two flare-ups a year world-wide), feeding the existing border-clash and war logic.
 - History → Sagas: chains rooted in a tension rise are named ("The water war", "Rivers and grudges", "The road to war in X").
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
+
+## 0.6.0 — weather, premises and the long game
+
+- World premises: every seed opens on a starting situation (The Cold Peace, The Long Boom, The Age of Unrest, After the Plague, The Machine Dawn, The Fractured Map, The Gilded Age, The Quiet Century) applied at generation, shown on the intro under the seed preview and on the onboarding card.
+- Premise arcs: each premise also schedules its own opening storyline (a border incident in the Cold Peace, a bubble warning and possible crash after the Long Boom, mass marches in the Age of Unrest, an outbreak scare After the Plague, an automation shock at the Machine Dawn, peace talks on the Fractured Map, a tycoon scandal in the Gilded Age, a resource find in the Quiet Century), all chained to a historic "premise.opening" event.
+- Trade model: trade volume between partners is derived from the smaller economy, relations, adjacency, alliance and openness (`simulation/trade.ts`); it feeds growth potential (open economies grow faster, losing partners hurts), scales the trade arcs on the map, and the country inspector lists top partners with yearly volume.
+- Map: Trade overlay colours nations by trade as a share of GDP.
+- Accessibility: "larger text" and "high contrast" settings in the More sheet (persisted); the desktop side nav gains a ⚙ more button for settings, saves, share and install.
+- Mobile: on list screens (Live, News, Social, …) toasts dock above the bottom nav instead of covering the screen header.
+- History: 📜 Export chronicle — the world's story as Markdown (premise, year reviews, sagas, historic events, interventions, the world today), copied to the clipboard or shared via the Web Share sheet on phones.
+- Fix: yearly reviews were almost always titled "A Quiet Year" because unclassified events counted toward "quiet"; years are now named by what actually dominated them.
+- Live: "Developing stories" strip — causal chains still producing events, named like sagas, each card jumping to the latest event.
+- God Mode: delayed interventions — "In 3 months, X declares war on Y", "next year a pandemic begins", "two weeks from now…" record an omen event now and carry out the plan on the day (through the consequence engine, so it survives saves); the resulting event is chained to the omen.
+- Religion: faiths rise in hard times and ebb in prosperity ("revival"/"decline" events) and split in schisms — a breakaway leader founds a Reformed/True/Orthodox splinter with part of the faithful, the two leaders become enemies, polarization jumps.
+- Characters: an executive passed over for the CEO job becomes the new chief's rival (with a new objective), feeding the feud, scandal and funding rules.
+- Culture: yearly Laurel Prizes for art and science (fame, wealth and influence for the laureates; a `prize.laurels` event), alongside the four-yearly World Games.
+- Politics: movements grow over several rounds, fade when the mood calms (monthly support drift), and a surging movement fields its leader as the main election challenger — protest movements can now win power. A country sustains at most four movements; new energy merges into the strongest.
+- News: an "Editorials" filter chip surfaces the weekly opinion pieces (they were buried under daily coverage).
+- AI: `LLMDialogueProvider` — character conversations go through the configured LLM endpoint (prompt `character_dialogue`, with personality, objective, memories, relationships, national mood and the running thread), falling back to the local provider on any failure; characters remember being interviewed (low-weight memories) whichever provider answers.
+- Map: weather fronts — storm cells that darken and flicker with lightning over climate-stressed land; a Climate overlay colours nations by climate risk.
+- Weather with consequences: storm cells are simulation-time objects (`simulation/weather.ts`) shared by the engine and the map, with seasons (hurricane season in the tropics in the second half of the year, winter storms in mid-latitudes); half of all hurricanes and floods now strike countries sitting under a front, so the map foreshadows disasters.
+- Balance: polarization now mean-reverts toward what unrest, war and mood sustain (it used to pin at 97 in a third of countries after a decade); movement support boosts from rallies, protests and tycoons reduced. After 10 years on the `diag` seed: 58 live movements (was 226), 2 of 32 countries above 80 polarization (was 14).
+- Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
+- Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
+- Summaries: the daily summary carries a storm forecast line when fronts sit over land.
+- Tests: JSON round-trip mid-story (pending omens, premise), premise arcs, God delay parsing, LLM dialogue mock.
 
 ## 0.5.0 — rivals, fronts and editorials
 

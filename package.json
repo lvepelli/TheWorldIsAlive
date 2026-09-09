@@ -1,7 +1,7 @@
 {
   "name": "the-world-is-alive",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "THE WORLD IS ALIVE — a living procedural civilization simulator with God Mode.",
   "type": "module",
   "scripts": {
