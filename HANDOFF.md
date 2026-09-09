@@ -73,6 +73,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Technical debt
 
 - `Inspector.tsx` is large (one file, seven views); split per entity kind when touching it seriously.
+- `characters.ts` has grown (CEO succession, objective-driven leaders and CEOs, prizes, journalist profiles in one file); `leaderActsOnObjective`, `pivotForObjective` and `fieldFromObjective` are already free functions and could move to `simulation/objectives.ts` with their regex tables.
 - CI runs are serialized by the `pages` concurrency group; each push cancels queued (not running) runs, so a burst of pushes means only the last one gets QA'd. Fine for solo work; switch to per-SHA groups if several people push.
 - Some inline styles in screens should migrate to CSS classes.
 - Event `type` strings are free-form; a union type would catch typos in TRIGGERS.

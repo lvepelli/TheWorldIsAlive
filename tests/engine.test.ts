@@ -185,6 +185,19 @@ describe('simulation', () => {
     for (let i = 0; i < 365; i++) tickDay(w2, rng2);
     expect(w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)).toBe(true);
   }, 30000);
+  it('removing a tycoon through God Mode passes the fortune to family', async () => {
+    const { presetById } = await import('../src/engine/godmode/presets');
+    const w = generateWorld({ seed: 'estate' });
+    const rng = RNG.fromState(w.rngState);
+    const rich = Object.values(w.people).filter((p) => p.alive && p.wealth > 50 && p.relationships.some((r) => (r.type === 'family' || r.type === 'partner') && w.people[r.target.id]?.alive)).sort((a, b) => b.wealth - a.wealth)[0];
+    expect(rich).toBeTruthy();
+    const heirs = rich.relationships.filter((r) => (r.type === 'family' || r.type === 'partner') && w.people[r.target.id]?.alive).map((r) => w.people[r.target.id]);
+    const before = heirs.map((h) => h.wealth);
+    const ev = presetById('remove-figure')!.run(w, rng, { p: rich.id, how: 'accident' });
+    expect(ev?.type).toBe('death.accident');
+    expect(rich.alive).toBe(false);
+    heirs.forEach((h, i) => { expect(h.wealth).toBeGreaterThan(before[i]); expect(h.history.some((x) => x.text.startsWith('Inherited'))).toBe(true); });
+  });
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
