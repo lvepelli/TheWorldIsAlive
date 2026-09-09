@@ -8,7 +8,7 @@ Read this first. Everything needed to continue lives in this repository; nothing
 
 ```bash
 npm install && npm run dev      # play
-npm test                        # engine tests (vitest, 33 tests, ~35 s incl. the 20-year balance run and the 6-year fuzz)
+npm test                        # engine tests (vitest, 34 tests, ~35 s incl. the 20-year balance run and the 6-year fuzz)
 npm run build && npm run e2e    # production build + headless desktop/mobile smoke run with screenshots in tests/e2e/output
 ```
 
@@ -66,14 +66,14 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Files that are safe vs. delicate
 
 - Safe to extend: `spawn.ts`, `consequences.ts`, `actions.ts`, `presets.ts`, screens, `global.css`.
-- Objectives are behaviour: `characters.ts` matches `person.objective` text against regexes (peace/election/reform/resign for leaders, field words for CEOs via `pivotForObjective`, research fields via `fieldFromObjective`). Any code that sets an objective string is therefore steering the simulation; keep the phrases human-readable and check those regexes when adding new ones.
+- Objectives are behaviour: `simulation/objectives.ts` matches `person.objective` text against regexes (peace/election/reform/resign for leaders, field words for CEOs via `pivotForObjective`, research fields via `fieldFromObjective`). Any code that sets an objective string is therefore steering the simulation; keep the phrases human-readable and check those regexes when adding new ones.
 - Anything that mutates the world outside a tick (dialogue persuasion, presets executed from the UI) must call `useGame.getState().bump()` afterwards or screens keep showing stale memoized data until the next day.
 - Delicate: `geography.ts` (region growth + island cleanup; noise is blended with a one-world-width-shifted sample so terrain wraps seamlessly — keep that if you change the noise), `contours.ts` (edge tracing assumes 4-connectivity and the seam rule), `renderer.ts` (camera wrap math), `loop.ts` (render throttling and cinematic gating), `storage.ts` (validation).
 
 ## Technical debt
 
 - `Inspector.tsx` is large (one file, seven views); split per entity kind when touching it seriously.
-- `characters.ts` has grown (CEO succession, objective-driven leaders and CEOs, prizes, journalist profiles in one file); `leaderActsOnObjective`, `pivotForObjective` and `fieldFromObjective` are already free functions and could move to `simulation/objectives.ts` with their regex tables.
+- Objective-driven behaviour lives in `simulation/objectives.ts` (`leaderActsOnObjective`, `pivotForObjective`, `fieldFromObjective` with their regex tables); `characters.ts` keeps the monthly loop, succession, prizes and journalist profiles.
 - CI runs are serialized by the `pages` concurrency group; each push cancels queued (not running) runs, so a burst of pushes means only the last one gets QA'd. Fine for solo work; switch to per-SHA groups if several people push.
 - Some inline styles in screens should migrate to CSS classes.
 - Event `type` strings are free-form; a union type would catch typos in TRIGGERS.
