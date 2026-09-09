@@ -1,16 +1,17 @@
 # Deployed QA report
 
-URL: http://localhost:4173/
-Date: 2026-09-09T00:59:53.695Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/51dc7c0cfa1f123d741a2c4749d907355f181de0/index.html
+Date: 2026-09-09T01:14:05.165Z
 
 ## android-360 (360×800)
 
 - ✅ page loads (HTTP 200, text/html)
+- ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9690 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (9664 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -33,11 +34,12 @@ Date: 2026-09-09T00:59:53.695Z
 ## iphone-390 (390×844)
 
 - ✅ page loads (HTTP 200, text/html)
+- ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8103 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8036 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -60,11 +62,12 @@ Date: 2026-09-09T00:59:53.695Z
 ## phone-430 (430×932)
 
 - ✅ page loads (HTTP 200, text/html)
+- ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8362 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8358 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -87,11 +90,12 @@ Date: 2026-09-09T00:59:53.695Z
 ## desktop-1440 (1440×900)
 
 - ✅ page loads (HTTP 200, text/html)
+- ℹ️ host interstitial clicked (githack "One more step")
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8043 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8009 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
