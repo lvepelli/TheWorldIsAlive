@@ -103,6 +103,12 @@ describe('simulation', () => {
     expect(copy.events.some((e) => e.type === 'health.pandemic' && e.day > 400)).toBe(true);
     expect(copy.day).toBe(430);
   }, 30000);
+  it('featured seeds map to their premises', async () => {
+    const { FEATURED_SEEDS, premiseFor, PREMISES } = await import('../src/engine/generator/premise');
+    expect(FEATURED_SEEDS.length).toBe(PREMISES.length);
+    for (const f of FEATURED_SEEDS) expect(premiseFor(f.seed).id, f.seed).toBe(f.premise);
+    expect(new Set(FEATURED_SEEDS.map((f) => f.premise)).size).toBe(PREMISES.length);
+  });
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);

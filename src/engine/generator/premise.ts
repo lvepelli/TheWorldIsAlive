@@ -89,3 +89,15 @@ export function applyPremise(world: World, seed: string): Premise {
   for (const arc of ARCS[p.id] ?? []) world.pending.push({ dueDay: rng.int(arc.delay[0], arc.delay[1]), ruleId: arc.rule, sourceEventId: opening.id });
   return p;
 }
+
+/** Curated seeds, one per premise, shown on the intro as "featured worlds". Keep in sync with PREMISES order (see tests). */
+export const FEATURED_SEEDS: { seed: string; premise: string }[] = [
+  { seed: 'amber-tide-6', premise: 'cold-peace' },
+  { seed: 'amber-harbor-16', premise: 'long-boom' },
+  { seed: 'amber-summit-7', premise: 'age-of-unrest' },
+  { seed: 'amber-meridian-2', premise: 'after-the-plague' },
+  { seed: 'amber-orchard-13', premise: 'machine-dawn' },
+  { seed: 'amber-citadel-1', premise: 'fractured-map' },
+  { seed: 'amber-lantern-2', premise: 'gilded-age' },
+  { seed: 'amber-canyon-2', premise: 'quiet-century' },
+];

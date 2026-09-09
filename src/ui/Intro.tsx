@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useGame, randomSeed } from '@/state/store';
 import { SaveManager } from './screens/SaveManager';
 import { SeedPreview } from './components/SeedPreview';
-import { premiseFor } from '@/engine/generator/premise';
+import { premiseFor, FEATURED_SEEDS, PREMISES } from '@/engine/generator/premise';
 import { InstallButton } from './components/InstallButton';
 
 export function Intro(): React.ReactElement {
@@ -46,6 +46,7 @@ export function Intro(): React.ReactElement {
               {autosave && <button className="btn primary" style={{ minHeight: 48 }} onClick={() => void loadWorld('autosave')}>▶ Continue — {autosave.name}, {autosave.date}</button>}
               <button className={`btn ${autosave ? '' : 'primary'}`} style={{ minHeight: 48 }} onClick={() => void go()}>✦ Generate new world</button>
               <div className="row"><input className="input" placeholder="Custom seed (optional)" value={seed} onChange={(e) => setSeed(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void go(seed); }} aria-label="World seed" /><button className="btn" style={{ whiteSpace: 'nowrap' }} onClick={() => void go(seed || randomSeed())} disabled={!seed.trim()}>Use seed</button></div>
+              <div className="chips scroll" aria-label="Featured worlds" style={{ justifyContent: 'center' }}>{FEATURED_SEEDS.map((f) => { const pr = PREMISES.find((x) => x.id === f.premise); return <button key={f.seed} className={`chip clickable ${seed === f.seed ? 'active' : ''}`} title={pr?.blurb} onClick={() => setSeed(f.seed)}>{pr?.title ?? f.premise}</button>; })}</div>
               <div className="row" style={{ justifyContent: 'center' }}><button className="btn ghost" onClick={() => setSeed(randomSeed())}>🎲 Random seed</button><button className="btn ghost" onClick={() => setShowSaves(true)}>💾 Saves & import</button></div>
               {error && <div className="card" style={{ color: 'var(--bad)' }}>{error}</div>}
             </div>

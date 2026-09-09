@@ -25,6 +25,7 @@
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
 - Summaries: the daily summary carries a storm forecast line when fronts sit over land.
 - Tests: JSON round-trip mid-story (pending omens, premise), premise arcs, God delay parsing, LLM dialogue mock.
+- Intro: "featured worlds" chips — one curated seed per premise (The Cold Peace, The Fractured Map, …) that fills the seed box; the premise tag under the preview updates as you pick.
 
 ## 0.5.0 — rivals, fronts and editorials
 
