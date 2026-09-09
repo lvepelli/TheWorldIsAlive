@@ -82,7 +82,8 @@ export class LLMGodInterpreter implements GodCommandInterpreter {
       const countries = Object.values(world.countries).map((c) => `${c.id}=${c.name}`).join('; ');
       const companies = Object.values(world.companies).filter((c) => c.alive).sort((a, b) => b.value - a.value).slice(0, 40).map((c) => `${c.id}=${c.name} (${c.sector}, ${c.countryId})`).join('; ');
       const people = Object.values(world.people).filter((p) => p.alive).sort((a, b) => b.fame - a.fame).slice(0, 40).map((p) => `${p.id}=${p.name} (${p.profession}, ${p.countryId})`).join('; ');
-      const vars = { actions, countries, companies, people, command: text };
+      const regions = Object.values(world.regions ?? {}).map((r) => `${r.id}=${r.name} (${r.countryId}, unrest ${r.unrest.toFixed(0)})`).join('; ');
+      const vars = { actions, countries, companies, people, regions, command: text };
       const out = parseJSON<Partial<GodPlan>>(await chat(this.cfg, fill(PROMPTS.god_command.system, vars), fill(PROMPTS.god_command.user, vars), 400));
       if (!out?.action || (!GOD_PRESETS.some((p) => p.id === out.action) && out.action !== 'company-breakthrough')) return local;
       return { action: out.action, params: out.params ?? {}, interpretation: out.interpretation ?? local.interpretation, confidence: typeof out.confidence === 'number' ? out.confidence : 0.8, magnitude: out.magnitude ?? local.magnitude, delayDays: typeof out.delayDays === 'number' && out.delayDays > 0 ? Math.round(out.delayDays) : local.delayDays, customDescription: out.customDescription ?? local.customDescription, targets: local.targets };

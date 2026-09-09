@@ -11,6 +11,7 @@ WORLD ENTITIES
 Countries: {{countries}}
 Companies (top 40): {{companies}}
 People (top 40): {{people}}
+Regions (inside countries; use their ids for the region param of create-country, autonomy, annex, referendum): {{regions}}
 
 PLAYER COMMAND
 {{command}}
