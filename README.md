@@ -8,8 +8,9 @@ what you caused.
 - **Procedural**: every seed produces a different planet, borders, names, flags, economies, rivalries and a starting *premise* (The Cold Peace, The Long Boom, After the Plague, …) with its own opening storyline. The same seed reproduces the same starting world.
 - **Simulated**: population, economy, politics, geopolitics, technology, society, environment and information systems influence each other every day.
 - **Consequential**: every event can schedule follow-ups. Wars trigger refugee waves, market shocks, allied interventions and anti-war protests; breakthroughs reshuffle markets and geopolitics; scandals end careers, and rivals, allies, mentors and funders react to what happens to the people they know. Trade volumes tie economies together and the map shows burning war fronts. The Live screen tracks developing stories; History names the sagas and exports a Markdown chronicle.
+- **Borders that move**: every nation is split into regions with governors and their own grievances; autonomy demands, concessions, crackdowns, secessions along regional lines and annexations under peace terms redraw the map — and the people who lose out (ousted governors) come back with liberation movements.
 - **Narrated**: a fictional media ecosystem covers events with different biases; a social feed reacts with characters that have personalities; markets move.
-- **God Mode**: 40 preset interventions plus a freeform command box ("A small battery company discovers a battery that stores twenty times more energy…"), including delayed commands ("In 3 months, Ceria declares war on Slakevo") recorded as omens and carried out on the day.
+- **God Mode**: 44 preset interventions plus a freeform command box ("A small battery company discovers a battery that stores twenty times more energy…"), including delayed commands ("In 3 months, Ceria declares war on Slakevo") recorded as omens and carried out on the day.
 - **Mobile-first**: bottom navigation, bottom-sheet inspector, pinch/zoom map, safe areas, installable PWA. Works offline once loaded.
 - **Portable**: plain Vite + React + TypeScript. No backend, no API key required. Optional LLM hooks.
 

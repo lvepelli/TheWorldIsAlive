@@ -101,6 +101,19 @@ async function run(name, viewport, mobile) {
     await page.locator('.event-card').first().click(); await page.waitForTimeout(400);
     check((await page.locator('.chain').count()) > 0, 'event inspector shows causal chain');
     await page.click('.inspector-head button[aria-label="Close"]');
+    // v0.8/v0.9 features: Regions overlay, region seams, God region targeting (annex), governors in the country inspector
+    await nav('World');
+    await page.click('button:has-text("Regions")'); await page.waitForTimeout(900);
+    const paintedRegions = await page.evaluate(() => { const c = document.querySelector('.map-canvas'); const g = c.getContext('2d'); const d = g.getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++; return lit; });
+    check(paintedRegions > 50, `Regions overlay paints the map (${paintedRegions} bright samples)`);
+    await page.click('button:has-text("Political")'); await page.waitForTimeout(300);
+    await nav('God');
+    await page.fill('textarea.god-input', 'The strongest nation annexes a region of its neighbour'); await page.waitForTimeout(600);
+    check((await page.locator('text=/annex/i').count()) > 1, 'God understands annexation');
+    await page.fill('textarea.god-input', ''); await page.waitForTimeout(200);
+    await nav('People');
+    check((await page.locator('.entity-row:has-text("Governor of")').count()) > 0 || (await page.locator('text=/Governor of/').count()) > 0, 'governors appear among the people');
+    await nav('World');
     await nav('God');
     await page.fill('textarea.god-input', 'A small battery company discovers a battery that stores twenty times more energy.');
     await page.waitForTimeout(500);
