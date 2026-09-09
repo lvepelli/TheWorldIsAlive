@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- People: a "Governors" filter chip lists every sitting governor (search already matched titles).
 - CI: the live QA also checks that a tap on the Regions overlay opens a region inspector.
 - Map: region names are tappable once drawn, and on the Regions overlay any tap on land opens that region (hover on desktop names it).
 - Regions are entities: tapping a region in a country's list (or its name in a city view) opens a Region inspector — population, prosperity, unrest, identity, autonomy, the governor, its cities, its story and the events that happened there — with a focus button that switches to the Regions overlay.

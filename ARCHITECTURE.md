@@ -78,3 +78,7 @@ Performance budget: ~300 cities, ~32 polygons, ≤80 event rings → comfortably
 - New event: add a `SpawnRule` in `spawn.ts` (or an action in `actions.ts`), optional `TRIGGERS` + `CONSEQUENCE_RULES` in `consequences.ts`, hashtag hints in `ai/narrative.ts`, a cinematic kicker in `ui/Overlays.tsx` if severity 5.
 - New God preset: add to `GOD_PRESETS`; add an intent regex to `interpreter.ts` for freeform support.
 - New entity field: add to `types.ts`, generation in `generator/world.ts`, defaults in `validateWorld()`, drift in `systems.ts`, display in `Inspector.tsx`.
+
+## Regions in the UI
+
+`EntityKind` includes `region`; `events/engine.ts` `getEntity` resolves it from `world.regions`, `Inspector.tsx` renders `RegionView` (stats, governor, cities, story, events tagged with `data.regionId`), `EntityRow` shows a ▦ lead icon. The renderer keeps four region caches keyed by regions count, country count, city count and `geography.version`: `regionCells` (per-cell region index via Voronoi of each country's cities, used by the Regions overlay fill), `seamCache` (world-space seam segments drawn per frame), `regionCellCache` (hit-testing on the Regions overlay) and `regionLabelCache` (label anchors); `regionLabelHits` is rebuilt every frame so `hitTest` can return a region for a tap on its label. Any change to cell ownership must bump `geography.version` (see `createCountry` and `transferRegion`).

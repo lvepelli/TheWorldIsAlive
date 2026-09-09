@@ -5,20 +5,21 @@ import { ageOf } from '@/engine/time';
 import { titleCase } from '../format';
 import type { Profession } from '@/engine/types';
 
-const PROFS: (Profession | 'all')[] = ['all', 'politician', 'entrepreneur', 'scientist', 'journalist', 'activist', 'executive', 'general', 'celebrity', 'artist', 'criminal', 'diplomat', 'athlete', 'engineer', 'religious-leader', 'citizen'];
+type ProfFilter = Profession | 'all' | 'governor';
+const PROFS: ProfFilter[] = ['all', 'politician', 'governor', 'entrepreneur', 'scientist', 'journalist', 'activist', 'executive', 'general', 'celebrity', 'artist', 'criminal', 'diplomat', 'athlete', 'engineer', 'religious-leader', 'citizen'];
 
 export function PeopleScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
   const version = useGame((s) => s.version);
   const [q, setQ] = useState('');
-  const [prof, setProf] = useState<Profession | 'all'>('all');
+  const [prof, setProf] = useState<ProfFilter>('all');
   const [sort, setSort] = useState<'influence' | 'fame' | 'wealth' | 'reputation'>('influence');
   const [showDead, setShowDead] = useState(false);
   const [limit, setLimit] = useState(60);
   const people = useMemo(() => {
     const lq = q.trim().toLowerCase();
     return Object.values(world.people)
-      .filter((p) => (showDead || p.alive) && (prof === 'all' || p.profession === prof) && (!lq || p.name.toLowerCase().includes(lq) || world.countries[p.countryId]?.name.toLowerCase().includes(lq) || p.title?.toLowerCase().includes(lq)))
+      .filter((p) => (showDead || p.alive) && (prof === 'all' || (prof === 'governor' ? !!p.title?.startsWith('Governor of') : p.profession === prof)) && (!lq || p.name.toLowerCase().includes(lq) || world.countries[p.countryId]?.name.toLowerCase().includes(lq) || p.title?.toLowerCase().includes(lq)))
       .sort((a, b) => b[sort] - a[sort]).slice(0, limit);
   }, [world, version, q, prof, sort, showDead, limit]);
   const leaders = useMemo(() => Object.values(world.countries).map((c) => world.people[c.leaderId]).filter(Boolean).sort((a, b) => b.influence - a.influence).slice(0, 6), [world, version]);
@@ -43,7 +44,7 @@ export function PeopleScreen(): React.ReactElement {
           <select className="select" style={{ width: 'auto' }} value={sort} onChange={(e) => setSort(e.target.value as 'influence')}><option value="influence">Influence</option><option value="fame">Fame</option><option value="wealth">Wealth</option><option value="reputation">Reputation</option></select>
           <label className="chip clickable"><input type="checkbox" checked={showDead} onChange={(e) => setShowDead(e.target.checked)} /> include deceased</label>
         </div>
-        <div className="chips scroll">{PROFS.map((p) => <button key={p} className={`chip clickable ${prof === p ? 'active' : ''}`} onClick={() => setProf(p)}>{titleCase(p)}</button>)}</div>
+        <div className="chips scroll">{PROFS.map((p) => <button key={p} className={`chip clickable ${prof === p ? 'active' : ''}`} onClick={() => setProf(p)}>{p === 'governor' ? 'Governors' : titleCase(p)}</button>)}</div>
         <div className="panel-solid list" style={{ padding: 6 }}>
           {people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={`${p.name}${p.alive ? '' : ' †'}`} sub={`${p.title ? p.title + ' · ' : ''}${titleCase(p.profession)} · ${world.countries[p.countryId]?.name ?? '?'} · ${ageOf(p.birthDay, world.day)}y`} right={<><div>{sort === 'wealth' ? `$${p.wealth.toFixed(0)}M` : p[sort].toFixed(0)}</div><div className="dim" style={{ fontSize: 10 }}>{sort}</div></>} />)}
           {!people.length && <div className="dim" style={{ padding: 12 }}>Nobody matches.</div>}
