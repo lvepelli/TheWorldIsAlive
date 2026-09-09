@@ -201,6 +201,13 @@ export class MapRenderer {
       case 'happiness': return ramp(c.happiness / 100, [270, 320, 45]);
       case 'tech': return ramp(c.technology / 100, [230, 200, 185]);
       case 'climate': return ramp(1 - c.climateRisk / 100, [15, 45, 170]);
+      case 'harvest': { // last harvest report's yield ratio (0.5 = failed, 1 = expected, 1.2 = bumper); potential before the first report
+        const w = this.world!;
+        if (this.harvestMemo.len !== w.events.length) { let last: WorldEvent | undefined; for (let i = w.events.length - 1; i >= 0; i--) { if (w.events[i].type === 'harvest.report') { last = w.events[i]; break; } } this.harvestMemo = { len: w.events.length, yields: last?.data?.yields as Record<string, number> | undefined }; }
+        const r = this.harvestMemo.yields?.[c.id];
+        const v = r !== undefined ? clamp((r - 0.5) / 0.75, 0, 1) : clamp(((c.resources.farmland ?? 50) / 100) * (0.5 + (c.resources.water ?? 50) / 200), 0, 1);
+        return ramp(v, [25, 60, 95]);
+      }
       case 'trade': { const share = tradeShare(this.world!, c); return ramp(clamp(Math.sqrt(share / 0.6), 0, 1), [215, 185, 140]); }
     }
   }
@@ -398,6 +405,7 @@ export class MapRenderer {
 
   /** Shared border segments between two country indexes (grid coords), cached per pair. */
   private frontCache = new Map<string, number[][]>();
+  private harvestMemo: { len: number; yields?: Record<string, number> } = { len: -1 };
   private frontsFor(world: World, ra: number, rb: number): number[][] {
     const key = `${ra}:${rb}:${world.geography.countryOrder.length}`;
     const hit = this.frontCache.get(key); if (hit) return hit;

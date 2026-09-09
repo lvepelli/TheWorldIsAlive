@@ -198,7 +198,7 @@ export function yearlyTick(world: World, rng: RNG): WorldEvent[] {
       description: `${poor.length ? `Poor harvests in ${poor.slice(0, 3).map((r) => r.c.name).join(', ')}${poor.length > 3 ? ` and ${poor.length - 3} more` : ''}.` : 'No major shortfalls.'} ${bumper.length ? `Bumper crops in ${bumper.slice(0, 2).map((r) => r.c.name).join(' and ')}.` : ''} World output ${worldRatio < 1 ? `${((1 - worldRatio) * 100).toFixed(0)}% below` : `${((worldRatio - 1) * 100).toFixed(0)}% above`} expectations; grain ${grainPct > 0 ? 'firmed' : 'eased'}.`,
       location: poor[0] ? { countryId: poor[0].c.id } : {}, actors: [...poor.slice(0, 3), ...bumper.slice(0, 2)].map((r) => ref('country', r.c.id)),
       effects: [...poor.map((r) => fx('country', r.c.id, 'happiness', -2)), ...poor.map((r) => fx('country', r.c.id, 'unrest', 2)), ...bumper.map((r) => fx('country', r.c.id, 'happiness', 2))],
-      tags: ['harvest', 'food', 'economy'], data: { worldRatio, shocks: [{ commodityId: 'grain', pct: grainPct }, { sector: 'agriculture', pct: grainPct > 0 ? 0.03 : -0.01 }] },
+      tags: ['harvest', 'food', 'economy'], data: { worldRatio, yields: Object.fromEntries(results.map((r) => [r.c.id, Math.round(r.ratio * 100) / 100])), shocks: [{ commodityId: 'grain', pct: grainPct }, { sector: 'agriculture', pct: grainPct > 0 ? 0.03 : -0.01 }] },
     }));
   }
   // World Games every four years: a global cultural moment with a host and a champion.
