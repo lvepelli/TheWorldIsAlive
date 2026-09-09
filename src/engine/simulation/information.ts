@@ -120,6 +120,9 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
     const local = people.filter((p) => p.countryId === ev.location.countryId);
     const pool = local.length && rng.bool(0.6) ? local : people;
     const authors = rng.sample(pool, Math.min(n, pool.length));
+    // Region events: the region's governor and anyone whose cause it is always get a word in.
+    const region = ev.data?.regionId ? world.regions?.[ev.data.regionId as string] : undefined;
+    if (region) { const stem = region.name.toLowerCase().split(' ')[0]; for (const p of people) { if ((p.title === `Governor of ${region.name}` || (/autonomy|independence|free|liberate/i.test(p.objective) && p.objective.toLowerCase().includes(stem))) && !authors.includes(p)) authors.unshift(p); } }
     for (const a of authors) {
       if (rng.next() > a.socialActivity * 0.8 + 0.2) continue;
       const post = makePost(world, rng, a, ev);

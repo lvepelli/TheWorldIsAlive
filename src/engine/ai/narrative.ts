@@ -160,6 +160,21 @@ function composePost(world: World, ev: WorldEvent, p: Person, stance: number, rn
   const short = ev.title.length > 80 ? ev.title.slice(0, 77) + '…' : ev.title;
   // Personal ties first: people react to what happens to family, partners, allies and enemies.
   const negative = isNegative(ev);
+  // Regional voices: the governor of the region an event is about, or a regionalist with that region in their cause, speaks as such.
+  const regionId = ev.data?.regionId as string | undefined; const region = regionId ? world.regions?.[regionId] : undefined;
+  if (region) {
+    const governs = p.title === `Governor of ${region.name}`; const cause = /autonomy|independence|free|liberate/i.test(p.objective) && p.objective.toLowerCase().includes(region.name.toLowerCase().split(' ')[0]);
+    const country = world.countries[region.countryId];
+    if (governs || cause) {
+      if (ev.type === 'region.autonomy') return rng.pick([`${region.name} has asked politely for a generation. Today we asked loudly.`, `To ${country?.name ?? 'the capital'}: we are not leaving. We are asking to be heard. For now.`, `Self-rule for ${region.name} is not a threat. Read the list. Then talk to us.`]);
+      if (ev.type === 'region.concession' || ev.type === 'region.referendum.yes') return rng.pick([`${region.name} decides for ${region.name} now. Thank you to everyone who marched.`, `We did not get everything. We got enough to build on.`, `Devolution is a word. Tomorrow it becomes a budget.`]);
+      if (ev.type === 'region.crackdown') return governs ? rng.pick([`Soldiers in ${region.name}. I will not resign, and I will not be quiet.`, `They can dissolve a council. They cannot dissolve a people.`, `To the families arrested tonight: ${region.name} knows your names.`]) : rng.pick([`They sent troops. We will send votes, and if votes fail, we will see.`, `Every arrest in ${region.name} makes ten more of us.`]);
+      if (ev.type === 'region.referendum') return rng.pick([`Finally a question ${region.name} gets to answer itself. Vote.`, `Whatever the result, we will respect it. Will the capital?`]);
+      if (ev.type === 'region.referendum.no') return governs ? rng.pick([`${region.name} has spoken and we listen. The work continues inside ${country?.name ?? 'the union'}.`, `Not the result I campaigned for. It is still ours.`]) : rng.pick([`A narrow no is not a yes for the capital. See you in five years.`, `We lost the count, not the argument.`]);
+      if (ev.type === 'region.annexed') return rng.pick([`${region.name} did not consent. Remember that when they show you the flag.`, `A border moved overnight. Families did not.`, `I will spend the rest of my life on this.`]);
+      if (ev.type === 'annex.insurgency') return rng.pick([`Nobody in ${region.name} is surprised.`, `Occupation has a cost. It is being paid tonight.`]);
+    }
+  }
   for (const a of ev.actors) {
     if (a.kind !== 'person' || a.id === p.id) continue;
     const rel = p.relationships.find((r) => r.target.id === a.id); const o = world.people[a.id];
