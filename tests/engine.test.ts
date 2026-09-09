@@ -298,6 +298,8 @@ describe('long-run balance', () => {
     console.log(`20y: pop ${(pop0 / 1e9).toFixed(2)}B→${(pop1 / 1e9).toFixed(2)}B · gdp ${cs.reduce((a, c) => a + c.gdp, 0).toFixed(0)}B · index ${w.indexes.global.value.toFixed(0)} · top co ${cos[0]?.name} $${cos[0]?.value.toFixed(0)}B · companies ${cos.length} · events ${w.events.length} · wars ${cs.reduce((a, c) => a + c.atWarWith.length, 0) / 2} · inflation max ${Math.max(...cs.map((c) => c.inflation)).toFixed(0)} · living ${Object.values(w.people).filter((p) => p.alive).length}`);
     expect(pop1 / pop0).toBeGreaterThan(0.5);
     expect(pop1 / pop0).toBeLessThan(3);
+    expect(cs.length).toBeLessThanOrEqual(45); // secessions and annexations are spaced out; the map must not fragment
+    for (const c of cs) for (const id of c.cityIds) { const r = w.cities[id].regionId ? w.regions[w.cities[id].regionId!] : undefined; expect(r?.countryId, `${w.cities[id].name} region`).toBe(c.id); }
     for (const c of cs) {
       expect(Number.isFinite(c.gdp) && c.gdp > 0).toBe(true);
       expect(c.inflation).toBeLessThan(200);

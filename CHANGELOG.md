@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Inspector: a "Show on map" button next to a country's regions switches to the Regions overlay and focuses the country.
+- Tests: the 20-year balance run now asserts the map does not fragment (≤ 45 nations) and that every city's region belongs to its country.
+
 ## 0.9.0 — regions and borders
 
 - Regions: every country with three or more cities is split into 2–4 regions (seeded, seam-aware k-means over its cities; `generator/regions.ts`), each with an identity, an autonomy level and its own unrest that drifts with the country's mood, the prosperity gap to the rest of the country and the odd slight from the capital (`simulation/regions.ts`). Distinct, aggrieved regions demand autonomy; the capital concedes (devolution, autonomy up) or cracks down (freedom down, unrest up), and a crackdown can end in secession along the region's own borders — the new state takes exactly the region's cities and the cells nearest to them, so borders stop looking arbitrary. Ten years on the `diag` seed: ~45 autonomy demands, 20 concessions, 16 crackdowns, 3 new states. Country inspector lists regions (unrest, identity, autonomy, last chapter); city inspector names the region; sagas are named ("The X question", "The X crackdown", "The birth of X"). Old saves get regions on load.
