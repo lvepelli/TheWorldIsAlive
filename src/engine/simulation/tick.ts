@@ -10,6 +10,7 @@ import { tickMarkets } from './markets';
 import { weeklyTick, monthlyTick, yearlyTick } from './systems';
 import { monthlyCharacters } from './characters';
 import { generateNews, generateSocial, generateEditorials, updateTrending } from './information';
+import { anniversaries } from './anniversaries';
 import { summarize } from './summary';
 import { toDate } from '../time';
 
@@ -25,6 +26,7 @@ export function tickDay(world: World, rng: RNG): TickResult {
   produced.push(...resolvePending(world, rng));
   // 2. Spontaneous events
   produced.push(...spawnDailyEvents(world, rng));
+  produced.push(...anniversaries(world, rng));
   // 3. Slow systems
   if (world.day - world.stats.lastWeeklyDay >= 7) { weeklyTick(world, rng); generateEditorials(world, rng); world.stats.lastWeeklyDay = world.day; }
   if (world.day - world.stats.lastMonthlyDay >= 30) {
