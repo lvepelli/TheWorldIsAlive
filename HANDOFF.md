@@ -88,16 +88,17 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Next recommended tasks (priority order)
 
-1. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
-2. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
-3. **Weather fronts / climate visualization** on the map and a trade-volume simulation feeding the trade arcs.
-4. **Religious schisms**, corporate succession fights, and sports/cultural championships as recurring calendar events.
-5. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
-6. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
-7. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
-8. **Localization** of templates (extract strings from `narrative.ts`/`actions.ts`).
-9. **Accessibility**: focus management for sheets/modals, reduced-motion audit, ARIA for canvas selections (announce selection via live region).
-10. **Capacitor packaging** (see MOBILE.md) + native file export.
+1. **Enable GitHub Pages** (owner, one click) so the clean URL and first-party PWA install work; CI then prefers it automatically.
+2. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
+3. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
+4. **Weather fronts / climate visualization** on the map and a trade-volume simulation feeding the trade arcs.
+5. **Religious schisms**, corporate succession fights, and sports/cultural championships as recurring calendar events.
+6. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
+7. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
+8. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
+9. **Localization** of templates (extract strings from `narrative.ts`/`actions.ts`).
+10. **Accessibility**: focus management for sheets/modals, reduced-motion audit (selection is already announced via a live region).
+11. **Capacitor packaging** (see MOBILE.md) + native file export.
 
 ## Balance snapshot (seed `diag`, 15 years)
 
