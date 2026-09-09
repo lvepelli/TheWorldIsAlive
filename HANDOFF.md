@@ -92,7 +92,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 2. **Wire `LLMDialogueProvider`** (prompt exists) behind the same `DialogueProvider` interface; add a per-character memory of conversations.
 3. **More relationship-driven rules**: rivals exploit downfalls, allies rally to a leader under attack, mentors endorse successors; marriages/partners as personal events.
 4. **Weather fronts / climate visualization** on the map and a trade-volume simulation feeding the trade arcs.
-5. **Religious schisms**, corporate succession fights, and sports/cultural championships as recurring calendar events.
+5. **Religious schisms** and cultural championships as recurring calendar events (CEO succession and the World Games exist in `characters.ts` / `systems.ts`; add rivalry between passed-over executives).
 6. **Regions** inside big countries (use `Region`), with regional unrest driving secession.
 7. **Balance pass** over 20 simulated years: check GDP/inflation runaway, war frequency, death rates; add regression tests for bounds.
 8. **Cloud saves**: implement `SaveStore` against a backend; add user identity.
