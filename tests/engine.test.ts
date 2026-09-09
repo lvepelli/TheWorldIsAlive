@@ -409,4 +409,14 @@ describe('regions', () => {
     const answer = localDialogue.answer(w, gov, 'How is your region?');
     expect(answer).toContain(r.name); expect(/govern/i.test(answer)).toBe(true);
   });
+  it('referendums follow identity and unrest', () => {
+    const w = generateWorld({ seed: 'regions' }); const rng = new RNG('referendum');
+    const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const [r1, r2] = (c.regionIds ?? []).map((id) => w.regions[id]).filter((x) => !x.cityIds.includes(c.capitalId));
+    const call = (r: typeof r1) => { const src = createEvent(w, { category: 'political', type: 'region.referendum', severity: 3, title: 'x', description: 'x', location: { countryId: c.id }, data: { regionId: r.id, region: r.name } }); return CONSEQUENCE_RULES['region.referendum.result'](w, rng, src, {}); };
+    r1.identity = 0.9; r1.unrest = 90; r1.autonomy = 0; c.stability = 70; // furious but the state is stable: self-rule, not independence
+    const yes = call(r1)!; expect(yes.type).toBe('region.referendum.yes'); expect(r1.autonomy).toBeGreaterThanOrEqual(40); expect(r1.unrest).toBeLessThan(90);
+    r2.identity = 0.1; r2.unrest = 20; r2.autonomy = 60;
+    const no = call(r2)!; expect(no.type).toBe('region.referendum.no'); expect(r2.autonomy).toBe(60);
+  });
 });
