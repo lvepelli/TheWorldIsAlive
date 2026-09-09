@@ -3,6 +3,7 @@
  * lose influence, found companies, run for office, die and retire.
  */
 import { RNG, clamp } from '../rng';
+import { regionsOf } from '../generator/regions';
 import type { World, Person, WorldEvent, Sector } from '../types';
 import { DAYS_PER_YEAR, SECTORS } from '../types';
 import * as A from '../events/actions';
@@ -131,7 +132,16 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
         // After the sea takes a district, coastal defences climb the agenda.
         const seaLoss = world.events.slice(-900).some((e) => e.type === 'sea.rise' && e.location.countryId === c.id && world.day - e.day < 400);
         if (seaLoss || (c.climateRisk > 65 && c.cityIds.some((id) => world.cities[id]?.coastal))) pool.push('coastal defence program', ...(seaLoss ? ['coastal defence program', 'coastal defence program'] : []));
+        // Restless regions push regional policies up the agenda: money for the poorest region, or devolved powers for the loudest.
+        const restless = regionsOf(world, c).filter((r) => !r.cityIds.includes(c.capitalId)).sort((x, y) => y.unrest - x.unrest)[0];
+        if (restless && restless.unrest > 45) pool.push('regional development fund', 'devolution act', ...(c.freedom > 55 ? ['devolution act'] : ['regional development fund']));
         const policy = rng.pick(pool);
+        let regionNote = '';
+        if ((policy === 'regional development fund' || policy === 'devolution act') && restless) {
+          if (policy === 'regional development fund') { for (const id of restless.cityIds) { const city = world.cities[id]; if (city) city.prosperity = clamp(city.prosperity + 3, 1, 100); } restless.unrest = clamp(restless.unrest - 8, 0, 100); regionNote = ` The money goes to ${restless.name}, where ${rng.pick(['the roads end', 'the mines closed', 'the young leave', 'the capital is a rumour'])}.`; }
+          else { restless.autonomy = clamp(restless.autonomy + 15, 0, 100); restless.unrest = clamp(restless.unrest - 12, 0, 100); regionNote = ` ${restless.name} gets its own assembly and a say over ${rng.pick(['schools', 'policing', 'its taxes', 'its language'])}.`; }
+          restless.history.push({ day: world.day, text: `${policy === 'devolution act' ? 'Devolution act' : 'Development fund'} from ${c.name}.` });
+        }
         if (policy === 'coastal defence program') { for (const id of c.cityIds) { const city = world.cities[id]; if (city?.coastal) city.prosperity = clamp(city.prosperity + 2, 1, 100); } }
         if (policy === 'irrigation program') c.resources.water = clamp((c.resources.water ?? 50) + 6, 0, 100);
         if (policy === 'agritech subsidy') c.resources.farmland = clamp((c.resources.farmland ?? 50) + 4, 0, 100);
@@ -147,11 +157,13 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
           'irrigation program': [fx('country', c.id, 'debt', 3), fx('country', c.id, 'happiness', 1), fx('country', c.id, 'climateRisk', -1)],
           'agritech subsidy': [fx('country', c.id, 'debt', 2), fx('country', c.id, 'technology', 1), fx('country', c.id, 'gdpGrowth', 0.2)],
           'coastal defence program': [fx('country', c.id, 'debt', 5), fx('country', c.id, 'climateRisk', -4), fx('country', c.id, 'stability', 1), fx('country', c.id, 'approval', 2)],
+          'regional development fund': [fx('country', c.id, 'debt', 4), fx('country', c.id, 'happiness', 1), fx('country', c.id, 'unrest', -1)],
+          'devolution act': [fx('country', c.id, 'stability', 1), fx('country', c.id, 'freedom', 1), fx('country', c.id, 'unrest', -2)],
         }[policy as keyof Record<string, never>] ?? [];
         return createEvent(world, {
           category: 'political', type: 'policy', severity: 2, title: `${c.name} launches ${policy}`,
-          description: `${p.title ?? 'Leader'} ${p.name} signed a sweeping ${policy} into law. ${rng.pick(['Opposition parties vowed to repeal it.', 'Markets reacted calmly.', 'Supporters celebrated in the capital.', 'Analysts call it a gamble.'])}`,
-          location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects, tags: ['policy', 'politics', c.code], data: { policy },
+          description: `${p.title ?? 'Leader'} ${p.name} signed a sweeping ${policy} into law.${regionNote} ${rng.pick(['Opposition parties vowed to repeal it.', 'Markets reacted calmly.', 'Supporters celebrated in the capital.', 'Analysts call it a gamble.'])}`,
+          location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects, tags: ['policy', 'politics', c.code], data: { policy, regionId: regionNote && restless ? restless.id : undefined, region: regionNote && restless ? restless.name : undefined },
         });
       }
       // Challengers attack the leader when approval is low

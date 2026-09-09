@@ -868,7 +868,10 @@ Object.assign(CONSEQUENCE_RULES, {
     const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
     if (!c) return null;
     const roll = rng.next();
-    if (roll < 0.35) return A.createMovement(w, rng, c, src.id, false, 'socialist', undefined, 'tax the machines and share the gains');
+    const hasDividend = c.history.some((h) => h.text === 'Universal dividend introduced.');
+    if (roll < 0.35 || (hasDividend && roll < 0.7 && rng.bool(0.5))) return A.createMovement(w, rng, c, src.id, false, 'socialist', undefined, 'tax the machines and share the gains');
+    if (roll < 0.7 && hasDividend) return null; // already paying one; no second dividend
+    if (roll < 0.7) c.history.push({ day: w.day, text: 'Universal dividend introduced.', eventId: src.id });
     if (roll < 0.7) return createEvent(w, { category: 'political', type: 'policy', severity: 2, causedBy: src.id, title: `${c.name} introduces universal basic dividend`, description: `Facing automation-driven unemployment, ${A.leaderOf(w, c)?.name ?? 'the government'} signed a universal dividend funded by a levy on autonomous systems. Tech firms threatened to relocate.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'happiness', 6), fx('country', c.id, 'unrest', -5), fx('country', c.id, 'debt', 6), fx('country', c.id, 'polarization', -3)], tags: ['policy', 'automation', c.code], data: { policy: 'universal dividend', shocks: [{ sector: 'technology', countryId: c.id, pct: -0.05 }] } });
     return createEvent(w, { category: 'political', type: 'regulation', severity: 3, causedBy: src.id, title: `${c.name} passes sweeping AI regulation`, description: `Parliament in ${c.name} imposed licensing, audits and liability on autonomous systems after the automation shock. Startups called it a death sentence; unions celebrated.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'technology', -2), fx('country', c.id, 'unrest', -4), fx('country', c.id, 'approval', 3)], tags: ['regulation', 'ai', c.code], data: { shocks: [{ sector: 'technology', countryId: c.id, pct: -0.08 }] } });
   },
