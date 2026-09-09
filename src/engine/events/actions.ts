@@ -565,3 +565,17 @@ export function createReligion(world: World, rng: RNG, c: Country, cause: Cause 
     location: { cityId: leader.cityId }, actors: [ref('organization', org.id), ref('person', leader.id), ref('country', c.id)], effects: [fx('country', c.id, 'polarization', 4)], tags: ['religion', 'culture', c.code],
   });
 }
+
+/** A grain exporter shuts its borders to food exports: domestic relief, dearer grain abroad, colder relations with importers. */
+export function grainExportBan(world: World, rng: RNG, c: Country, cause: Cause = 'simulation', player = false): WorldEvent {
+  const importers = Object.values(world.countries).filter((x) => x.id !== c.id && c.tradePartners.includes(x.id) && (x.resources.farmland ?? 50) < (c.resources.farmland ?? 50));
+  for (const x of importers) setRelation(world, c, x, -8);
+  return createEvent(world, {
+    category: 'economic', type: 'export.ban', severity: importers.length >= 3 ? 3 : 2, ...base(cause, player),
+    title: `${c.name} bans grain exports`,
+    description: `${c.name} ${rng.pick(['sealed its silos', 'halted grain shipments "until further notice"', 'imposed an export ban to hold down bread prices at home'])}. ${importers.length ? `${importers.slice(0, 3).map((x) => x.name).join(', ')} depend on those shipments and protested.` : 'Neighbours took note.'} ${rng.pick(['Traders scrambled for alternative supply.', 'The ban is popular at home and hated abroad.', 'World grain rose within hours.'])}`,
+    location: { countryId: c.id }, actors: [ref('country', c.id), ...importers.slice(0, 3).map((x) => ref('country', x.id))],
+    effects: [fx('country', c.id, 'happiness', 1), fx('country', c.id, 'inflation', -0.5), ...importers.map((x) => fx('country', x.id, 'inflation', 0.8))],
+    tags: ['food', 'trade', 'export-ban', c.code], data: { importers: importers.map((x) => x.id), shocks: [{ commodityId: 'grain', pct: 0.04 }] },
+  });
+}

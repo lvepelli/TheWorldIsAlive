@@ -344,6 +344,13 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     ev.description += ' Hunger, not war, drove them.';
     return ev;
   },
+  'food.exportban': (w, rng, src) => {
+    const ids = (src.data?.poor as ID[] | undefined) ?? [];
+    const exporters = Object.values(w.countries).filter((c) => !ids.includes(c.id) && (c.resources.farmland ?? 50) > 60 && c.tradePartners.length);
+    if (!exporters.length) return null;
+    const c = rng.pickWeighted(exporters, (x) => (x.resources.farmland ?? 50) + (100 - x.freedom) / 2);
+    return A.grainExportBan(w, rng, c, src.id);
+  },
   // ---- Summits with agendas ----
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
@@ -830,6 +837,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.aid', delay: [10, 40], p: 0.7 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.migration', delay: [20, 70], p: 0.6 },
+  { match: (e) => e.type === 'food.crisis', rule: 'food.exportban', delay: [3, 25], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
   { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },
