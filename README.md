@@ -15,6 +15,8 @@ what you caused.
 
 ## Screenshots
 
+Current build (v0.6): a Fractured Map world with four wars, burning fronts and trade arcs; the newsroom's weekly editorials; markets; a conversation with a leader; the intro with featured worlds. Regenerate with `npm run build && node tests/e2e/showcase.mjs`.
+
 | | |
 | --- | --- |
 | ![World map](docs/screenshots/world-desktop.png) | ![Newsroom](docs/screenshots/news-desktop.png) |
