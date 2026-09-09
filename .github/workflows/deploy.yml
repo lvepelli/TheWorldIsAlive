@@ -69,7 +69,7 @@ jobs:
             echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using the githack mirror for QA."
             for i in $(seq 1 12); do
               got=$(curl -fsSL "https://rawcdn.githack.com/${{ github.repository }}/${SHA_GH}/build-id.txt" 2>/dev/null || true)
-              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; curl -sSI "$MIRROR" | grep -i "content-type" || true; break; fi
+              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; echo "--- response headers ---"; curl -sSI "$MIRROR" || true; break; fi
               echo "mirror not ready ($i): '$got'"; sleep 10
             done
           fi
