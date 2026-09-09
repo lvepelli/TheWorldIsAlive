@@ -33,7 +33,7 @@ export function tickDay(world: World, rng: RNG): TickResult {
     world.stats.lastMonthlyDay = world.day;
     world.summaries.push(summarize(world, 'month'));
   }
-  if (world.day - world.stats.lastYearlyDay >= 365) { produced.push(...yearlyTick(world, rng)); world.stats.lastYearlyDay = world.day; world.summaries.push(summarize(world, 'year')); }
+  if (world.day - world.stats.lastYearlyDay >= 365) { produced.push(...yearlyTick(world, rng)); world.stats.lastYearlyDay = world.day; world.summaries.push(summarize(world, 'year')); compact(world); }
   // Any event created inside actions (e.g. nested succession) that we did not capture
   const all = world.events.slice(before);
   for (const ev of all) if (!produced.includes(ev)) produced.push(ev);
@@ -51,3 +51,17 @@ export function tickDay(world: World, rng: RNG): TickResult {
 }
 
 export function isNewYear(world: World): boolean { return toDate(world.day, world.meta.startYear).dayOfYear === 0; }
+
+/** Yearly compaction keeps save files small: strips detail that the UI never shows for stale entities. */
+export function compact(world: World): void {
+  const cutoff = world.day - 365;
+  for (const e of world.events) if (e.day < cutoff && !e.historic) { if (e.effects.length) e.effects = []; if (e.affectedEntities.length > 3) e.affectedEntities = e.affectedEntities.slice(0, 3); if (e.tags.length > 3) e.tags = e.tags.slice(0, 3); if (e.description.length > 220) e.description = e.description.slice(0, 217) + '…'; }
+  for (const co of Object.values(world.companies)) if (!co.alive && co.priceHistory.length > 2) co.priceHistory = co.priceHistory.slice(-2);
+  for (const p of Object.values(world.people)) {
+    if (p.alive) { if (p.history.length > 30) p.history = p.history.slice(-30); if (p.memories.length > 12) p.memories = p.memories.slice(-12); continue; }
+    if (p.memories.length) p.memories = [];
+    if (p.relationships.length > 4) p.relationships = p.relationships.slice(0, 4);
+    if (p.history.length > 12) p.history = p.history.slice(-12);
+  }
+  for (const o of Object.values(world.organizations)) if (!o.alive && o.history.length > 6) o.history = o.history.slice(-6);
+}

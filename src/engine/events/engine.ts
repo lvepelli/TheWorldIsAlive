@@ -25,7 +25,7 @@ export interface EventDraft {
   relatedEvents?: ID[];
 }
 
-export const MAX_EVENTS = 4000;
+export const MAX_EVENTS = 3000;
 
 export function resolveLocation(world: World, loc?: EventDraft['location']): WorldEvent['location'] {
   if (loc?.x !== undefined && loc?.y !== undefined) return { countryId: loc.countryId, cityId: loc.cityId, x: loc.x, y: loc.y };

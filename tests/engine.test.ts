@@ -163,7 +163,7 @@ describe('long-run balance', () => {
     const g = w.indexes.global.value;
     expect(g).toBeGreaterThan(50);
     expect(g).toBeLessThan(200000);
-    expect(w.events.length).toBeLessThanOrEqual(4000);
+    expect(w.events.length).toBeLessThanOrEqual(3000);
     expect(w.pending.length).toBeLessThan(2000);
     const dialogue = localDialogue.answer(w, Object.values(w.people).find((p) => p.alive)!, 'What do you want?');
     expect(dialogue.length).toBeGreaterThan(10);
