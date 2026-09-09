@@ -28,13 +28,20 @@ export function Inspector(): React.ReactElement {
   const open = !!selection && !!world;
   const announce = selection && world ? (() => { const r = selection; const e = r.kind === 'person' ? world.people[r.id] : r.kind === 'country' ? world.countries[r.id] : r.kind === 'city' ? world.cities[r.id] : r.kind === 'company' ? world.companies[r.id] : r.kind === 'organization' ? world.organizations[r.id] : r.kind === 'outlet' ? world.outlets[r.id] : world.events.find((x) => x.id === r.id); return e ? `${r.kind}: ${'title' in e && r.kind === 'event' ? (e as { title: string }).title : (e as { name: string }).name}` : ''; })() : '';
   const sheetRef = React.useRef<HTMLElement>(null);
+  // Keyboard users: focus lands on the panel when it opens, and returns to the map/opener when it closes.
+  const wasOpen = React.useRef(false);
+  React.useEffect(() => {
+    if (open && !wasOpen.current) { const opener = document.activeElement as HTMLElement | null; sheetRef.current?.focus({ preventScroll: true }); (sheetRef.current as HTMLElement & { __opener?: HTMLElement | null }).__opener = opener; }
+    if (!open && wasOpen.current) { const el = sheetRef.current as (HTMLElement & { __opener?: HTMLElement | null }) | null; if (el?.__opener && document.contains(el.__opener)) el.__opener.focus({ preventScroll: true }); }
+    wasOpen.current = open;
+  }, [open]);
   const drag = React.useRef<{ y0: number; dy: number } | null>(null);
   // Swipe-down on the header/grabber dismisses the sheet on phones.
   const onDown = (e: React.PointerEvent) => { if (window.innerWidth >= 900 || e.pointerType === 'mouse') return; drag.current = { y0: e.clientY, dy: 0 }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); };
   const onMove = (e: React.PointerEvent) => { const d = drag.current; if (!d || !sheetRef.current) return; d.dy = Math.max(0, e.clientY - d.y0); sheetRef.current.style.transition = 'none'; sheetRef.current.style.transform = `translateY(${d.dy}px)`; };
   const onUp = () => { const d = drag.current; const el = sheetRef.current; drag.current = null; if (!d || !el) return; el.style.transition = ''; el.style.transform = ''; if (d.dy > 90) select(null); };
   return (
-    <aside ref={sheetRef} className={`inspector ${open ? 'open' : ''}`} aria-hidden={!open}>
+    <aside ref={sheetRef} className={`inspector ${open ? 'open' : ''}`} aria-hidden={!open} role="region" aria-label="Inspector" tabIndex={-1}>
       <div aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{announce}</div>
       <div className="grabber" onClick={() => select(null)} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'none', width: 80, padding: '6px 0', background: 'none' }}><div style={{ width: 40, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.2)', margin: '0 auto' }} /></div>
       <div className="inspector-head" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'pan-x' }}>

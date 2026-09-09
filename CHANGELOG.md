@@ -11,6 +11,7 @@
 - History → Sagas: names for scandal rivalries ("The Okoro affair", "Vidal against the world"), feuds, snap elections and purges.
 - Balance: rival pile-ons capped, breakups reachable for less famous couples, senior allies can act as mentors.
 - World premises: every seed opens on a starting situation (The Cold Peace, The Long Boom, The Age of Unrest, After the Plague, The Machine Dawn, The Fractured Map, The Gilded Age, The Quiet Century) applied at generation, shown on the intro under the seed preview and on the onboarding card.
+- Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 
 ## 0.4.0 — deployed & turning
 
