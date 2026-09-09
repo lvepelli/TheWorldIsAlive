@@ -7,7 +7,7 @@ import { pctChange } from './markets';
 import { RNG, clamp } from '../rng';
 import type { World, Country, WorldEvent } from '../types';
 import { DAYS_PER_YEAR } from '../types';
-import { yearOf } from '../time';
+import { yearOf, toDate } from '../time';
 import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
 
@@ -118,6 +118,22 @@ export function monthlyTick(world: World, rng: RNG): WorldEvent[] {
       let target = (c.ideology === o.ideology ? 15 : -5) + (c.alliances.includes(oid) ? 40 : 0) + (c.tradePartners.includes(oid) ? 15 : 0) + ((c.freedom > 60) === (o.freedom > 60) ? 8 : -10);
       if (c.atWarWith.includes(oid)) target = -100;
       c.relations[oid] = clamp(rel + (target - rel) * 0.03 + rng.gauss(0, 1.5), -100, 100);
+    }
+    // Election campaigns: two to four months before the vote, a campaign story with a poll, a challenger and a promise.
+    if (c.electionEvery && year + 1 === c.nextElectionYear && toDate(world.day, world.meta.startYear).month >= 8 && !c.history.some((h) => h.text === 'Campaign season.' && world.day - h.day < 300)) {
+      c.history.push({ day: world.day, text: 'Campaign season.' });
+      const incumbent = world.people[c.leaderId];
+      const movement = Object.values(world.organizations).filter((o) => o.alive && o.type === 'movement' && o.countryId === c.id && o.support > 30 && o.leaderId && world.people[o.leaderId]?.alive && o.leaderId !== c.leaderId).sort((a, b) => b.support - a.support)[0];
+      const challenger = movement ? world.people[movement.leaderId!] : Object.values(world.people).filter((p) => p.alive && !p.retired && p.countryId === c.id && p.profession === 'politician' && p.id !== c.leaderId && !p.title?.startsWith('Governor')).sort((a, b) => b.influence - a.influence)[0];
+      const poll = clamp(c.approval + (incumbent?.personality.charisma ?? 0.5) * 10 - 5 - (movement ? (movement.support - 30) / 3 : 0) + rng.gauss(0, 4), 15, 85);
+      if (challenger) { challenger.fame = clamp(challenger.fame + 8, 0, 100); challenger.influence = clamp(challenger.influence + 4, 0, 100); challenger.history.push({ day: world.day, text: `Ran for the leadership of ${c.name}.` }); }
+      const promise = rng.pick(['lower prices', 'jobs in the regions', 'an end to corruption', 'peace with the neighbours', 'a bigger army', 'clean air', 'a referendum on everything']);
+      out.push(createEvent(world, {
+        category: 'political', type: 'election.campaign', severity: 2, title: `Campaign season opens in ${c.name}: ${incumbent?.name ?? 'the government'} vs ${challenger?.name ?? 'the opposition'}`,
+        description: `Voters in ${c.name} go to the polls in the new year. Early polling gives ${incumbent?.name ?? 'the incumbent'} ${poll.toFixed(0)}%; ${challenger ? `${challenger.name}${movement ? ` of ${movement.name}` : ''} is promising ${promise}` : `the opposition is promising ${promise}`}. ${rng.pick(['Both sides accuse the other of foreign money.', 'The first debate was mostly about the debate.', 'Nobody is talking about the deficit.', 'Turnout is the only number that matters.'])}`,
+        location: { countryId: c.id }, actors: [ref('country', c.id), ...(incumbent ? [ref('person', incumbent.id)] : []), ...(challenger ? [ref('person', challenger.id)] : [])],
+        effects: [fx('country', c.id, 'polarization', 2)], tags: ['election', 'campaign', c.code], data: { poll, challenger: challenger?.id, movement: movement?.id },
+      }));
     }
     // Elections
     if (c.electionEvery && year >= c.nextElectionYear && world.day % 30 < 7) {

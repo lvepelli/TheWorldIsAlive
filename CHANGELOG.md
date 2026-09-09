@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Elections have campaigns: from September of the year before a vote, a campaign story opens with an early poll for the incumbent, a named challenger (a surging movement's leader, or the most influential politician) and a promise; the challenger gains fame and a résumé line.
 - LLM: the God-command prompt now lists regions (id, country, unrest) so an LLM interpreter can target them for independence, autonomy, annexation and referendums.
 - God Mode: "Hold a referendum in <Region>" and a Regional Referendum preset (45 presets) put any region to a vote; the result lands weeks later like a natural one.
 - Referendums: a free state (freedom above 60) answers an autonomy demand with a referendum about a third of the time (once per region per three years). Turnout and the yes-share follow identity, unrest and existing autonomy; a yes brings sweeping devolution (or, when the region is furious and the state fragile, an honoured vote for independence), a no calms the region and costs the governor who campaigned for it. Sagas: "The X referendum".
