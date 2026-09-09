@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Summaries: monthly and yearly reviews name the most restless regions (unrest above 55) and their countries.
 - People: a "Governors" filter chip lists every sitting governor (search already matched titles).
 - CI: the live QA also checks that a tap on the Regions overlay opens a region inspector.
 - Map: region names are tappable once drawn, and on the Regions overlay any tap on land opens that region (hover on desktop names it).

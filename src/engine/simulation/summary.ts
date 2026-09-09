@@ -29,6 +29,8 @@ export function summarize(world: World, period: 'day' | 'month' | 'year'): World
     const countries = Object.values(world.countries);
     const unstable = countries.filter((c) => c.stability < 35);
     if (unstable.length) lines.push(`Fragile states: ${unstable.slice(0, 3).map((c) => c.name).join(', ')}.`);
+    const restless = Object.values(world.regions ?? {}).filter((r) => r.unrest > 55 && world.countries[r.countryId] && !r.cityIds.includes(world.countries[r.countryId].capitalId)).sort((a, b) => b.unrest - a.unrest);
+    if (restless.length) lines.push(`Restless regions: ${restless.slice(0, 3).map((r) => `${r.name} (${world.countries[r.countryId].name})`).join(', ')}${restless.length > 3 ? ` and ${restless.length - 3} more` : ''}.`);
     const rising = Object.values(world.people).filter((p) => p.alive).sort((a, b) => b.fame - a.fame).slice(0, 3);
     if (rising.length) lines.push(`Most talked about: ${rising.map((p) => p.name).join(', ')}.`);
     const top = Object.values(world.companies).filter((c) => c.alive && c.priceHistory.length > 2).map((c) => ({ c, ch: pctChange(c.priceHistory, Math.min(c.priceHistory.length - 1, span)) })).sort((a, b) => b.ch - a.ch);
