@@ -67,6 +67,16 @@ async function run(name, viewport, mobile) {
     await page.waitForTimeout(400);
     const after = await page.screenshot({ clip: { x: box.x + 10, y: box.y + box.height * 0.45, width: 120, height: 80 } });
     check(!before.equals(after), 'map drag moves the view');
+    if (mobile) {
+      const s0 = await page.evaluate(() => window.__twiaRenderer?.camera.scale ?? 0);
+      const cdp2 = await ctx.newCDPSession(page); const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+      await cdp2.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cx - 30, y: cy }, { x: cx + 30, y: cy }] });
+      for (let k = 1; k <= 6; k++) await cdp2.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: cx - 30 - k * 12, y: cy }, { x: cx + 30 + k * 12, y: cy }] });
+      await cdp2.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(300);
+      const s1 = await page.evaluate(() => window.__twiaRenderer?.camera.scale ?? 0);
+      check(s1 > s0 * 1.2, `pinch zoom scales the map (${s0.toFixed(2)} → ${s1.toFixed(2)})`);
+    }
     const nav = async (label) => { if (mobile && !['World', 'Live', 'News', 'God'].includes(label)) { await page.click('.bottom-nav button[aria-label="More"]'); await page.click(`.modal button:has-text("${label}")`); } else await page.click(`${mobile ? '.bottom-nav' : '.side-nav'} button[aria-label="${label}"]`); await page.waitForTimeout(400); };
     for (const s of ['Live', 'News', 'Social', 'Markets', 'History']) { await nav(s); const ov = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1); check((await page.locator('.screen-title').count()) > 0 && !ov, `${s} screen renders without overflow`); }
     await shot('04-news');

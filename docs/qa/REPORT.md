@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: http://localhost:4173/lvepelli/TheWorldIsAlive/abc123/index.html
-Date: 2026-09-09T00:38:18.603Z
+URL: http://localhost:4173/
+Date: 2026-09-09T00:59:53.695Z
 
 ## android-360 (360×800)
 
@@ -9,12 +9,13 @@ Date: 2026-09-09T00:38:18.603Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9679 bright samples)
+- ✅ map is painted (9690 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
 - ✅ map drag moves the view
+- ✅ pinch zoom scales the map (6.04 → 20.55)
 - ✅ Live screen renders without overflow
 - ✅ News screen renders without overflow
 - ✅ Social screen renders without overflow
@@ -35,12 +36,13 @@ Date: 2026-09-09T00:38:18.603Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8108 bright samples)
+- ✅ map is painted (8103 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
 - ✅ map drag moves the view
+- ✅ pinch zoom scales the map (6.40 → 21.77)
 - ✅ Live screen renders without overflow
 - ✅ News screen renders without overflow
 - ✅ Social screen renders without overflow
@@ -67,6 +69,7 @@ Date: 2026-09-09T00:38:18.603Z
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
 - ✅ map drag moves the view
+- ✅ pinch zoom scales the map (7.12 → 24.21)
 - ✅ Live screen renders without overflow
 - ✅ News screen renders without overflow
 - ✅ Social screen renders without overflow
@@ -87,7 +90,7 @@ Date: 2026-09-09T00:38:18.603Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8050 bright samples)
+- ✅ map is painted (8043 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
