@@ -96,6 +96,8 @@ async function run(name, viewport, mobile) {
     check(errors.length === 0, `no runtime errors${errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''}`);
   } catch (e) {
     check(false, `exception: ${e.message.split('\n')[0]}`);
+    if (errors.length) lines.push(`- ℹ️ runtime errors: ${errors.slice(0, 5).join(' | ')}`);
+    try { lines.push(`- ℹ️ body: ${(await page.evaluate(() => document.body.innerText.slice(0, 300))).replace(/\n+/g, ' / ')}`); } catch { /* ignore */ }
     try { await shot('99-error'); } catch { /* ignore */ }
   }
   report.push(...lines, '');

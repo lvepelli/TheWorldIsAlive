@@ -1,15 +1,15 @@
 # Deployed QA report
 
-URL: http://localhost:4173/
-Date: 2026-09-09T00:03:49.082Z
+URL: http://localhost:4173/lvepelli/TheWorldIsAlive/abc123/index.html
+Date: 2026-09-09T00:38:18.603Z
 
 ## android-360 (360×800)
 
-- ✅ page loads (HTTP 200)
+- ✅ page loads (HTTP 200, text/html)
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9684 bright samples)
+- ✅ map is painted (9679 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -31,11 +31,11 @@ Date: 2026-09-09T00:03:49.082Z
 
 ## iphone-390 (390×844)
 
-- ✅ page loads (HTTP 200)
+- ✅ page loads (HTTP 200, text/html)
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8083 bright samples)
+- ✅ map is painted (8108 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -57,11 +57,11 @@ Date: 2026-09-09T00:03:49.082Z
 
 ## phone-430 (430×932)
 
-- ✅ page loads (HTTP 200)
+- ✅ page loads (HTTP 200, text/html)
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8368 bright samples)
+- ✅ map is painted (8362 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -83,11 +83,11 @@ Date: 2026-09-09T00:03:49.082Z
 
 ## desktop-1440 (1440×900)
 
-- ✅ page loads (HTTP 200)
+- ✅ page loads (HTTP 200, text/html)
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8067 bright samples)
+- ✅ map is painted (8050 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
