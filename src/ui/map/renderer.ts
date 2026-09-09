@@ -4,7 +4,7 @@
  * dynamic layers (borders, cities, routes, events, labels) are drawn per frame.
  */
 import type { World, Country, City, WorldEvent, EntityRef, ID } from '@/engine/types';
-import { tradeVolume } from '@/engine/simulation/trade';
+import { tradeVolume, tradeShare } from '@/engine/simulation/trade';
 import { buildContours, type Shapes, polygonArea } from './contours';
 import type { MapOverlay } from '@/state/store';
 import { clamp } from '@/engine/rng';
@@ -199,6 +199,7 @@ export class MapRenderer {
       case 'tension': { const worst = Math.max(0, ...Object.values(c.relations).map((r) => -r)) / 100; const war = c.atWarWith.length ? 1 : 0; return ramp(1 - Math.max(worst, war), [0, 30, 150]); }
       case 'happiness': return ramp(c.happiness / 100, [270, 320, 45]);
       case 'tech': return ramp(c.technology / 100, [230, 200, 185]);
+      case 'trade': { const share = tradeShare(this.world!, c); return ramp(clamp(Math.sqrt(share / 0.6), 0, 1), [215, 185, 140]); }
     }
   }
 

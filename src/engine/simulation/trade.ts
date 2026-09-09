@@ -11,7 +11,7 @@ export function tradeVolume(world: World, a: Country, b: Country): number {
   if (a.atWarWith.includes(b.id)) return 0;
   const rel = a.relations[b.id] ?? 0;
   if (rel < -60) return 0;
-  const base = Math.min(a.gdp, b.gdp) * 0.08 + Math.sqrt(a.gdp * b.gdp) * 0.02;
+  const base = Math.min(a.gdp, b.gdp) * 0.04 + Math.sqrt(a.gdp * b.gdp) * 0.01;
   const neighbor = a.neighbors.includes(b.id) ? 1.5 : 1;
   const allied = a.alliances.includes(b.id) ? 1.3 : 1;
   const relFactor = 0.6 + Math.max(0, rel + 60) / 160; // 0.6 at -60 … 1.6 at +100

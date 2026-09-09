@@ -16,7 +16,7 @@ import { audio } from '@/ui/audio';
 
 export type Screen = 'world' | 'live' | 'news' | 'social' | 'markets' | 'people' | 'orgs' | 'history' | 'god';
 export type Speed = 0 | 1 | 5 | 20 | 100;
-export type MapOverlay = 'political' | 'stability' | 'economy' | 'tension' | 'happiness' | 'tech';
+export type MapOverlay = 'political' | 'stability' | 'economy' | 'tension' | 'happiness' | 'tech' | 'trade';
 export type LinkMode = 'auto' | 'all' | 'none';
 export type Phase = 'intro' | 'generating' | 'playing';
 

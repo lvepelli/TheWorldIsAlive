@@ -44,7 +44,7 @@ Implemented chains: war (markets, allies join, refugees, attrition→end, anti-w
 
 ## Trade (`trade.ts`)
 
-Nothing is stored: `tradeVolume(a, b)` = (min(gdp) × 0.08 + √(gdpA·gdpB) × 0.02) × neighbor 1.5 × ally 1.3 × relations factor (0.6 at −60 … 1.6 at +100) × openness (freedom). War or relations below −60 suspend a link. `tradeShare` (total / GDP, capped 0.8) enters the weekly growth potential as `(min(0.5, share) − 0.15) × 2`, so sanctions, wars and broken alliances have a lasting economic cost. The map scales trade arcs by log volume; the inspector's Trade section lists top partners.
+Nothing is stored: `tradeVolume(a, b)` = (min(gdp) × 0.04 + √(gdpA·gdpB) × 0.01) × neighbor 1.5 × ally 1.3 × relations factor (0.6 at −60 … 1.6 at +100) × openness (freedom). War or relations below −60 suspend a link. `tradeShare` (total / GDP, capped 0.8) enters the weekly growth potential as `(min(0.5, share) − 0.25) × 2`, so sanctions, wars and broken alliances have a lasting economic cost. The map scales trade arcs by log volume, the Trade overlay colours countries by share, and the inspector Trade section lists top partners.
 
 ## Markets (`markets.ts`)
 
