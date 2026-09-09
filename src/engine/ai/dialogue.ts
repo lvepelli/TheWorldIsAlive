@@ -29,7 +29,7 @@ export class LocalDialogueProvider implements DialogueProvider {
       const open = p.personality.openness > 0.55 && p.personality.caution < 0.7;
       const ask = question.replace(/^.*?\b(you should|you must|why don't you|i advise you to|i urge you to|please)\b\s*/i, '').replace(/[?.!]+$/, '').trim();
       if (!ask) return prefix + voice(['Should what? Say it plainly.', 'Advice is cheap. Finish the sentence.']);
-      return prefix + (open ? voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}… You are not the first to say it. I will think about it — seriously.`, `Maybe you are right. If I ${ask}, the people who matter will notice. Let me consider it.`]) : voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}? No. I did not get here by taking advice from strangers.`, `I hear you. I will do the opposite, and you will see why.`]));
+      return (open ? voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}… You are not the first to say it. I will think about it — seriously.`, `Maybe you are right. If I ${ask}, the people who matter will notice. Let me consider it.`]) : voice([`${ask.charAt(0).toUpperCase() + ask.slice(1)}? No. I did not get here by taking advice from strangers.`, `I hear you. I will do the opposite, and you will see why.`]));
     }
     if (/want|goal|objective|ambition|plan/.test(q)) return prefix + voice([`I want to ${p.objective}. Everything else is noise.`, `To ${p.objective}. ${p.personality.ambition > 0.7 ? 'And I will not stop until it is done.' : 'If the world allows it.'}`, `${p.personality.integrity > 0.6 ? 'Honestly?' : 'Officially?'} To ${p.objective}.`]);
     if (/country|nation|government|leader|state|home/.test(q) && c) {
