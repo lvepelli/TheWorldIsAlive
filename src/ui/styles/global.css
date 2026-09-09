@@ -402,3 +402,7 @@ html[data-high-contrast] .btn, html[data-high-contrast] .chip { border-color: va
 
 /* Visually hidden text for screen readers (severity labels next to colour dots). */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Desktop map legend: keep it compact so it never collides with the overlay bar. */
+.map-legend { flex-wrap: wrap; justify-content: flex-end; max-width: 380px; row-gap: 2px; }
+@media (max-width: 1279px) { .map-legend .hint { display: none; } }

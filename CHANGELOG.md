@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Map: the desktop legend explains the active overlay in a few words (what the colours mean, that dotted seams are regions).
 - Map: region names appear as small italic labels once you zoom in (and from a lighter zoom on the Regions overlay), amber where the region is angry; the capital's own region is not labelled on the political map since it reads as the country.
 - History: the Markdown chronicle export gains a "Borders" section (foundings, annexations, devolutions, ✦ for your doing); a "Borders" tab lists every founding, annexation and devolution in order, with a one-line tally of how the map has changed; tap an entry to open the event.
 - Dialogue: ask anyone "How is your region?" (new starter chip) — governors describe the region they run, its mood, its autonomy and the last thing that happened to it; regionalists state their cause; others say where they are from.

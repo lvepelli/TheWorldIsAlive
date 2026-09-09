@@ -7,6 +7,10 @@ import { audio } from '../audio';
 import { Modal } from '../components/Modal';
 import { SaveManager } from './SaveManager';
 
+const OVERLAY_HINTS: Record<string, string> = {
+  political: 'dotted seams = regions', stability: 'green stable → red fragile', economy: 'brighter = richer per person', tension: 'red = hostile relations / war', happiness: 'violet unhappy → gold content', tech: 'brighter = more advanced',
+  trade: 'brighter = trade matters more', climate: 'red = high climate risk', harvest: 'red failed → green bumper', regions: 'green calm → red angry regions',
+};
 const OVERLAYS: { id: MapOverlay; label: string }[] = [
   { id: 'political', label: 'Political' }, { id: 'stability', label: 'Stability' }, { id: 'economy', label: 'Wealth' }, { id: 'tension', label: 'Tension' }, { id: 'happiness', label: 'Mood' }, { id: 'tech', label: 'Tech' }, { id: 'trade', label: 'Trade' }, { id: 'climate', label: 'Climate' }, { id: 'harvest', label: 'Harvest' }, { id: 'regions', label: 'Regions' },
 ];
@@ -112,7 +116,7 @@ function HudBottom(): React.ReactElement {
           <button className={links !== 'none' ? 'active' : ''} title="Toggle alliance/trade/war links" onClick={() => setLinks(links === 'auto' ? 'all' : links === 'all' ? 'none' : 'auto')} aria-label="Links mode">{links === 'auto' ? 'Links' : links === 'all' ? 'All links' : 'No links'}</button>
         </div>
         <div className="panel map-legend hide-mobile">
-          <span>{Object.keys(world.countries).length} nations</span><span>·</span><span>{wars} war{wars === 1 ? '' : 's'}</span><span>·</span><span>{world.events.length} events</span>
+          <span>{Object.keys(world.countries).length} nations</span><span>·</span><span>{wars} war{wars === 1 ? '' : 's'}</span><span>·</span><span>{world.events.length} events</span>{OVERLAY_HINTS[overlay] && <><span>·</span><span className="dim hint">{OVERLAY_HINTS[overlay]}</span></>}
         </div>
       </div>
       <div className="panel ticker" aria-live="polite">
