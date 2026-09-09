@@ -6,14 +6,28 @@ import { formatDate } from '@/engine/time';
 import { catVar } from '../format';
 import { audio } from '../audio';
 
-const EXAMPLES = [
-  'A small battery company discovers a battery that stores twenty times more energy than current technology.',
-  'A meteor strikes the largest city in the world.',
-  'The two most powerful nations sign a historic alliance.',
-  'A young activist named Mira Vale starts a movement that sweeps the country.',
-  'A global pandemic begins.',
-  'The economy of the richest country collapses into crisis.',
-];
+/** Example commands that name real entities from the current world, so "Inspire me" always makes sense. */
+function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['world']>): string[] {
+  const cs = Object.values(world.countries); const byGdp = cs.slice().sort((a, b) => b.gdp - a.gdp);
+  const a = byGdp[0], b = byGdp[1] ?? byGdp[0], weak = cs.slice().sort((x, y) => x.stability - y.stability)[0];
+  const people = Object.values(world.people).filter((p) => p.alive).sort((x, y) => y.fame - x.fame);
+  const star = people[0]; const cos = Object.values(world.companies).filter((c) => c.alive).sort((x, y) => y.value - x.value);
+  const co = cos[0]; const city = world.cities[a.capitalId];
+  return [
+    `A small ${a.adjective} battery company discovers a battery that stores twenty times more energy than current technology.`,
+    `A meteor strikes ${city?.name ?? a.name}.`,
+    `${a.name} and ${b.name} sign a historic alliance.`,
+    `A young activist named Mira Vale starts a movement that sweeps ${weak.name}.`,
+    'A global pandemic begins.',
+    `The economy of ${a.name} collapses into crisis.`,
+    star ? `${star.name} is caught in a huge scandal.` : `A scandal engulfs the government of ${a.name}.`,
+    co ? `${co.name} invents a working fusion reactor.` : `${a.adjective} scientists discover life on another world.`,
+    `${weak.name} erupts in revolution.`,
+    `Oil is discovered in ${b.name}.`,
+    `Refugees flee ${weak.name} for ${a.name}.`,
+    `${b.name} declares war on ${a.name}.`,
+  ];
+}
 
 export function GodScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
@@ -66,7 +80,8 @@ export function GodScreen(): React.ReactElement {
           )}
           <div className="row wrap" style={{ marginTop: 10 }}>
             <button className="btn primary" disabled={!preview} onClick={() => preview && execute(preview, text)}>✦ Make it so</button>
-            <button className="btn ghost" onClick={() => setText(EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)])}>Inspire me</button>
+            <button className="btn ghost" onClick={() => { const ex = examplesFor(world); setText(ex[Math.floor(Math.random() * ex.length)]); }}>Inspire me</button>
+            <button className="btn ghost" title="Execute a random preset on random targets" onClick={() => { const p = GOD_PRESETS[Math.floor(Math.random() * GOD_PRESETS.length)]; execute({ action: p.id, params: {}, interpretation: `Surprise: ${p.label}`, confidence: 1, targets: [] }, `Surprise me → ${p.label}`); }}>🎲 Surprise me</button>
           </div>
           {result && (
             <div className="card" style={{ marginTop: 10, borderColor: result.ok ? 'rgba(88,214,141,0.4)' : 'rgba(255,93,93,0.4)' }}>

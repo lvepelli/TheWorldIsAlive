@@ -455,6 +455,44 @@ Object.assign(CONSEQUENCE_RULES, {
     if (roll < 0.7) return createEvent(w, { category: 'political', type: 'policy', severity: 2, causedBy: src.id, title: `${c.name} introduces universal basic dividend`, description: `Facing automation-driven unemployment, ${A.leaderOf(w, c)?.name ?? 'the government'} signed a universal dividend funded by a levy on autonomous systems. Tech firms threatened to relocate.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'happiness', 6), fx('country', c.id, 'unrest', -5), fx('country', c.id, 'debt', 6), fx('country', c.id, 'polarization', -3)], tags: ['policy', 'automation', c.code], data: { policy: 'universal dividend', shocks: [{ sector: 'technology', countryId: c.id, pct: -0.05 }] } });
     return createEvent(w, { category: 'political', type: 'regulation', severity: 3, causedBy: src.id, title: `${c.name} passes sweeping AI regulation`, description: `Parliament in ${c.name} imposed licensing, audits and liability on autonomous systems after the automation shock. Startups called it a death sentence; unions celebrated.`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'technology', -2), fx('country', c.id, 'unrest', -4), fx('country', c.id, 'approval', 3)], tags: ['regulation', 'ai', c.code], data: { shocks: [{ sector: 'technology', countryId: c.id, pct: -0.08 }] } });
   },
+  'coup.sanctions': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c) return null;
+    const democracies = Object.values(w.countries).filter((x) => x.id !== c.id && x.freedom > 60 && (x.gdp > c.gdp * 0.5));
+    if (!democracies.length) return null;
+    const lead = rng.pickWeighted(democracies, (x) => x.gdp);
+    const bloc = [lead, ...democracies.filter((x) => x.id !== lead.id && lead.alliances.includes(x.id))].slice(0, 4);
+    for (const d of bloc) { A.setRelation(w, d, c, -20); d.tradePartners = d.tradePartners.filter((t) => t !== c.id); c.tradePartners = c.tradePartners.filter((t) => t !== d.id); }
+    return createEvent(w, { category: 'diplomatic', type: 'sanctions', severity: 3, causedBy: src.id, title: `${lead.name}${bloc.length > 1 ? ' and allies' : ''} impose sanctions on ${c.name}`, description: `Citing the unconstitutional seizure of power, ${bloc.map((x) => x.name).join(', ')} froze assets and cut trade with ${c.name}. The junta called it "colonial arrogance".`, location: { countryId: c.id }, actors: [ref('country', lead.id), ref('country', c.id)], effects: [fx('country', c.id, 'gdpGrowth', -2), fx('country', c.id, 'inflation', 4), fx('country', c.id, 'unrest', 5), fx('country', c.id, 'approval', 3)], tags: ['sanctions', 'diplomacy', c.code, lead.code], data: { shocks: [{ countryId: c.id, pct: -0.08 }] } });
+  },
+  'tech.startups': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id);
+    if (!c) return null;
+    const sector = (src.data?.sector as Sector | undefined) ?? 'technology';
+    const ev = A.foundCompany(w, rng, c, sector, src.id, false, undefined, undefined, `${String(src.data?.field ?? sector)} applications`);
+    ev.description += ` The founders say the recent ${String(src.data?.field ?? sector)} breakthrough made the venture possible.`;
+    return ev;
+  },
+  'disaster.reconstruction': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = c$(w, src.actors.find((a) => a.kind === 'country')?.id); const city = src.location.cityId ? w.cities[src.location.cityId] : undefined;
+    if (!c) return null;
+    const cos = Object.values(w.companies).filter((x) => x.alive && x.sector === 'construction');
+    const co = cos.length ? rng.pickWeighted(cos, (x) => x.value) : null;
+    return createEvent(w, { category: 'economic', type: 'reconstruction', severity: 2, causedBy: src.id, title: `${city?.name ?? c.name} rebuilds after the ${String(src.data?.kind ?? 'disaster')}`, description: `${co ? `${co.name} won the main contract as` : 'As'} reconstruction of ${city?.name ?? c.name} began. Cranes fill the skyline; ${rng.pick(['survivors are returning', 'critics question where the money went', 'the new district is planned to be disaster-proof'])}.`, location: { cityId: city?.id, countryId: c.id }, actors: [ref('country', c.id), ...(co ? [ref('company', co.id)] : [])], effects: [fx('country', c.id, 'gdpGrowth', 0.8), fx('country', c.id, 'approval', 3), ...(city ? [fx('city', city.id, 'prosperity', 6)] : []), ...(co ? [fx('company', co.id, 'value%', 8)] : [])], tags: ['reconstruction', c.code], data: { shocks: [{ sector: 'construction', countryId: c.id, pct: 0.06 }] } });
+  },
+  'bankrupt.assets': (w: World, rng: RNG, src: WorldEvent) => {
+    const dead = src.actors.find((a) => a.kind === 'company'); const d = dead ? w.companies[dead.id] : undefined;
+    if (!d) return null;
+    const buyers = Object.values(w.companies).filter((x) => x.alive && x.sector === d.sector && x.id !== d.id);
+    if (!buyers.length) return null;
+    const b = rng.pickWeighted(buyers, (x) => x.value);
+    b.employees += Math.round(d.employees * 0.3); b.revenue += d.revenue * 0.2;
+    return createEvent(w, { category: 'corporate', type: 'acquisition', severity: 2, causedBy: src.id, title: `${b.name} picks up the pieces of ${d.name}`, description: `${b.name} bought ${d.name}'s ${rng.pick(['factories', 'patents', 'customer base', 'best engineers'])} out of bankruptcy for cents on the dollar.`, location: { cityId: b.cityId }, actors: [ref('company', b.id), ref('company', d.id)], effects: [fx('company', b.id, 'value%', 5), fx('company', b.id, 'growth', 1)], tags: ['corporate', d.sector] });
+  },
+  'pandemic.lockdown-protests': (w: World, rng: RNG, src: WorldEvent) => {
+    const c = rng.pickWeighted(Object.values(w.countries), (x) => x.polarization + (100 - x.happiness));
+    return createEvent(w, { category: 'social', type: 'protest', severity: 2, causedBy: src.id, title: `Anti-lockdown protests spread in ${c.name}`, description: `Months into the pandemic, crowds in ${A.capitalOf(w, c).name} defied restrictions, chanting against "medical tyranny". ${rng.pick(['Police stood back.', 'Clashes left dozens injured.', 'The government blamed foreign disinformation.'])}`, location: { countryId: c.id }, actors: [ref('country', c.id)], effects: [fx('country', c.id, 'polarization', 5), fx('country', c.id, 'unrest', 4), fx('country', c.id, 'approval', -3)], tags: ['protest', 'pandemic', c.code] });
+  },
   'espionage.tension': (w: World, rng: RNG, src: WorldEvent) => {
     const [a, b] = src.actors.filter((x) => x.kind === 'country').map((x) => w.countries[x.id]);
     if (!a || !b) return null;
@@ -506,6 +544,11 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'space.milestone', rule: 'space.race', delay: [20, 120], p: 0.8 },
   { match: (e) => e.type === 'espionage', rule: 'espionage.tension', delay: [5, 30], p: 0.6 },
   { match: (e) => e.type === 'automation.shock', rule: 'automation.politics', delay: [20, 120], p: 0.9 },
+  { match: (e) => e.type === 'leader.coup', rule: 'coup.sanctions', delay: [7, 40], p: 0.75 },
+  { match: (e) => e.type === 'tech.breakthrough' && e.severity >= 4, rule: 'tech.startups', delay: [30, 150], p: 0.8 },
+  { match: (e) => e.type.startsWith('disaster.') && e.severity >= 4, rule: 'disaster.reconstruction', delay: [60, 150], p: 0.85 },
+  { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
+  { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
 ];
 
 /** Schedule follow-ups for a freshly created event. */
