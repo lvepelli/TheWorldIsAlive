@@ -12,7 +12,8 @@ what you caused.
 - **Borders that move**: every nation is split into regions with governors and their own grievances; autonomy demands, concessions, crackdowns, secessions along regional lines and annexations under peace terms redraw the map — and the people who lose out (ousted governors) come back with liberation movements.
 - **Narrated**: a fictional media ecosystem covers events with different biases; a social feed reacts with characters that have personalities; markets move.
 - **God Mode**: 45 preset interventions plus a freeform command box ("A small battery company discovers a battery that stores twenty times more energy…"), including delayed commands ("In 3 months, Ceria declares war on Slakevo") recorded as omens and carried out on the day.
-- **Mobile-first**: bottom navigation, bottom-sheet inspector, pinch/zoom map, safe areas, installable PWA. Works offline once loaded.
+- **Spanish-first, readable**: the whole interface ships in Spanish (English available in Settings), with a grand-strategy layout — top bar with time controls and world indicators, a dominant map with twelve map modes, a section rail whose panels open beside the map, tabbed country/region/city/person/company panels with breadcrumbs, a global search, grouped alerts, a calendar and a structured event detail (*why did this happen / what did this cause*). Every generated sentence passes through a text-hygiene pass.
+- **Mobile-first**: bottom navigation, sheet panels, pinch/zoom map, safe areas, installable PWA. Works offline once loaded.
 - **Portable**: plain Vite + React + TypeScript. No backend, no API key required. Optional LLM hooks.
 
 ## Screenshots
@@ -22,7 +23,8 @@ Current build (v0.9): a Fractured Map world with regions inside every nation, wa
 | | |
 | --- | --- |
 | ![World map](docs/screenshots/world-desktop.png) | ![Newsroom](docs/screenshots/news-desktop.png) |
-| ![Markets](docs/screenshots/markets-desktop.png) | ![Person dialogue](docs/screenshots/person-dialogue-desktop.png) |
+| ![Economy table and country panel](docs/screenshots/economy-desktop.png) | ![Person dialogue](docs/screenshots/person-dialogue-desktop.png) |
+| ![God Mode](docs/screenshots/god-desktop.png) | ![Events on mobile](docs/screenshots/events-mobile.png) |
 
 Mobile: [world map](docs/screenshots/world-mobile.png) · [God Mode cinematic](docs/screenshots/god-cinematic-mobile.png) · [intro with seed preview](docs/screenshots/intro-desktop.png)
 
@@ -65,13 +67,13 @@ Requirements: Node 20+ and npm. Playwright uses the system/bundled Chromium; set
 ## How to play
 
 1. **Generate** a world (or type a seed). Watch the initialization sequence and the reveal.
-2. **Observe**: the map is the heart of the game. Tap a country or a glowing city to open the inspector. Switch map overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest, regions).
-3. **Advance time**: pause / 1× / 5× / 20× / fast-forward, or jump a day, week, month or year.
-4. **Follow the world**: LIVE (event stream + daily summary), NEWS (outlets with bias), SOCIAL (posts, replies, trending), MARKETS (indexes, commodities, companies), PEOPLE, ORGS, HISTORY (timeline, your interventions, period summaries).
-5. **Intervene**: GOD → describe what you want, or pick a preset. Then open the resulting event and read *Why did this happen?* to follow the causal chain as consequences unfold over the following days and months.
+2. **Observe**: the map is the heart of the game. Tap a country, a region (in *Regiones* mode) or a glowing city to open its panel with tabs (resumen, economía, política, regiones, empresas, diplomacia, sociedad, personas, historia, eventos). Pick a map mode from the selector at the bottom left: político, regiones, economía, población, diplomacia, conflictos, religión, tecnología, estabilidad, recursos, empresas, migración.
+3. **Advance time**: the top bar has pause / 1× / 5× / 20× / fast-forward and a jump menu (week, month, year); the indicators next to the clock show world growth, stability and wars.
+4. **Follow the world**: the left rail opens sections beside the map — MUNDO, EVENTOS (what just happened, developing stories, filterable timeline), CALENDARIO, PAÍSES, REGIONES, PERSONAS, EMPRESAS, ECONOMÍA (sortable world table), POLÍTICA, DIPLOMACIA, TECNOLOGÍA, SOCIEDAD, RELIGIONES, NOTICIAS, RED SOCIAL, HISTORIA. The bell groups alerts; the search box finds any entity or event.
+5. **Intervene**: MODO DIOS → describe what you want in Spanish or English, or pick an intervention by category (política, guerra, economía, sociedad, tecnología, medio ambiente, empresas, personas, regiones, global), set its target, magnitude and timing, read the preview, execute. Then open the resulting event and read *¿Por qué ha ocurrido?* / *¿Qué ha causado?* to follow the chain as consequences unfold.
 6. **Save**: autosaves every ~45 s of simulation and after interventions. Manual save/load, export to a `.json` file, import on any device.
 
-Keyboard (desktop): `Space` pause/resume · `1–4` speeds · `G` God Mode · `W` world · `L` live · `Esc` close · `Shift+D` debug overlay.
+Keyboard (desktop): `Space` pause/resume · `1–4` speeds · `G` God Mode · `W` world · `E` events · `Esc` close · `Shift+D` debug overlay. Language: Settings (☰) → Idioma, or the chips on the title screen.
 
 ## Project structure
 
@@ -91,17 +93,23 @@ src/
                             trade.ts, weather.ts, anniversaries.ts, information.ts (news/social/editorials), summary.ts, relations.ts
     events/                 engine.ts (createEvent/effects), actions.ts (world mutations),
                             spawn.ts (spontaneous events), consequences.ts (reaction rules)
-    godmode/                presets.ts, interpreter.ts (freeform → plan), execute.ts
+    godmode/                presets.ts, interpreter.ts (freeform → plan), es.ts (Spanish → English keyword bridge), execute.ts
+    i18n/                   lang.ts (current language), render.ts (Spanish templates for engine events, English fallback)
+    text.ts                 text hygiene: tidy() + findTextIssues()
+  i18n/                     es.ts, en.ts dictionaries + t()
     ai/                     narrative.ts (local provider), llm.ts (optional), prompts.ts, index.ts
     persistence/            storage.ts (IndexedDB / memory, export/import, validation)
   state/                    store.ts (zustand), loop.ts (time loop)
-  ui/                       App.tsx, Intro.tsx, Overlays.tsx, audio.ts, format.ts
+  ui/                       App.tsx (shell layout), Intro.tsx, Overlays.tsx, audio.ts, format.ts, i18n.ts (useT)
+    shell/                  TopBar, NavRail, Drawer, SearchBox, AlertsPanel, SettingsModal, MapModes, Breadcrumbs
+    panels/                 one contextual panel per section (Countries … Calendar, Events)
     map/                    contours.ts, renderer.ts (canvas), WorldMap.tsx (input)
-    screens/                World, Live, News, Social, Markets, People, Orgs, History, God, SaveManager
-    components/             Inspector, EventCard, EntityRow, Flag, Avatar, Sparkline, RelationGraph, Modal, Stat
+    screens/                World, News, Social, History, God, SaveManager
+    components/             Inspector (tabbed entity views), EventCard, EntityRow, Flag, Avatar, Sparkline, RelationGraph, Modal, Stat
+    godmode/labels.ts       Spanish labels + player-facing categories for God presets
     styles/global.css       design system
 prompts/                    LLM prompt templates (mirrored in src/engine/ai/prompts.ts)
-tests/                      engine.test.ts (vitest), e2e/smoke.mjs (playwright)
+tests/                      vitest suites (engine, godmode, i18n, text, llm, contours, robustness, prompts), e2e/ (playwright: smoke, deployed QA, showcase, shots)
 scripts/                    package.mjs, icons.mjs
 docs → *.md at repo root    ARCHITECTURE, GAME_DESIGN, WORLD_ENGINE, AI_SYSTEM, MOBILE, HANDOFF, CHANGELOG
 ```

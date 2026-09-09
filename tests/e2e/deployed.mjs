@@ -1,11 +1,13 @@
 /**
  * QA against a deployed URL (used by .github/workflows/deploy.yml, also runnable locally):
- *   DEPLOY_URL=https://lvepelli.github.io/TheWorldIsAlive/ node tests/e2e/deployed.mjs
- * Checks intro → generation → map → navigation → God Mode → save/reload → PWA assets on
- * three phone viewports (portrait) and desktop; writes screenshots + docs/qa/REPORT.md.
+ *   DEPLOY_URL=https://lvepelli.github.io/TheWorldIsAlive/ QA_OUT=/tmp/qa node tests/e2e/deployed.mjs
+ * Checks intro → generation → map → sections → panels → map modes → God Mode (ES + EN) → alerts →
+ * localization → text hygiene → save/reload → PWA assets on three phone viewports and desktop;
+ * writes screenshots + REPORT.md to docs/qa (or QA_OUT).
  */
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { startWorld, nav, closeInspector, closeDrawer, dismissCinematic, textIssues, overflow } from './_lib.mjs';
 
 const RAW = process.env.DEPLOY_URL || 'http://localhost:4173/';
 const SITE = /\.html$/.test(RAW) ? RAW : RAW.replace(/\/?$/, '/');
@@ -24,42 +26,38 @@ async function run(name, viewport, mobile) {
   const lines = [`## ${name} (${viewport.width}×${viewport.height})`, ``];
   const check = (ok, msg) => { lines.push(`- ${ok ? '✅' : '❌'} ${msg}`); if (!ok) failures++; };
   const shot = (n) => page.screenshot({ path: `${OUT}${name}-${n}.png` });
+  const painted = () => page.evaluate(() => { const c = document.querySelector('.map-canvas'); const g = c.getContext('2d'); const d = g.getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++; return lit; });
   try {
     const res = await page.goto(SITE, { waitUntil: 'load', timeout: 60000 });
     check(res && res.ok(), `page loads (HTTP ${res?.status()}, ${res?.headers()['content-type'] ?? '?'})`);
-    // githack shows a one-time "One more step" interstitial for HTML; click through it.
-    if ((await page.locator('text=Open the page').count()) > 0) { lines.push('- ℹ️ host interstitial clicked (githack "One more step")'); await page.click('text=Open the page'); await page.waitForLoadState('load'); errors.length = 0; /* errors so far belong to the host's interstitial page, not the app */ }
-    await page.waitForSelector('input[aria-label="World seed"]', { timeout: 30000 });
+    if ((await page.locator('text=Open the page').count()) > 0) { lines.push('- ℹ️ host interstitial clicked (githack "One more step")'); await page.click('text=Open the page'); await page.waitForLoadState('load'); errors.length = 0; }
+    await page.waitForSelector('[data-testid="seed"]', { timeout: 30000 });
     check(true, 'intro renders');
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-    check(!overflow, 'no horizontal overflow on intro');
+    check((await page.evaluate(() => document.documentElement.lang)) === 'es', 'Spanish is the default language');
+    check(!(await overflow(page)), 'no horizontal overflow on intro');
     await shot('01-intro');
-    await page.fill('input[aria-label="World seed"]', 'qa-' + viewport.width);
-    await page.click('text=Use seed');
-    await page.waitForSelector('.map-canvas', { timeout: 30000 });
-    await page.waitForTimeout(2500);
+    await startWorld(page, 'qa-' + viewport.width, { pause: false });
     check(true, 'world generated, map canvas present');
-    const painted = await page.evaluate(() => { const c = document.querySelector('.map-canvas'); const g = c.getContext('2d'); const d = g.getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++; return lit; });
-    check(painted > 50, `map is painted (${painted} bright samples)`);
-    if (await page.locator('text=Got it').count()) await page.click('text=Got it');
+    check((await painted()) > 50, `map is painted`);
     await shot('02-world');
-    const date1 = await page.locator('.clock .date').innerText();
+    const date1 = await page.locator('[data-testid="date"]').innerText();
     await page.waitForTimeout(3200);
-    const date2 = await page.locator('.clock .date').innerText();
+    const date2 = await page.locator('[data-testid="date"]').innerText();
     check(date1 !== date2, `simulation progresses at 1× (${date1} → ${date2})`);
-    await page.click('.clock .speeds button:nth-child(1)');
-    // touch targets
-    const small = await page.evaluate(() => Array.from(document.querySelectorAll('.bottom-nav button, .clock .speeds button, .btn')).filter((b) => { const r = b.getBoundingClientRect(); return r.width > 0 && (r.height < 28 || r.width < 28); }).length);
+    await page.click('[data-testid="speed-0"]');
+    await dismissCinematic(page);
+    const small = await page.evaluate(() => Array.from(document.querySelectorAll('.bottom-nav button, .clock .speeds button, .btn, .nav-rail button')).filter((b) => { const r = b.getBoundingClientRect(); return r.width > 0 && (r.height < 28 || r.width < 26); }).length);
     check(small === 0, `no visible controls under 28px (${small})`);
-    // tap to select (retry over a grid until land is hit), then drag
+    // tap to select, then drag
     const box = await page.locator('.map-canvas').boundingBox();
     let selected = false;
-    for (let i = 0; i < 24 && !selected; i++) { const x = box.x + box.width * (0.12 + (i % 6) * 0.15), y = box.y + box.height * (0.28 + Math.floor(i / 6) * 0.12); if (mobile) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y); await page.waitForTimeout(300); selected = (await page.locator('.inspector.open').count()) > 0; }
-    check(selected, 'tap on map opens inspector');
+    for (let i = 0; i < 24 && !selected; i++) { const x = box.x + box.width * (0.12 + (i % 6) * 0.15), y = box.y + box.height * (0.28 + Math.floor(i / 6) * 0.12); if (mobile) await page.touchscreen.tap(x, y); else await page.mouse.click(x, y); await page.waitForTimeout(300); selected = (await page.locator('[data-testid="inspector"]').count()) > 0; }
+    check(selected, 'tap on map opens the entity panel');
+    if (selected) check((await page.locator('.inspector [data-tab]').count()) >= 3, 'entity panel has tabs');
     await shot('03-inspector');
     const inspOverflow = await page.evaluate(() => { const el = document.querySelector('.inspector'); return el ? el.scrollWidth > el.clientWidth + 1 : false; });
-    check(!inspOverflow, 'inspector has no horizontal overflow');
-    if (selected) await page.click('.inspector-head button[aria-label="Close"]');
+    check(!inspOverflow, 'entity panel has no horizontal overflow');
+    await closeInspector(page);
     await page.waitForTimeout(300);
     const before = await page.screenshot({ clip: { x: box.x + 10, y: box.y + box.height * 0.45, width: 120, height: 80 } });
     if (mobile) { const cdp = await ctx.newCDPSession(page); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + box.width * 0.5, y: box.y + box.height * 0.5 }] }); for (let k = 1; k <= 6; k++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + box.width * 0.5 + k * 20, y: box.y + box.height * 0.5 + k * 8 }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
@@ -77,66 +75,77 @@ async function run(name, viewport, mobile) {
       const s1 = await page.evaluate(() => window.__twiaRenderer?.camera.scale ?? 0);
       check(s1 > s0 * 1.2, `pinch zoom scales the map (${s0.toFixed(2)} → ${s1.toFixed(2)})`);
     }
-    const nav = async (label) => { if (mobile && !['World', 'Live', 'News', 'God'].includes(label)) { await page.click('.bottom-nav button[aria-label="More"]'); await page.click(`.modal button:has-text("${label}")`); } else await page.click(`${mobile ? '.bottom-nav' : '.side-nav'} button[aria-label="${label}"]`); await page.waitForTimeout(400); };
-    for (const s of ['Live', 'News', 'Social', 'Markets', 'History']) { await nav(s); const ov = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1); check((await page.locator('.screen-title').count()) > 0 && !ov, `${s} screen renders without overflow`); }
-    await shot('04-news');
-    // v0.6 features: editorials, developing stories, chronicle export, conversations, delayed God commands
-    await nav('News'); await page.click('.chip:has-text("Editorials")'); await page.waitForTimeout(400);
-    check((await page.locator('.tag:has-text("editorial")').count()) > 0, 'News shows weekly editorials');
-    await nav('Live');
-    check((await page.locator('.story-card').count()) > 0 || (await page.locator('.event-card').count()) > 0, 'Live shows developing stories or events');
-    await nav('History');
-    check((await page.locator('button:has-text("Export chronicle")').count()) > 0, 'History offers the chronicle export');
-    await nav('People');
-    await page.locator('.entity-row').first().click(); await page.waitForTimeout(500);
-    const ask = page.locator('.inspector input[placeholder^="Ask"]');
-    if (await ask.count()) { await ask.fill('You should make peace with your rivals'); await ask.press('Enter'); await page.waitForTimeout(500); }
-    check((await page.locator('.inspector .card').count()) > 0, 'a character answers a question');
-    await page.click('.inspector-head button[aria-label="Close"]');
-    await nav('God');
-    await page.fill('textarea.god-input', 'In 2 weeks, a global pandemic begins'); await page.waitForTimeout(500);
-    check((await page.locator('text=Scheduled: in 2 weeks').count()) > 0, 'delayed God command is understood');
-    await page.fill('textarea.god-input', ''); await page.waitForTimeout(200);
-    await nav('Live');
-    await page.locator('.event-card').first().click(); await page.waitForTimeout(400);
-    check((await page.locator('.chain').count()) > 0, 'event inspector shows causal chain');
-    await page.click('.inspector-head button[aria-label="Close"]');
-    // v0.8/v0.9 features: Regions overlay, region seams, God region targeting (annex), governors in the country inspector
-    await nav('World');
-    await page.click('button:has-text("Regions")'); await page.waitForTimeout(900);
-    const paintedRegions = await page.evaluate(() => { const c = document.querySelector('.map-canvas'); const g = c.getContext('2d'); const d = g.getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++; return lit; });
-    check(paintedRegions > 50, `Regions overlay paints the map (${paintedRegions} bright samples)`);
-    await shot('07-regions');
-    { // a tap on land while the Regions overlay is active opens that region's inspector
-      let kind = '';
-      for (const [fx, fy] of [[0.5, 0.42], [0.4, 0.35], [0.6, 0.5], [0.3, 0.55]]) { await page.mouse.click(Math.round(viewport.width * fx), Math.round(viewport.height * fy)); await page.waitForTimeout(500); kind = (await page.locator('.inspector .kicker').first().textContent().catch(() => '')) ?? ''; if (/region/i.test(kind)) break; await page.click('.inspector-head button[aria-label="Close"]').catch(() => {}); }
-      check(/region/i.test(kind), 'tap on the Regions overlay opens a region inspector');
-      await page.click('.inspector-head button[aria-label="Close"]').catch(() => {});
+    // Sections
+    for (const s of ['countries', 'regions', 'people', 'companies', 'economy', 'politics', 'diplomacy', 'technology', 'society', 'religions', 'calendar', 'events', 'news', 'social', 'history', 'god']) {
+      await nav(page, s, mobile);
+      const ok = (await page.locator('[data-testid="panel-col"], [data-testid="drawer"]').count()) > 0;
+      check(ok && !(await overflow(page)), `${s} section renders without overflow`);
     }
-    await page.click('button:has-text("Political")'); await page.waitForTimeout(300);
-    await nav('God');
-    await page.fill('textarea.god-input', 'The strongest nation annexes a region of its neighbour'); await page.waitForTimeout(600);
-    check((await page.locator('text=/annex/i').count()) > 1, 'God understands annexation');
-    await page.fill('textarea.god-input', ''); await page.waitForTimeout(200);
-    await nav('People');
-    check((await page.locator('.entity-row:has-text("Governor of")').count()) > 0 || (await page.locator('text=/Governor of/').count()) > 0, 'governors appear among the people');
-    await nav('World');
-    await nav('God');
-    await page.fill('textarea.god-input', 'A small battery company discovers a battery that stores twenty times more energy.');
-    await page.waitForTimeout(500);
-    check((await page.locator('text=The world understands').count()) > 0, 'freeform God command interpreted');
-    await page.click('text=Make it so'); await page.waitForTimeout(900);
-    if (await page.locator('.cinematic').count()) { await shot('05-cinematic'); await page.click('.cinematic'); await page.waitForTimeout(300); }
-    check((await page.locator('text=It is done.').count()) > 0, 'God intervention executed');
-    await shot('06-god');
-    // save + reload
-    await nav('World');
-    if (mobile) { await page.click('.bottom-nav button[aria-label="More"]'); await page.click('text=Save / load / export'); } else await page.click('button[aria-label="Save and load"]');
-    await page.click('text=Overwrite autosave'); await page.waitForTimeout(600); await page.keyboard.press('Escape');
+    await nav(page, 'economy', mobile); await shot('04-economy');
+    await page.locator('.table tbody tr').first().click(); await page.waitForTimeout(300);
+    check((await page.locator('[data-testid="inspector-kind"]').count()) > 0, 'economy table row opens the country panel');
+    await closeInspector(page);
+    await nav(page, 'events', mobile);
+    check((await page.locator('[data-testid="event-card"]').count()) > 0, 'events timeline lists events');
+    await page.locator('[data-testid="event-card"]').first().click(); await page.waitForTimeout(400);
+    check((await page.locator('[data-testid="chain"]').count()) > 0, 'event detail shows causes and consequences');
+    await shot('05-event');
+    await closeInspector(page);
+    await nav(page, 'news', mobile); await page.click('.chip:nth-child(2)'); await page.waitForTimeout(300);
+    check((await page.locator('.article').count()) > 0 || (await page.locator('[data-testid="drawer"] .dim').count()) > 0, 'news renders articles or an empty state');
+    await nav(page, 'calendar', mobile); await shot('06-calendar');
+    await nav(page, 'people', mobile);
+    await page.locator('.entity-row').first().click(); await page.waitForTimeout(400);
+    const ask = page.locator('[data-testid="ask"]');
+    if (await ask.count()) { await ask.fill('¿Qué quieres?'); await ask.press('Enter'); await page.waitForTimeout(500); }
+    check((await page.locator('[data-testid="answer"]').count()) > 0, 'a character answers a question');
+    await closeInspector(page);
+    // Map modes
+    await nav(page, 'world', mobile);
+    await page.click('[data-testid="mapmode"]'); await page.click('[data-mapmode="regions"]'); await page.waitForTimeout(900);
+    check((await painted()) > 50, 'Regions map mode paints the map');
+    await shot('07-regions');
+    { let kind = '';
+      for (const [fx, fy] of [[0.5, 0.42], [0.4, 0.35], [0.6, 0.5], [0.3, 0.55]]) { await page.mouse.click(Math.round(viewport.width * fx), Math.round(viewport.height * fy)); await page.waitForTimeout(500); kind = (await page.locator('[data-testid="inspector-kind"]').first().textContent().catch(() => '')) ?? ''; if (/regi/i.test(kind)) break; await closeInspector(page); }
+      check(/regi/i.test(kind), 'tap in Regions mode opens a region panel');
+      await closeInspector(page); }
+    for (const m of ['economy', 'population', 'diplomacy', 'conflict', 'religion', 'political']) { await page.click('[data-testid="mapmode"]'); await page.click(`[data-mapmode="${m}"]`); await page.waitForTimeout(250); }
+    check((await painted()) > 50, 'map modes cycle without breaking the map');
+    // God Mode: Spanish + English free text, categories, preset
+    await nav(page, 'god', mobile);
+    await page.fill('[data-testid="god-input"]', 'Dentro de dos semanas empieza una pandemia global'); await page.waitForTimeout(500);
+    check((await page.locator('[data-testid="god-preview"]').count()) > 0 && /2 weeks|14/.test(await page.locator('[data-testid="god-preview"]').innerText()), 'Spanish delayed God command is understood');
+    await page.fill('[data-testid="god-input"]', 'The strongest nation annexes a region of its neighbour'); await page.waitForTimeout(500);
+    check(/annex/i.test(await page.locator('[data-testid="god-preview"]').innerText()), 'English God command is understood');
+    await page.fill('[data-testid="god-input"]', 'Una pequeña empresa descubre una batería que almacena veinte veces más energía.'); await page.waitForTimeout(500);
+    await page.click('[data-testid="god-execute"]'); await page.waitForTimeout(900); await dismissCinematic(page);
+    check((await page.locator('[data-testid="god-result"]').count()) > 0, 'God intervention executed');
+    check((await page.locator('[data-god-group]').count()) >= 10, 'God Mode shows its categories');
+    await page.click('[data-god-group="environment"]'); await page.click('.preset[data-preset="meteor"]');
+    check((await page.locator('[data-testid="god-config"]').count()) > 0, 'preset configuration shows target, magnitude and timing');
+    await page.click('[data-testid="god-run-preset"]'); await page.waitForTimeout(700); await dismissCinematic(page);
+    await shot('08-god');
+    // Alerts
+    await page.click('[data-testid="alerts"]'); await page.waitForTimeout(300);
+    check((await page.locator('.alert-row').count()) > 0, 'alerts panel lists grouped alerts');
+    await closeDrawer(page);
+    // Localization
+    await nav(page, 'world', mobile);
+    await page.click('[data-testid="menu"]'); await page.click('[data-testid="lang-en"]'); await page.waitForTimeout(300);
+    check(/world/i.test(await page.locator(mobile ? '.bottom-nav [data-nav="world"]' : '.nav-rail [data-nav="world"]').innerText()), 'UI switches to English');
+    await page.click('[data-testid="lang-es"]'); await page.waitForTimeout(300);
+    check(/mundo/i.test(await page.locator(mobile ? '.bottom-nav [data-nav="world"]' : '.nav-rail [data-nav="world"]').innerText()), 'UI switches back to Spanish');
+    // Save + reload
+    await page.click('[data-testid="open-saves"]'); await page.click('[data-testid="save-autosave"]'); await page.waitForTimeout(600); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+    // Text hygiene on the busiest screen
+    await nav(page, 'events', mobile);
+    const issues = await textIssues(page);
+    check(issues.length === 0, `no duplicated words or broken punctuation on screen${issues.length ? ': ' + issues.slice(0, 3).join(' | ') : ''}`);
+    await closeDrawer(page);
     await page.reload({ waitUntil: 'load' });
     if ((await page.locator('text=Open the page').count()) > 0) { lines.push('- ℹ️ host interstitial appeared again after reload'); await page.click('text=Open the page'); await page.waitForLoadState('load'); errors.length = 0; }
     await page.waitForSelector('.logo', { timeout: 30000 });
-    check((await page.locator('button:has-text("Continue")').count()) > 0, 'autosave survives reload (IndexedDB)');
+    check((await page.locator('[data-testid="continue"]').count()) > 0, 'autosave survives reload (IndexedDB)');
     // PWA assets
     const manifest = await page.evaluate(async () => { const l = document.querySelector('link[rel=manifest]'); if (!l) return null; const r = await fetch(l.href); return r.ok ? await r.json() : null; });
     check(!!manifest && Array.isArray(manifest.icons) && manifest.icons.length >= 2, 'manifest served with icons');

@@ -65,8 +65,10 @@ Performance budget: ~300 cities, ~32 polygons, ≤80 event rings → comfortably
 
 ## UI structure
 
-- `App.tsx` — layout (side nav ≥900 px, bottom nav below), screen switch, inspector, toasts, cinematic, debug overlay, error boundary, keyboard shortcuts.
-- `components/Inspector.tsx` — one view per entity kind, with **Why did this happen?** causal chain for events, relationship graph tabs (`RelationGraph.tsx`, a tiny force layout on canvas), and God shortcuts.
+- `App.tsx` — the shell: `shell/TopBar` (clock, speeds, jump menu, indicators, `SearchBox`, alerts, menu), `shell/NavRail` (≥900 px) or the bottom navigation + *Más* sheet (phones), `screens/WorldScreen` always mounted underneath, a `.right-col` beside the map hosting the section panel (`panels/*` via `SectionView`; wide variant for economy, diplomacy, events, history, news, God, calendar) or the `Inspector`, plus toasts, cinematic, settings modal, debug overlay, error boundary and keyboard shortcuts.
+- `panels/*` — one contextual panel per section (`ListPanel` helpers for searchable/sortable lists; `EconomyPanel` sortable table; `DiplomacyPanel`; `CalendarPanel` derives entries from the real schedules; `EventsPanel` timeline with filters; `shell/AlertsPanel` groups `state.alerts`).
+- `components/Inspector.tsx` — tabbed view per entity kind with `shell/Breadcrumbs` (Mundo › País › Región › Ciudad); the event view carries **¿Por qué ha ocurrido?** / **¿Qué ha causado?** (`data-testid="chain"`), impact and reactions; relationship graph (`RelationGraph.tsx`).
+- Localization: `src/i18n` (`t()`, `es.ts`/`en.ts`), `ui/i18n.ts` `useT()` re-renders on language change, `engine/i18n/render.ts` renders engine events in Spanish at display time, `ui/godmode/labels.ts` localizes God presets and regroups them into player-facing categories. Engine data stays English; only presentation is translated, so saves are language-independent.
 - Styling is a single `styles/global.css` with tokens (`--sev-*`, `--cat-*`, panels, buttons, inputs, mobile/desktop breakpoints at 900 px).
 
 ## Persistence (`src/engine/persistence/storage.ts`)

@@ -11,7 +11,7 @@ Deployment: `.github/workflows/deploy.yml` on every push publishes the path-rela
 
 ## Responsive architecture
 
-- Breakpoint at **900 px**: below it the app uses a bottom navigation (World, Live, News, God, More), a compact HUD (date + speed buttons; world name hidden; save/audio moved into *More*), and the inspector becomes a **bottom sheet** (max 72% height, grabber to close). Above it: a 68 px side rail and a 400 px right inspector.
+- Breakpoint at **900 px**: below it the app uses a bottom navigation (Mundo, Eventos, Noticias, Modo Dios, Más → every other section, alerts and settings), a compact top bar (date, pause/1×/5×/fast-forward, jump, search, alerts, menu), section panels as full-screen sheets, and the entity panel as a **bottom sheet** (max 72 % height, grabber to close). Above it: a 76 px section rail, the map, and a 400 px (wide: 560 px) column beside it for panels and the inspector.
 - Minimum tested width: 360 px. Landscape phones (height ≤ 520 px) get a compact layout: smaller bottom nav, ticker/onboarding hidden, single toast. All controls have ≥ 40 px tap targets (nav 60 px).
 - Safe areas: `viewport-fit=cover` + `env(safe-area-inset-*)` on the bottom nav, HUD and modals.
 - No hover requirements: hover only adds a country tooltip on desktop mice.

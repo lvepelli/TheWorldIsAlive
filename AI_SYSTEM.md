@@ -23,6 +23,10 @@ The game must be complete without any AI API. Generative AI is an **enhancement 
 
 `src/engine/ai/index.ts` picks implementations based on `VITE_AI_ENDPOINT`.
 
+### Spanish input
+
+The local interpreter is a set of English regex intents. Spanish commands are handled by `godmode/es.ts`: `looksSpanish()` detects Spanish keywords and `spanishToEnglish()` translates phrases and keywords word by word ("dentro de tres meses" → "in three months", "declara la guerra" → "declares the war") while shielding entity names, so intents, delays and magnitudes match as before. The same bridge translates Spanish questions to characters (`Inspector` dialogue) before the local dialogue provider answers (answers are still English). An LLM interpreter receives the original text.
+
 ### Time phrases
 
 Both interpreters return an optional `delayDays`. The local one parses "in/after/within N days|weeks|months|years|decades", "N … from now", "next week|month|year" and "tomorrow" (`findDelay`). The store routes a delayed plan to `scheduleIntervention`, which records a `prophecy` event immediately and queues a `god.scheduled` consequence carrying the plan; on the due day `executePlan` runs and the produced event is chained to the omen. An LLM interpreter should fill the same field.
