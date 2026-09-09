@@ -164,7 +164,7 @@ function RegionView({ r }: { r: Region }): React.ReactElement {
     <>
       <div className="row" style={{ gap: 12 }}>
         <span className="avatar" style={{ background: 'rgba(240,179,90,0.15)', color: 'var(--accent)', width: 40, height: 40, fontSize: 18 }}>▦</span>
-        <div className="grow"><div className="title">{r.name}{isCapital && <span className="tag" style={{ color: 'var(--accent)' }}>capital region</span>}{r.autonomy >= 50 && <span className="tag">autonomous</span>}</div><div className="dim" style={{ fontSize: 12 }}>Region of {country?.name ?? '?'} · {cities.length} {cities.length === 1 ? 'city' : 'cities'} · {mood}</div></div>
+        <div className="grow"><div className="title">{r.name} {isCapital && <span className="tag" style={{ color: 'var(--accent)' }}>capital region</span>} {r.autonomy >= 50 && <span className="tag">autonomous</span>}</div><div className="dim" style={{ fontSize: 12 }}>Region of {country?.name ?? '?'} · {cities.length} {cities.length === 1 ? 'city' : 'cities'} · {mood}</div></div>
         <button className="btn icon sm" title="Focus on map" onClick={() => { useGame.getState().setOverlay('regions'); focusOn(centre.x, centre.y, 3); setScreen('world'); }}>◎</button>
       </div>
       <div className="stat-grid"><Stat k="Population" v={fmtPop(stats.population)} /><Stat k="Prosperity" v={stats.prosperity.toFixed(0)} bar={stats.prosperity} /><Stat k="Unrest" v={r.unrest.toFixed(0)} bar={r.unrest} color={barColor(100 - r.unrest)} /><Stat k="Identity" v={`${(r.identity * 100).toFixed(0)}%`} bar={r.identity * 100} /><Stat k="Autonomy" v={r.autonomy.toFixed(0)} bar={r.autonomy} /></div>

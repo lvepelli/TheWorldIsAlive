@@ -54,3 +54,5 @@ Templates live in `/prompts/*.md` (human-readable) and are inlined in `src/engin
 2. Add a prompt in `/prompts` and `prompts.ts`.
 3. Implement the async enhancer that mutates existing world data (never creates simulation-relevant state).
 4. Bump `version` in the store after mutation so the UI refreshes.
+
+The God-command prompt (`prompts/god_command.md`) also lists regions (`id=name (countryId, unrest)`) so an LLM interpreter can fill the `region` parameter of create-country, autonomy, annex and referendum.
