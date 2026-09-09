@@ -85,6 +85,24 @@ describe('simulation', () => {
     expect(seen.size).toBe(8);
     for (const [id, v] of seen) expect(v.fired, `${id} (${v.seed})`).toBe(true);
   }, 60000);
+  it('a JSON round-trip mid-story keeps ticking (pending consequences, omens, premise)', async () => {
+    const w = generateWorld({ seed: 'roundtrip' });
+    const rng = RNG.fromState(w.rngState);
+    for (let i = 0; i < 400; i++) tickDay(w, rng);
+    const { scheduleIntervention } = await import('../src/engine/godmode/execute');
+    const { LocalGodInterpreter } = await import('../src/engine/godmode/interpreter');
+    const plan = await new LocalGodInterpreter().interpret(w, 'In 2 weeks, a global pandemic begins');
+    scheduleIntervention(w, rng, plan, 'In 2 weeks, a global pandemic begins');
+    w.rngState = rng.state();
+    const { validateWorld } = await import('../src/engine/persistence/storage');
+    const copy = validateWorld(JSON.parse(JSON.stringify(w)));
+    expect(copy.meta.premise?.id).toBe(w.meta.premise?.id);
+    expect(copy.pending.some((p) => p.ruleId === 'god.scheduled')).toBe(true);
+    const rng2 = RNG.fromState(copy.rngState);
+    for (let i = 0; i < 30; i++) tickDay(copy, rng2);
+    expect(copy.events.some((e) => e.type === 'health.pandemic' && e.day > 400)).toBe(true);
+    expect(copy.day).toBe(430);
+  }, 30000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
