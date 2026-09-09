@@ -19,6 +19,8 @@ function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['wor
     `${a.name} and ${b.name} sign a historic alliance.`,
     `A young activist named Mira Vale starts a movement that sweeps ${weak.name}.`,
     'A global pandemic begins.',
+    `${b.name} hosts a film festival.`,
+    `In 2 weeks, ${a.name} hosts a trade fair.`,
     `The economy of ${a.name} collapses into crisis.`,
     star ? `${star.name} is caught in a huge scandal.` : `A scandal engulfs the government of ${a.name}.`,
     people[1] && people[2] ? `${people[1].name} and ${people[2].name} become bitter rivals.` : `${weak.name} calls a snap election.`,

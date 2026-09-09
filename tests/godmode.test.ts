@@ -4,6 +4,8 @@ import { RNG } from '../src/engine/rng';
 import { tickDay } from '../src/engine/simulation/tick';
 import { LocalGodInterpreter, findDelay } from '../src/engine/godmode/interpreter';
 import { scheduleIntervention } from '../src/engine/godmode/execute';
+import { GOD_PRESETS } from '../src/engine/godmode/presets';
+import { react } from '../src/engine/events/consequences';
 
 describe('god mode', () => {
   it('parses delays', () => {
@@ -26,5 +28,17 @@ describe('god mode', () => {
     const war = w.events.find((e) => e.type === 'war.declared' && e.causedBy === res.event!.id);
     expect(war).toBeTruthy(); expect(a.atWarWith.includes(b.id)).toBe(true);
     expect(w.interventions.some((i) => i.eventId === war!.id)).toBe(true);
+  });
+  it('holds a festival or a fair on command, in the named country', async () => {
+    const w = generateWorld({ seed: 'fairs' }); const rng = new RNG('fairs'); const interp = new LocalGodInterpreter();
+    const host = Object.values(w.countries)[3];
+    const plan = await interp.interpret(w, `Hold a film festival in ${host.name}`);
+    expect(plan.action).toBe('festival'); expect(plan.params.a).toBe(host.id);
+    const fair = await interp.interpret(w, `${host.name} hosts a trade fair`);
+    expect(fair.action).toBe('trade-fair');
+    const preset = GOD_PRESETS.find((p) => p.id === 'festival')!; const ev = preset.run(w, rng, { a: host.id })!;
+    expect(ev.type).toBe('festival.film'); expect(ev.location.countryId).toBe(host.id); expect(ev.playerIntervention).toBe(true);
+    react(w, rng, ev);
+    expect(!ev.data?.maker || w.pending.some((q) => q.sourceEventId === ev.id && q.ruleId.startsWith('festival.'))).toBe(true);
   });
 });
