@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Regional elections: in states that vote, every non-capital region confirms or replaces its governor at the start of an election year (incumbents survive more often when the region is calm and their reputation good); notable changes in restless or distinct regions become events, and a separatist winner is noted.
 - Social: governors and regionalists post in their own voice about their region's demands, concessions, crackdowns, referendums and annexations.
 - Accessibility: the relationship graph carries a hidden text alternative (nodes, ties and their strength).
 - Accessibility: the map canvas describes itself to screen readers (nations, wars, restless regions, events on record, current selection) and updates as the world changes.

@@ -6,6 +6,7 @@
 import { RNG, clamp } from '../rng';
 import type { World, WorldEvent, Region } from '../types';
 import { createEvent, fx, ref } from '../events/engine';
+import { yearOf, toDate } from '../time';
 import { regionsOf } from '../generator/regions';
 import { appointGovernor } from '../generator/world';
 
@@ -16,6 +17,26 @@ export function regionsTick(world: World, rng: RNG): WorldEvent[] {
     const regions = regionsOf(world, c);
     for (const r of regions) { const gov0 = r.governorId ? world.people[r.governorId] : undefined; if (!gov0 || !gov0.alive || gov0.retired || gov0.countryId !== c.id) { if (gov0 && gov0.title === `Governor of ${r.name}`) gov0.title = undefined; appointGovernor(world, rng, r, r.unrest < 40); } }
     if (regions.length < 2) continue;
+    // Regional elections in states that vote: in the election year's first months, each non-capital region confirms or replaces its governor.
+    const electionYear = c.electionEvery > 0 && c.nextElectionYear - c.electionEvery === yearOf(world.day, world.meta.startYear) && toDate(world.day, world.meta.startYear).month <= 2;
+    if (electionYear && !c.history.some((h) => h.text === 'Regional elections.' && world.day - h.day < 300)) {
+      c.history.push({ day: world.day, text: 'Regional elections.' });
+      for (const r of regions) {
+        if (r.cityIds.includes(c.capitalId)) continue;
+        const gov = r.governorId ? world.people[r.governorId] : undefined;
+        const keep = gov && gov.alive && rng.bool(clamp(0.55 - (r.unrest - 40) / 100 + (gov.reputation > 20 ? 0.15 : 0), 0.15, 0.85));
+        if (keep) { gov!.history.push({ day: world.day, text: `Re-elected Governor of ${r.name}.` }); continue; }
+        const old = gov; if (old && old.title === `Governor of ${r.name}`) old.title = undefined; if (old) old.history.push({ day: world.day, text: `Lost the governorship of ${r.name} at the polls.` });
+        r.governorId = undefined; const next = appointGovernor(world, rng, r, r.unrest < 35); if (!next) continue;
+        if (r.unrest > 40 || r.identity > 0.55) { const anchor = world.cities[r.cityIds[0]];
+          out.push(createEvent(world, {
+            category: 'political', type: 'region.election', severity: r.unrest > 60 ? 2 : 1, title: `${next.name} wins ${r.name}`,
+            description: `${r.name} elected ${next.name} as governor${old ? `, unseating ${old.name}` : ''}. ${/autonomy|independence/i.test(next.objective) ? `The new governor campaigned on ${/independence/i.test(next.objective) ? 'independence' : 'self-rule'}; the capital is not celebrating.` : rng.pick(['A quieter voice for a restless region.', 'Turnout was the story.', `${c.name}'s government called it a mandate for unity.`])}`,
+            location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('person', next.id), ref('country', c.id), ...(old ? [ref('person', old.id)] : [])],
+            effects: [], tags: ['region', 'election', c.code], data: { regionId: r.id, region: r.name },
+          })); }
+      }
+    }
     const prosperityOf = (r: Region) => r.cityIds.reduce((s, id) => s + (world.cities[id]?.prosperity ?? 50), 0) / Math.max(1, r.cityIds.length);
     const countryProsperity = c.cityIds.reduce((s, id) => s + (world.cities[id]?.prosperity ?? 50), 0) / Math.max(1, c.cityIds.length);
     for (const r of regions) {

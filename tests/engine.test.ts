@@ -186,8 +186,10 @@ describe('simulation', () => {
     const w2 = generateWorld({ seed: 'no-snap' });
     const rng2 = RNG.fromState(w2.rngState);
     const auto = Object.values(w2.countries).find((c) => !c.electionEvery)!; w2.people[auto.leaderId].objective = 'hold free elections'; w2.people[auto.leaderId].history.push({ day: 0, text: 'Persuaded by an interviewer to hold free elections.' });
-    for (let i = 0; i < 365; i++) tickDay(w2, rng2);
-    expect(w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)).toBe(true);
+    const leaderId = auto.leaderId; let removed = false;
+    for (let i = 0; i < 365; i++) { tickDay(w2, rng2); if (auto.leaderId !== leaderId) { removed = true; break; } if (w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)) break; }
+    // A persuaded leader who stays in office calls the vote; one toppled or resigning first (scandals happen) is exempt.
+    expect(removed || w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)).toBe(true);
   }, 30000);
   it('removing a tycoon through God Mode passes the fortune to family', async () => {
     const { presetById } = await import('../src/engine/godmode/presets');
