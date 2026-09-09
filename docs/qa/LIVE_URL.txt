@@ -1,4 +1,4 @@
 Pages (needs one-time enabling by the repo owner): https://lvepelli.github.io/TheWorldIsAlive/
-Mirror (githack, shows a one-time Open-the-page prompt), pinned to this deploy: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/c2892e3dc32335a283b1c269a73609e3d8c8bb72/index.html
+Mirror (githack, shows a one-time Open-the-page prompt), pinned to this deploy: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/df0d2ad998d2b57d2393f02de947dfc53f5ddb64/index.html
 Mirror (githack), latest: https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html
-QA ran against: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/c2892e3dc32335a283b1c269a73609e3d8c8bb72/index.html
+QA ran against: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/df0d2ad998d2b57d2393f02de947dfc53f5ddb64/index.html
