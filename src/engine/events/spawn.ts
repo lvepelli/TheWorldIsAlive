@@ -556,7 +556,8 @@ SPAWN_RULES.push({
     const old = org.leaderId ? w.people[org.leaderId] : undefined;
     const rebel = makePerson(w, rng, fam, c, A.pickCity(w, rng, c), 'religious-leader', 1);
     const issue = rng.pick(['the succession', 'whether machines have souls', 'the true date of the prophecy', 'money and who keeps it', 'a doctrine of purity', 'cooperation with the state']);
-    const splinter = makeOrg(w, rng, fam, c, 'religion', `${rng.pick(['Reformed', 'True', 'Orthodox', 'New', 'Free'])} ${org.name}`, rebel.id, org.ideology, org.agenda);
+    const PREFIXES = ['Reformed', 'True', 'Orthodox', 'New', 'Free']; const baseName = org.name.replace(new RegExp(`^(?:(?:${PREFIXES.join('|')}) )+`), ''); // a schism of a schism does not become "New New …"
+    const splinter = makeOrg(w, rng, fam, c, 'religion', `${rng.pick(PREFIXES.filter((x) => !org.name.startsWith(x + ' ')))} ${baseName}`, rebel.id, org.ideology, org.agenda);
     splinter.founded = w.day; splinter.support = clamp(org.support * rng.float(0.3, 0.5), 1, 100); splinter.influence = clamp(org.influence * 0.5, 0, 100);
     org.support = clamp(org.support - splinter.support, 1, 100);
     rebel.affiliations.push(splinter.id); rebel.fame = clamp(40 + org.support / 2, 20, 90); rebel.objective = `lead the faithful away from ${org.name}`;

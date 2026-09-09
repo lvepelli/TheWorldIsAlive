@@ -25,8 +25,43 @@ export function calendarTick(world: World, rng: RNG): WorldEvent[] {
   if (!Object.keys(world.countries).length) return out;
   if (date.month >= 4 && date.month <= 5 && !firedThisYear(world, 'festival.film', year)) out.push(holdFestival(world, rng));
   if (date.month >= 9 && date.month <= 10 && !firedThisYear(world, 'trade.fair', year)) out.push(holdFair(world, rng));
+  out.push(...holyDays(world, rng, date.month, year));
   return out;
 }
+
+/** Each living faith with real support has a holy season (a month fixed by its id); once a year its country fills with pilgrims. */
+function holyDays(world: World, rng: RNG, month: number, year: number): WorldEvent[] {
+  const out: WorldEvent[] = [];
+  const faiths = Object.values(world.organizations).filter((o) => o.alive && o.type === 'religion' && o.countryId && o.support > 15);
+  for (const f of faiths) {
+    const holyMonth = RNG.hash(f.id)[0] % 12; if (month < holyMonth) continue; // the monthly tick can skip a calendar month, so fire on or after the holy month
+    if (firedThisYearFor(world, 'religion.holiday', f.id, year)) continue;
+    const c = world.countries[f.countryId!]; if (!c) continue;
+    const city = world.cities[c.capitalId] ?? world.cities[c.cityIds[0]]; if (!city) continue;
+    const pilgrims = Math.round(c.population * (f.support / 100) * rng.float(0.05, 0.2));
+    const leader = f.leaderId ? world.people[f.leaderId] : undefined;
+    const clash = c.polarization > 65 && rng.bool(0.25);
+    if (clash) c.unrest = clamp(c.unrest + 2, 0, 100);
+    out.push(createEvent(world, {
+      category: 'cultural', type: clash ? 'religion.holiday.clash' : 'religion.holiday', severity: clash ? 3 : f.support > 40 ? 2 : 1,
+      title: clash ? `Clashes mar the ${f.name} holy days in ${city.name}` : `${f.name} holy days fill ${city.name}`,
+      description: clash
+        ? `${fmtCount(pilgrims)} pilgrims came to ${city.name} for the ${f.name} holy days; ${rng.pick(['a counter-march', 'a blasphemous poster', 'a dispute over a shrine', 'a politician\'s speech'])} turned the last night into street fighting. ${leader ? `${leader.name} appealed for calm.` : 'The police blamed outsiders.'}`
+        : `${fmtCount(pilgrims)} ${c.adjective} pilgrims filled ${city.name} for the ${f.name} holy days. ${leader ? `${leader.name} led the ${rng.pick(['vigil', 'procession', 'dawn prayer'])}. ` : ''}${rng.pick(['Shops closed; the trains did not.', 'The government declared two days off.', 'The capital\'s traffic gave up entirely.', 'Sceptics stayed home and complained online.'])}`,
+      location: { countryId: c.id, cityId: city.id, x: city.x, y: city.y }, actors: [ref('organization', f.id), ref('country', c.id), ...(leader ? [ref('person', leader.id)] : [])],
+      effects: clash ? [fx('country', c.id, 'unrest', 3), fx('country', c.id, 'polarization', 2)] : [fx('country', c.id, 'happiness', f.support > 40 ? 2 : 1), fx('country', c.id, 'unrest', -1)],
+      tags: ['culture', 'religion', c.code], data: { orgId: f.id, pilgrims, shocks: clash ? [] : [{ sector: 'retail', pct: 0.005 }] },
+    }));
+  }
+  return out;
+}
+
+function firedThisYearFor(world: World, type: string, orgId: string, year: number): boolean {
+  for (let i = world.events.length - 1; i >= 0; i--) { const e = world.events[i]; if (world.day - e.day > 400) break; if ((e.type === type || e.type === `${type}.clash`) && e.data?.orgId === orgId && yearOf(e.day, world.meta.startYear) === year) return true; }
+  return false;
+}
+
+function fmtCount(n: number): string { return n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n); }
 
 /** Spring film festival: a host city, a winning film and its maker. God Mode can call it for a chosen host. */
 export function holdFestival(world: World, rng: RNG, opts: CalendarOptions = {}): WorldEvent {

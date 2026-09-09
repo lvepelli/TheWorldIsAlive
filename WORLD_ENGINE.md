@@ -16,7 +16,7 @@ One tick = one simulated day (`simulation/tick.ts`). Cadences:
 | Yearly | climate report, harvest report, rising seas, World Games (every 4 years), Laurel Prizes, yearly summary | systems.ts `yearlyTick` |
 | Monthly (elections) | campaign season from September before an election year (`election.campaign`: poll, challenger, promise), then the vote in January | systems.ts `monthlyTick` |
 | Monthly (regions) | regional unrest drift, autonomy demands | simulation/regions.ts `regionsTick` |
-| Calendar | film festival (May), trade fair (October) — once per year each, guarded by the event log | simulation/calendar.ts `calendarTick` (from the monthly tick) |
+| Calendar | film festival (May), trade fair (October), holy days per faith (its own month) — once per year each, guarded by the event log | simulation/calendar.ts `calendarTick` (from the monthly tick) |
 
 Years are 365 days (no leap years) for determinism; `time.ts` converts day indexes to calendar dates.
 
