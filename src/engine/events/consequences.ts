@@ -442,6 +442,7 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     const ally = rng.pickWeighted(allies, (x) => x.fame + x.influence);
     relate(w, ally, person, 'ally', 0.1);
     ally.history.push({ day: w.day, text: `Stood by ${person.name} during the scandal.` });
+    person.memories.push({ day: w.day, text: `${ally.name} stood by me when it counted.`, weight: 0.6 });
     const c = w.countries[person.countryId];
     const isLeader = c?.leaderId === person.id;
     return createEvent(w, {

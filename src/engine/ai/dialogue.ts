@@ -51,6 +51,8 @@ export class LocalDialogueProvider implements DialogueProvider {
       const friends = rels.filter((x) => x.r.strength > 0.3).map((x) => x.o.name);
       const enemies = rels.filter((x) => x.r.strength < -0.3).map((x) => x.o.name);
       const betrayed = rels.filter((x) => x.r.type === 'enemy' && x.r.since < world.day - 30 && x.r.strength < -0.4 && x.o.profession === p.profession).map((x) => x.o.name);
+      const stoodBy = p.memories.filter((m) => / stood by me when it counted\.$/.test(m.text)).map((m) => m.text.replace(/ stood by me.*$/, ''));
+      if (stoodBy.length && rng.bool(0.6)) return prefix + `${stoodBy[stoodBy.length - 1]}. ${rng.pick(['When everyone else went quiet, they did not.', 'I do not forget that.', 'That is what trust looks like.'])}`;
       if (betrayed.length && rng.bool(0.5)) return prefix + `${betrayed[0]} and I used to be on the same side. ${rng.pick(['Not anymore.', 'That ended badly.', 'I will not make that mistake twice.'])}`;
       return prefix + voice([`${friends.length ? `I trust ${friends.slice(0, 2).join(' and ')}.` : 'I trust no one completely.'} ${enemies.length ? `${enemies[0]} would love to see me fail.` : 'Enemies? Give it time.'}`, `${p.personality.caution > 0.5 ? 'Trust is expensive.' : 'Trust is easy, verifying is hard.'} ${friends.length ? `${friends[0]} has never let me down.` : ''} ${enemies.length ? `Keep ${enemies[0]} away from me.` : ''}`.trim()]);
     }

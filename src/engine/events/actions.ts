@@ -483,6 +483,26 @@ export function killPerson(world: World, rng: RNG, p: Person, how: 'assassinatio
     tags: ['death', how, ...(c ? [c.code] : [])], historic: sev >= 4,
   });
   for (const x of led) changeLeader(world, rng, x, 'succession', ev.id);
+  // Inheritance: a fortune passes to living family; two or more heirs can fall out over it.
+  const heirs = p.relationships.filter((r) => (r.type === 'family' || r.type === 'partner') && world.people[r.target.id]?.alive).map((r) => world.people[r.target.id]);
+  if (p.wealth > 50 && heirs.length) {
+    const share = p.wealth / heirs.length;
+    for (const h of heirs) { h.wealth += share; h.history.push({ day: world.day, text: `Inherited $${share >= 1000 ? (share / 1000).toFixed(1) + 'B' : share.toFixed(0) + 'M'} from ${p.name}.` }); }
+    const contesters = p.relationships.filter((r) => r.strength < -0.3 && world.people[r.target.id]?.alive && !heirs.includes(world.people[r.target.id])).map((r) => world.people[r.target.id]);
+    const pair = heirs.length >= 2 && rng.bool(0.5) ? rng.shuffle(heirs.slice()).slice(0, 2) : heirs.length === 1 && contesters.length && rng.bool(0.4) ? [heirs[0], rng.pick(contesters)] : null;
+    if (pair) {
+      const [a, b] = pair;
+      relate(world, a, b, 'rival', -0.6);
+      a.history.push({ day: world.day, text: `Fell out with ${b.name} over ${p.name}'s estate.` }); b.history.push({ day: world.day, text: `Fell out with ${a.name} over ${p.name}'s estate.` });
+      a.memories.push({ day: world.day, text: `${b.name} contested the will. Family means nothing to them.`, weight: 0.6 });
+      createEvent(world, {
+        category: 'personal', type: 'inheritance.feud', severity: p.fame > 60 ? 3 : 2, causedBy: ev.id,
+        title: `${p.name}'s heirs go to war over the estate`,
+        description: `${a.name} and ${b.name} are contesting ${p.name}'s fortune ${rng.pick(['in court', 'through the press', 'with rival wills', 'over a single house'])}. ${rng.pick(['Lawyers on both sides are delighted.', 'The funeral was the last time they spoke.', 'Neither will say what the fight is really about.'])}`,
+        location: { cityId: a.cityId }, actors: [ref('person', a.id), ref('person', b.id)], effects: [fx('person', a.id, 'fame', 3), fx('person', b.id, 'fame', 3)], tags: ['inheritance', 'feud', 'family'],
+      });
+    }
+  }
   return ev;
 }
 
