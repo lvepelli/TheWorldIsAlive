@@ -597,6 +597,22 @@ SPAWN_RULES.push({
   },
 });
 
+SPAWN_RULES.push({
+  id: 'water.dispute',
+  weight: (w) => countries(w).reduce((s, c) => s + ((c.resources.water ?? 50) < 35 ? 0.08 : 0), 0),
+  run: (w, rng) => {
+    // Water wars: a thirsty country eyes a water-rich neighbour's rivers; dams and diversions poison relations.
+    const thirsty = countries(w).filter((c) => (c.resources.water ?? 50) < 35 && c.neighbors.some((n) => (w.countries[n]?.resources.water ?? 50) > (c.resources.water ?? 50) + 25));
+    if (!thirsty.length) return null;
+    const a = rng.pickWeighted(thirsty, (c) => 60 - (c.resources.water ?? 50) + c.unrest / 4);
+    const rich = a.neighbors.map((n) => w.countries[n]).filter((b) => b && (b.resources.water ?? 50) > (a.resources.water ?? 50) + 25 && !a.atWarWith.includes(b.id));
+    if (!rich.length) return null;
+    const b = rng.pickWeighted(rich, (x) => x.resources.water ?? 50);
+    const what = rng.pick([`${b.name}'s new dam`, 'a river diversion upstream', 'the shrinking shared aquifer', 'irrigation canals cut across the border']);
+    return A.shiftTension(w, rng, a, b, rng.int(14, 28), 'simulation', false, `a water dispute over ${what}`);
+  },
+});
+
 function leaderAgg(w: World, c: Country): number { return w.people[c.leaderId]?.personality.aggression ?? 0.5; }
 
 /** Roll for spontaneous events for this day. */
