@@ -53,6 +53,16 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
       if (rng.next() > a.socialActivity * 0.8 + 0.2) continue;
       const post = makePost(world, rng, a, ev);
       out.push(post);
+      // Viral posts get quote-reposted by other public figures with their own spin.
+      if (post.viral && rng.bool(0.5)) {
+        const q = rng.pickWeighted(people.filter((x) => x.id !== a.id && x.fame > 30), (x) => x.fame);
+        if (q) {
+          const agree = rng.next() < 0.5 + (q.ideology === a.ideology ? 0.2 : -0.2);
+          const lead = agree ? rng.pick(['This.', 'Exactly right.', 'Worth reading twice.', 'Signal-boosting.']) : rng.pick(['Wrong on every count.', 'This is how misinformation spreads.', 'Respectfully: no.', 'Read this and then read the actual facts.']);
+          const excerpt = post.text.length > 90 ? post.text.slice(0, 87) + '…' : post.text;
+          out.push({ id: nextId(world, 's'), day: world.day, authorId: q.id, text: `${lead} ↻ @${a.socialHandle}: “${excerpt}”`, hashtags: post.hashtags.slice(0, 1), likes: Math.round(post.likes * rng.float(0.1, 0.6)), reposts: Math.round(post.reposts * rng.float(0.1, 0.4)), replies: 0, eventId: ev.id, sentiment: agree ? post.sentiment : -post.sentiment, viral: false });
+        }
+      }
       // Replies
       const nReplies = post.viral ? rng.int(1, 3) : rng.bool(0.3) ? 1 : 0;
       for (let i = 0; i < nReplies; i++) {
