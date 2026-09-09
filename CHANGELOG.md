@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — deployed & turning
+
+- Deployment: GitHub Pages via `.github/workflows/deploy.yml` (gh-pages branch), base-path-aware build, post-deploy Playwright QA on three phone viewports + desktop committed to `docs/qa`. Live: https://lvepelli.github.io/TheWorldIsAlive/
+- Map: day/night terminator sweeping the planet; tileable ocean/static raster with screen-space vignette; wrap-continuous terrain noise (no antimeridian seam); softer highland/snow texture; camera opens on the population-weighted center; seam hairline clipped from border strokes.
+- Tooling: `tests/e2e/deployed.mjs` (QA any URL), `tests/e2e/serve.mjs` (static server), `netlify.toml`.
+
 ## 0.3.0 — living details
 
 - Map: decaying impact zones for disasters, epidemics (pandemics span wider), battles and crackdowns.

@@ -23,7 +23,7 @@ export class MapRenderer {
   private ctx: CanvasRenderingContext2D;
   private world: World | null = null;
   private shapes: Shapes | null = null;
-  private staticCanvas: HTMLCanvasElement | null = null;
+  staticCanvas: HTMLCanvasElement | null = null;
   private staticOverlay: MapOverlay | null = null;
   private staticVersion = -1;
   private countryIndex = new Map<ID, number>();
@@ -134,8 +134,9 @@ export class MapRenderer {
     c.width = W * PX; c.height = H * PX;
     const g = c.getContext('2d')!;
     // Ocean
-    const grad = g.createRadialGradient(c.width / 2, c.height / 2, 10, c.width / 2, c.height / 2, c.width * 0.7);
-    grad.addColorStop(0, '#0c1424'); grad.addColorStop(1, '#05070d');
+    // Tileable ocean: flat base with a latitude gradient only (no x variation, so wrap copies join seamlessly).
+    const grad = g.createLinearGradient(0, 0, 0, c.height);
+    grad.addColorStop(0, '#070b16'); grad.addColorStop(0.5, '#0b1322'); grad.addColorStop(1, '#070b16');
     g.fillStyle = grad; g.fillRect(0, 0, c.width, c.height);
     // Subtle depth: darker far from land
     // Graticule
@@ -148,6 +149,10 @@ export class MapRenderer {
       void r;
       for (const p of polys) { this.tracePoly(g, p, PX); g.strokeStyle = 'rgba(143,211,255,0.06)'; g.lineWidth = PX * 3; g.stroke(); g.strokeStyle = 'rgba(143,211,255,0.09)'; g.lineWidth = PX * 1.2; g.stroke(); }
     }
+    g.restore();
+    // Dark outer halo (drawn before fills so strokes along the wrap seam are covered by land)
+    g.save(); g.lineJoin = 'round';
+    for (const [, polys] of this.shapes!.byCountry) for (const p of polys) { this.tracePoly(g, p, PX); g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = PX * 0.9; g.stroke(); }
     g.restore();
     // Land fills
     for (const [r, polys] of this.shapes!.byCountry) {
@@ -168,7 +173,8 @@ export class MapRenderer {
         const lat = Math.abs(i / W / H - 0.5) * 2;
         let r = 40, gg = 120, b = 70, a = 0.16; // temperate green
         if (m < 0.38) { r = 200; gg = 160; b = 90; a = 0.14; } // arid
-        if (e > 0.74) { r = 230; gg = 230; b = 240; a = 0.12 + (e - 0.74) * 1.6; } // mountains/snow
+        if (e > 0.72) { r = 120; gg = 105; b = 85; a = 0.14; } // highlands
+        if (e > 0.86) { r = 230; gg = 230; b = 240; a = 0.1 + (e - 0.86) * 1.4; } // peaks/snow
         if (lat > 0.8) { r = 220; gg = 235; b = 250; a = 0.22; } // polar
         img.data[o] = r; img.data[o + 1] = gg; img.data[o + 2] = b; img.data[o + 3] = Math.round(clamp(a, 0, 0.6) * 255);
       }
@@ -180,14 +186,6 @@ export class MapRenderer {
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
       g.drawImage(t, 0, 0, c.width, c.height); g.restore();
     } catch { /* texture optional */ }
-    // Inner shadow along coasts for depth
-    g.save(); g.lineJoin = 'round';
-    for (const [, polys] of this.shapes!.byCountry) for (const p of polys) { this.tracePoly(g, p, PX); g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = PX * 0.5; g.stroke(); }
-    g.restore();
-    // Vignette
-    const v = g.createRadialGradient(c.width / 2, c.height / 2, c.height * 0.3, c.width / 2, c.height / 2, c.width * 0.75);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.45)');
-    g.fillStyle = v; g.fillRect(0, 0, c.width, c.height);
     this.staticCanvas = c; this.staticOverlay = overlay;
   }
 
@@ -231,10 +229,15 @@ export class MapRenderer {
       g.drawImage(this.staticCanvas!, sx, sy, W * cam.scale, this.H * cam.scale);
     }
     const t = opts.now / 1000;
+    if (!(window as unknown as { __twiaNoNight?: boolean }).__twiaNoNight) this.drawNight(world, offsets, opts.now, opts.reducedMotion);
     const selCountry = opts.selection?.kind === 'country' ? opts.selection.id : opts.selection?.kind === 'city' ? world.cities[opts.selection.id]?.countryId : null;
     const hoverCountry = opts.hover?.kind === 'country' ? opts.hover.id : null;
-    // Borders + war highlighting
+    // Borders + war highlighting. Clip out a hairline at each wrap seam so the artificial
+    // polygon edges along the antimeridian are never stroked.
     g.save(); g.lineJoin = 'round';
+    g.beginPath(); g.rect(0, 0, this.width, this.height);
+    for (const k of [-1, 0, 1, 2]) { const [sx] = this.worldToScreen(k * W, 0); if (sx > -4 && sx < this.width + 4) g.rect(sx - 1.5, 0, 3, this.height); }
+    g.clip('evenodd');
     for (const ox of offsets) {
       g.setTransform(this.dpr * cam.scale, 0, 0, this.dpr * cam.scale, this.dpr * ((ox - cam.x) * cam.scale + this.width / 2), this.dpr * ((0 - cam.y) * cam.scale + this.height / 2));
       for (const [r, polys] of this.shapes.byCountry) {
@@ -262,6 +265,30 @@ export class MapRenderer {
     this.drawEvents(world, offsets, t, opts.reducedMotion);
     // Labels
     this.drawLabels(world, offsets, selCountry);
+    // Screen-space vignette (drawn last so it never shows raster seams)
+    const v = g.createRadialGradient(this.width / 2, this.height / 2, Math.min(this.width, this.height) * 0.35, this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.75);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.5)');
+    g.fillStyle = v; g.fillRect(0, 0, this.width, this.height);
+  }
+
+  /** Day/night terminator: a soft shadow band that circles the planet as simulated days pass. */
+  private drawNight(world: World, offsets: number[], nowMs: number, reduced: boolean): void {
+    const g = this.ctx; const cam = this.camera; const W = this.W;
+    // One rotation per simulated day; interpolate with wall-clock so it glides between ticks.
+    const phase = reduced ? 0.25 : ((world.day * 0.37 + (nowMs / 60000)) % 1);
+    const centerX = phase * W; // sub-solar longitude in grid units
+    void offsets;
+    {
+      for (const k of [-2, -1, 0, 1, 2]) {
+        const nightCenter = centerX + W / 2 + k * W;
+        const [sx] = this.worldToScreen(nightCenter, 0);
+        const half = (W / 2) * cam.scale;
+        if (sx + half < 0 || sx - half > this.width) continue;
+        const grad = g.createLinearGradient(sx - half, 0, sx + half, 0);
+        grad.addColorStop(0, 'rgba(2,4,12,0)'); grad.addColorStop(0.28, 'rgba(2,4,12,0.34)'); grad.addColorStop(0.5, 'rgba(2,4,12,0.42)'); grad.addColorStop(0.72, 'rgba(2,4,12,0.34)'); grad.addColorStop(1, 'rgba(2,4,12,0)');
+        g.fillStyle = grad; g.fillRect(sx - half, 0, half * 2, this.height);
+      }
+    }
   }
 
   private capitalPos(world: World, c: Country): [number, number] { const cap = world.cities[c.capitalId]; return cap ? [cap.x, cap.y] : [c.centroid.x, c.centroid.y]; }

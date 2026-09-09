@@ -2,7 +2,7 @@
 
 Read this first. Everything needed to continue lives in this repository; nothing depends on the original chat session.
 
-## Status (v0.3.0)
+## Status (v0.4.0)
 
 **Playable, complete first version.** Builds, passes unit + browser smoke tests, works on desktop and 360–430 px phones, installs as a PWA, saves to IndexedDB, exports/imports JSON.
 
@@ -63,7 +63,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 ## Files that are safe vs. delicate
 
 - Safe to extend: `spawn.ts`, `consequences.ts`, `actions.ts`, `presets.ts`, screens, `global.css`.
-- Delicate: `geography.ts` (region growth + island cleanup), `contours.ts` (edge tracing assumes 4-connectivity and the seam rule), `renderer.ts` (camera wrap math), `loop.ts` (render throttling and cinematic gating), `storage.ts` (validation).
+- Delicate: `geography.ts` (region growth + island cleanup; noise is blended with a one-world-width-shifted sample so terrain wraps seamlessly — keep that if you change the noise), `contours.ts` (edge tracing assumes 4-connectivity and the seam rule), `renderer.ts` (camera wrap math), `loop.ts` (render throttling and cinematic gating), `storage.ts` (validation).
 
 ## Technical debt
 

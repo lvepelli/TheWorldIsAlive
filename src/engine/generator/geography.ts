@@ -49,13 +49,16 @@ export function generateGeography(seed: string, width = 240, height = 120, targe
         mass += b.w * Math.exp(-d * 1.4);
       }
       const nx = x * freq, ny = y * freq;
-      const f = noise.fbm(nx + 10, ny + 10, 6, 2.1, 0.52);   // -0.5..0.5-ish
-      const ridges = 1 - Math.abs(noise.fbm(nx * 2.3 + 40, ny * 2.3 + 40, 4));
+      // Wrap-continuous sampling: blend the sample at x with the sample one world-width to the left,
+      // weighted by x/width, so column 0 and column W agree and the antimeridian has no seam.
+      const wx = x / width; const nxL = (x - width) * freq;
+      const f = (1 - wx) * noise.fbm(nx + 10, ny + 10, 6, 2.1, 0.52) + wx * noise.fbm(nxL + 10, ny + 10, 6, 2.1, 0.52);   // -0.5..0.5-ish
+      const ridges = 1 - Math.abs((1 - wx) * noise.fbm(nx * 2.3 + 40, ny * 2.3 + 40, 4) + wx * noise.fbm(nxL * 2.3 + 40, ny * 2.3 + 40, 4));
       const lat = Math.abs(y / height - 0.5) * 2; // 0 equator, 1 pole
       const polar = lat > 0.86 ? (lat - 0.86) / 0.14 : 0;
       let e = 0.27 + mass * 0.45 + f * 0.9 + ridges * 0.08 - polar * 0.6;
       elevation[i] = Math.max(0, Math.min(1, e));
-      moisture[i] = 0.5 + noise.fbm(nx * 1.7 + 200, ny * 1.7 + 200, 4) * 0.9;
+      moisture[i] = 0.5 + ((1 - wx) * noise.fbm(nx * 1.7 + 200, ny * 1.7 + 200, 4) + wx * noise.fbm(nxL * 1.7 + 200, ny * 1.7 + 200, 4)) * 0.9;
     }
   }
   const SEA = 0.5;

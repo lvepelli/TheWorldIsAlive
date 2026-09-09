@@ -29,6 +29,7 @@ export function WorldMap(): React.ReactElement {
     const canvas = canvasRef.current!;
     const r = new MapRenderer(canvas);
     rendererRef.current = r;
+    (window as unknown as { __twiaRenderer?: MapRenderer }).__twiaRenderer = r; // debug/QA hook
     const resize = () => { const rect = canvas.parentElement!.getBoundingClientRect(); r.resize(rect.width, rect.height, window.devicePixelRatio || 1); if (!initialized.current && world) { const h = r.homeCenter(); r.camera = { x: h.x, y: h.y, scale: r.fitScale() }; } };
     const initialized = { current: false };
     resize();
