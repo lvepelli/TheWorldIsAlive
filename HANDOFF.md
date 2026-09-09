@@ -112,6 +112,8 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Balance snapshot (seed `diag`, 15 years)
 
+*Cross-seed check (v0.9.2):* 20 years on `amber-citadel-1` end at unrest 9, happiness 64, stability 62, freedom 60, inflation 4.6 %, growth 3.1 %, debt 126 %; on `amber-empire-1` unrest 13, happiness 66, stability 62, freedom 64, debt 109 %. `diag` is the harsh seed.
+
 *Update (v0.9.1 balance pass):* 20 years on `diag` end at mean unrest 18, happiness 55, polarization 33, stability 52, freedom 57, inflation 4.8 %, growth 2.1 %, debt 128 % (before the freedom baseline drift and debt consolidation: unrest 31, happiness 38, freedom 38, inflation 8.5 %, growth 0.2 %, debt 254 %). Per 20 years: ~68 wars, 6 new nations, ~16 annexations, ~210 autonomy demands, ~85 concessions, ~82 crackdowns, ~13 referendums, ~80 campaigns, ~150 automation shocks (capped at 8/year).
 
 *Update (regions, after v0.8.0):* 20 years on `diag`: 32 → 38 nations (6 secessions; world-wide spacing of two years between foundings plus three years per country), ~137 autonomy demands, 56 concessions, 64 crackdowns, ~99 regions with mean unrest ~31 and ~15 autonomous; ~52 wars declared. Without the spacing the map fragmented to 48 nations in 20 years.
