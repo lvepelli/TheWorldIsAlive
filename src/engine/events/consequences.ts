@@ -304,6 +304,41 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       location: { cityId: person.cityId }, actors: [ref('person', person.id)], effects: [fx('person', person.id, 'wealth%', -30), fx('person', person.id, 'fame', 5)], tags: ['scandal', 'downfall'],
     });
   },
+  // ---- Summits with agendas ----
+  'summit.outcome': (w, rng, src) => {
+    const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
+    const guests = ((src.data?.guests as ID[] | undefined) ?? []).map((id) => w.countries[id]).filter(Boolean);
+    if (!topic || !host || !guests.length) return null;
+    const all = [host, ...guests];
+    const avgRel = guests.reduce((s, g) => s + (host.relations[g.id] ?? 0), 0) / guests.length;
+    const atWar = all.some((a) => all.some((b) => a.atWarWith.includes(b.id)));
+    const success = !atWar && rng.next() < 0.45 + avgRel / 200 + (host.freedom > 60 ? 0.05 : 0);
+    if (!success) {
+      for (const g of guests) A.setRelation(w, host, g, -4);
+      return createEvent(w, {
+        category: 'diplomatic', type: 'summit.collapse', severity: 2, causedBy: src.id,
+        title: `${topic.charAt(0).toUpperCase() + topic.slice(1)} talks collapse`,
+        description: `Months after the ${host.name} summit, the ${topic} process ${rng.pick(['fell apart over money', 'died in committee', 'was vetoed by a single delegation', 'collapsed amid mutual accusations'])}. ${rng.pick(['Diplomats blamed each other.', 'Nobody expects a second round soon.', 'The host called it "a pause, not an end".'])}`,
+        location: { countryId: host.id }, actors: all.map((c) => ref('country', c.id)), effects: [fx('country', host.id, 'approval', -2)], tags: ['diplomacy', 'summit', host.code],
+      });
+    }
+    const effects: ReturnType<typeof fx>[] = []; let what = '';
+    switch (topic) {
+      case 'climate finance': for (const c of all) effects.push(fx('country', c.id, 'climateRisk', -2)); for (const c of all) if (c.gdp > 500) effects.push(fx('country', c.id, 'debt', 1)); what = 'a climate fund that the richer members will pay into'; break;
+      case 'debt relief': { const poor = guests.slice().sort((a, b) => a.gdp / a.population - b.gdp / b.population)[0]; effects.push(fx('country', poor.id, 'debt', -12), fx('country', poor.id, 'happiness', 3), fx('country', host.id, 'approval', 1)); what = `debt relief for ${poor.name}`; break; }
+      case 'trade tariffs': { const g = rng.pick(guests); if (!host.tradePartners.includes(g.id)) { host.tradePartners.push(g.id); g.tradePartners.push(host.id); } effects.push(fx('country', host.id, 'gdpGrowth', 0.3), fx('country', g.id, 'gdpGrowth', 0.3)); what = `a trade agreement between ${host.name} and ${g.name}`; break; }
+      case 'AI safety': for (const c of all) effects.push(fx('country', c.id, 'technology', 1), fx('country', c.id, 'polarization', -1)); what = 'shared rules for advanced machine systems'; break;
+      case 'nuclear non-proliferation': for (const c of all) effects.push(fx('country', c.id, 'military', -2), fx('country', c.id, 'stability', 1)); for (const g of guests) A.setRelation(w, host, g, 8); what = 'an arms-control protocol'; break;
+      case 'migration': for (const c of all) effects.push(fx('country', c.id, 'happiness', 1), fx('country', c.id, 'unrest', -1)); what = 'a shared framework for refugees and border processing'; break;
+      default: for (const g of guests) A.setRelation(w, host, g, 10); for (const c of all) effects.push(fx('country', c.id, 'stability', 1)); what = 'a regional security framework with a standing council'; break;
+    }
+    return createEvent(w, {
+      category: 'diplomatic', type: 'summit.accord', severity: 3, causedBy: src.id,
+      title: `${host.name} summit delivers: ${what.split(' ').slice(0, 5).join(' ')}${what.split(' ').length > 5 ? '…' : ''}`,
+      description: `The ${topic} process begun in ${A.capitalOf(w, host)?.name ?? host.name} produced ${what}. ${guests.map((g) => g.name).join(', ')} and ${host.name} signed. ${rng.pick(['Implementation is the hard part.', 'Markets liked it.', 'Hardliners at home called it a sell-out.', 'The photo will be in the history books.'])}`,
+      location: { countryId: host.id }, actors: all.map((c) => ref('country', c.id)), effects, tags: ['diplomacy', 'summit', 'accord', host.code], historic: topic === 'nuclear non-proliferation',
+    });
+  },
   // ---- Premise opening arcs (scheduled by generator/premise.ts) ----
   'premise.cold-peace.incident': (w, rng, src) => {
     const a = c$(w, src.data?.a as ID), b = c$(w, src.data?.b as ID);
@@ -750,6 +785,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type.startsWith('disaster.') && e.severity >= 4, rule: 'disaster.reconstruction', delay: [60, 150], p: 0.85 },
   { match: (e) => e.type === 'company.bankrupt' && e.severity >= 3, rule: 'bankrupt.assets', delay: [10, 60], p: 0.7 },
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
+  { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
   { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },

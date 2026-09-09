@@ -319,6 +319,7 @@ export const SPAWN_RULES: SpawnRule[] = [
         title: `${host.name} hosts summit on ${topic}`,
         description: `Leaders of ${guests.map((g) => g.name).join(', ')} met in ${A.capitalOf(w, host).name} for talks on ${topic}. ${rng.pick(['A joint declaration was signed.', 'Talks ended without agreement.', 'A working group was formed.', 'One delegation walked out.'])}`,
         location: { countryId: host.id }, actors: [ref('country', host.id), ...guests.map((g) => ref('country', g.id))], effects: [fx('country', host.id, 'approval', 2)], tags: ['diplomacy', 'summit', host.code],
+        data: { topic, host: host.id, guests: guests.map((g) => g.id) },
       });
     },
   },
