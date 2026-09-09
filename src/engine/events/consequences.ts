@@ -333,6 +333,17 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       data: { shocks: [{ commodityId: 'grain', pct: -0.03 }] as MarketShock[] },
     });
   },
+  'food.migration': (w, rng, src) => {
+    const ids = (src.data?.poor as ID[] | undefined) ?? []; const poor = ids.map((id) => w.countries[id]).filter(Boolean);
+    if (!poor.length) return null;
+    const from = rng.pickWeighted(poor, (x) => x.unrest + 10);
+    const dest = from.neighbors.map((id) => w.countries[id]).filter((x) => x && !ids.includes(x.id) && !x.atWarWith.includes(from.id));
+    if (!dest.length) return null;
+    const to = rng.pickWeighted(dest, (x) => x.gdp / Math.max(1, x.population) * 1e6 + x.stability);
+    const ev = A.migrationWave(w, rng, from, to, from.population * rng.float(0.003, 0.012), src.id);
+    ev.description += ' Hunger, not war, drove them.';
+    return ev;
+  },
   // ---- Summits with agendas ----
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
@@ -818,6 +829,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.aid', delay: [10, 40], p: 0.7 },
+  { match: (e) => e.type === 'food.crisis', rule: 'food.migration', delay: [20, 70], p: 0.6 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.rival-pounce', delay: [1, 6], p: 0.45 },
   { match: (e) => e.type === 'scandal', rule: 'scandal.allies-rally', delay: [2, 8], p: 0.7 },
   { match: (e) => e.type === 'downfall', rule: 'downfall.rival-rises', delay: [10, 60], p: 0.5 },
