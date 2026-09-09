@@ -2,14 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { useGame } from '@/state/store';
 import { EventCard } from '../components/EventCard';
 import { toDate, MONTHS, formatDate } from '@/engine/time';
-import { EVENT_CATEGORIES, type EventCategory } from '@/engine/types';
+import { EVENT_CATEGORIES, type EventCategory, type WorldEvent } from '@/engine/types';
 import { catVar } from '../format';
 
 export function HistoryScreen(): React.ReactElement {
   const world = useGame((s) => s.world)!;
   const version = useGame((s) => s.version);
   const select = useGame((s) => s.select);
-  const [tab, setTab] = useState<'timeline' | 'interventions' | 'summaries'>('timeline');
+  const [tab, setTab] = useState<'timeline' | 'sagas' | 'interventions' | 'summaries'>('timeline');
   const [cat, setCat] = useState<EventCategory | 'all'>('all');
   const [country, setCountry] = useState('all');
   const [year, setYear] = useState<number | 'all'>('all');
@@ -21,12 +21,16 @@ export function HistoryScreen(): React.ReactElement {
     for (const e of evs) { const d = toDate(e.day, world.meta.startYear); const key = `${d.year}-${d.month}`; let g = groups[groups.length - 1]; if (!g || g.key !== key) { g = { key, label: `${MONTHS[d.month]} ${d.year}`, events: [] }; groups.push(g); } g.events.push(e); }
     return groups;
   }, [world, version, cat, country, year, onlyHistoric]);
+  const sagas = useMemo(() => {
+    const childOf = new Set<string>(); for (const e of world.events) for (const c of e.consequences) childOf.add(c);
+    return world.events.filter((e) => !childOf.has(e.id) && e.consequences.length > 0).map((root) => { const chain = collectChain(world, root.id); return { root, chain, size: chain.length, span: Math.max(...chain.map((x) => x.day)) - root.day, sev: Math.max(...chain.map((x) => x.severity)) }; }).filter((s) => s.size >= 3).sort((a, b) => b.sev * 100 + b.size - (a.sev * 100 + a.size)).slice(0, 40);
+  }, [world, version]);
   return (
     <div className="screen">
       <div className="screen-inner">
         <div className="screen-header"><div><div className="kicker">Chronicle of {world.meta.name}</div><h2 className="screen-title">History</h2></div><div className="dim mono">seed {world.meta.seed}</div></div>
         <div className="row">
-          {(['timeline', 'interventions', 'summaries'] as const).map((t) => <button key={t} className={`chip clickable ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t === 'interventions' ? `Your interventions (${world.interventions.length})` : t[0].toUpperCase() + t.slice(1)}</button>)}
+          {(['timeline', 'sagas', 'interventions', 'summaries'] as const).map((t) => <button key={t} className={`chip clickable ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t === 'interventions' ? `Your interventions (${world.interventions.length})` : t === 'sagas' ? `Sagas (${sagas.length})` : t[0].toUpperCase() + t.slice(1)}</button>)}
         </div>
         {tab === 'timeline' && (
           <>
@@ -44,6 +48,21 @@ export function HistoryScreen(): React.ReactElement {
             ))}
             {!grouped.length && <div className="dim">History has not been written yet.</div>}
           </>
+        )}
+        {tab === 'sagas' && (
+          <div className="list">
+            <p className="muted" style={{ fontSize: 13 }}>Stories the world wrote by itself: an event and everything it set in motion. Tap any step to inspect it.</p>
+            {sagas.map((s) => (
+              <div key={s.root.id} className="card">
+                <div className="row"><span className={`sev sev-${s.sev}`} /><span className="kicker" style={{ color: catVar(s.root.category) }}>{sagaTitle(world, s.root, s.chain)}</span><span className="grow" /><span className="dim mono" style={{ fontSize: 11 }}>{s.size} events · {s.span}d{s.root.playerIntervention ? ' · ✦ yours' : ''}</span></div>
+                <div className="chain" style={{ marginTop: 6 }}>
+                  {s.chain.slice(0, 7).map((e, i) => <div key={e.id} className={`node ${i === 0 ? 'current' : ''}`} style={{ ['--c' as string]: catVar(e.category) }} onClick={() => select({ kind: 'event', id: e.id })}><span className={`sev sev-${e.severity}`} /><span className="grow ellipsis">{e.title}</span><span className="dim mono" style={{ fontSize: 10 }}>{formatDate(e.day, world.meta.startYear, 'short')}</span></div>)}
+                  {s.chain.length > 7 && <div className="arrow">… {s.chain.length - 7} more</div>}
+                </div>
+              </div>
+            ))}
+            {!sagas.length && <div className="dim">No sagas yet. Give the world time, or start one in God Mode.</div>}
+          </div>
         )}
         {tab === 'interventions' && (
           <div className="list">
@@ -73,4 +92,31 @@ export function countConsequences(world: { events: { id: string; consequences: s
   let n = 0;
   for (const c of ev.consequences) { if (seen.has(c)) continue; seen.add(c); n += 1 + countConsequences(world, c, seen); }
   return n;
+}
+
+/** Root plus all downstream events (breadth-first, chronological), capped for display. */
+export function collectChain(world: { events: WorldEvent[] }, rootId: string): WorldEvent[] {
+  const byId = new Map(world.events.map((e) => [e.id, e] as const));
+  const out: WorldEvent[] = []; const seen = new Set<string>(); const queue = [rootId];
+  while (queue.length && out.length < 60) { const id = queue.shift()!; if (seen.has(id)) continue; seen.add(id); const e = byId.get(id); if (!e) continue; out.push(e); queue.push(...e.consequences); }
+  return out.sort((a, b) => a.day - b.day);
+}
+
+function sagaTitle(world: { countries: Record<string, { name: string }> }, root: { type: string; title: string; location: { countryId?: string }; actors: { kind: string; id: string }[] }, chain: { type: string }[]): string {
+  const c = root.location.countryId ? world.countries[root.location.countryId]?.name : undefined;
+  const types = new Set(chain.map((e) => e.type));
+  if (root.type === 'war.declared') return `The ${c ?? ''} war`.replace('  ', ' ');
+  if (root.type === 'tech.breakthrough') return `The breakthrough that reshaped ${c ?? 'the world'}`;
+  if (root.type === 'scandal') return types.has('downfall') || types.has('leader.resignation') ? 'A scandal and a fall' : 'A scandal survived';
+  if (root.type === 'protest.mass') return types.has('leader.revolution') ? `The ${c ?? ''} revolution`.replace('  ', ' ') : `Unrest in ${c ?? 'the streets'}`;
+  if (root.type.startsWith('disaster.')) return `After the ${root.type.split('.')[1]} in ${c ?? '?'}`;
+  if (root.type === 'health.epidemic' || root.type === 'health.pandemic') return types.has('vaccine') ? 'The plague and the cure' : 'The outbreak';
+  if (root.type === 'government.collapse') return `The fall of ${c ?? 'a state'}`;
+  if (root.type === 'company.founded') return types.has('startup.success') ? 'From garage to giant' : 'A startup story';
+  if (root.type === 'movement.founded') return `A movement rises in ${c ?? '?'}`;
+  if (root.type === 'country.founded') return 'Birth of a nation';
+  if (root.type.startsWith('economy.')) return `The ${root.type.split('.')[1]} of ${c ?? 'the world'}`;
+  if (root.type === 'space.milestone') return 'The space race';
+  if (root.type === 'leader.coup') return `The coup in ${c ?? '?'}`;
+  return root.title;
 }
