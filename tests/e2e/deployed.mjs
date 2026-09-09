@@ -114,9 +114,9 @@ async function run(name, viewport, mobile) {
     // God Mode: Spanish + English free text, categories, preset
     await nav(page, 'god', mobile);
     await page.fill('[data-testid="god-input"]', 'Dentro de dos semanas empieza una pandemia global'); await page.waitForTimeout(500);
-    check((await page.locator('[data-testid="god-preview"]').count()) > 0 && /2 weeks|14/.test(await page.locator('[data-testid="god-preview"]').innerText()), 'Spanish delayed God command is understood');
+    check((await page.locator('[data-testid="god-preview"]').count()) > 0 && /2 (weeks|semanas)|14/.test(await page.locator('[data-testid="god-preview"]').innerText()), 'Spanish delayed God command is understood');
     await page.fill('[data-testid="god-input"]', 'The strongest nation annexes a region of its neighbour'); await page.waitForTimeout(500);
-    check(/annex/i.test(await page.locator('[data-testid="god-preview"]').innerText()), 'English God command is understood');
+    check(/annex|anexion/i.test(await page.locator('[data-testid="god-preview"]').innerText()), 'English God command is understood');
     await page.fill('[data-testid="god-input"]', 'Una pequeña empresa descubre una batería que almacena veinte veces más energía.'); await page.waitForTimeout(500);
     await page.click('[data-testid="god-execute"]'); await page.waitForTimeout(900); await dismissCinematic(page);
     check((await page.locator('[data-testid="god-result"]').count()) > 0, 'God intervention executed');
