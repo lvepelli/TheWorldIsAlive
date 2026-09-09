@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+const page = await ctx.newPage();
+await page.goto('http://localhost:4173/?seed=showcase-42'); await page.waitForSelector('.map-canvas', { timeout: 20000 }); await page.waitForTimeout(2500);
+await page.click('.clock .speeds button:nth-child(1)'); if (await page.locator('text=Got it').count()) await page.click('text=Got it');
+await page.click('.bottom-nav button[aria-label="Live"]'); await page.waitForTimeout(300); await page.locator('.event-card').first().click(); await page.waitForTimeout(500);
+console.log('open before swipe:', await page.locator('.inspector.open').count());
+const head = await page.locator('.inspector-head').boundingBox();
+const cdp = await ctx.newCDPSession(page);
+await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: head.x + 150, y: head.y + 10 }] });
+for (let k = 1; k <= 8; k++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: head.x + 150, y: head.y + 10 + k * 20 }] });
+await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+await page.waitForTimeout(400);
+console.log('open after swipe:', await page.locator('.inspector.open').count());
+await browser.close();

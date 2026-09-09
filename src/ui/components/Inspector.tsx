@@ -26,10 +26,16 @@ export function Inspector(): React.ReactElement {
   const version = useGame((s) => s.version);
   void version;
   const open = !!selection && !!world;
+  const sheetRef = React.useRef<HTMLElement>(null);
+  const drag = React.useRef<{ y0: number; dy: number } | null>(null);
+  // Swipe-down on the header/grabber dismisses the sheet on phones.
+  const onDown = (e: React.PointerEvent) => { if (window.innerWidth >= 900 || e.pointerType === 'mouse') return; drag.current = { y0: e.clientY, dy: 0 }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); };
+  const onMove = (e: React.PointerEvent) => { const d = drag.current; if (!d || !sheetRef.current) return; d.dy = Math.max(0, e.clientY - d.y0); sheetRef.current.style.transition = 'none'; sheetRef.current.style.transform = `translateY(${d.dy}px)`; };
+  const onUp = () => { const d = drag.current; const el = sheetRef.current; drag.current = null; if (!d || !el) return; el.style.transition = ''; el.style.transform = ''; if (d.dy > 90) select(null); };
   return (
-    <aside className={`inspector ${open ? 'open' : ''}`} aria-hidden={!open}>
-      <div className="grabber" onClick={() => select(null)} />
-      <div className="inspector-head">
+    <aside ref={sheetRef} className={`inspector ${open ? 'open' : ''}`} aria-hidden={!open}>
+      <div className="grabber" onClick={() => select(null)} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'none', width: 80, padding: '6px 0', background: 'none' }}><div style={{ width: 40, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.2)', margin: '0 auto' }} /></div>
+      <div className="inspector-head" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'pan-x' }}>
         {stack.length > 0 ? <button className="btn ghost sm" onClick={back} aria-label="Back">←</button> : null}
         <span className="kicker grow">{selection ? selection.kind : ''}</span>
         <button className="btn ghost sm" onClick={() => select(null)} aria-label="Close">✕</button>
