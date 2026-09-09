@@ -18,6 +18,7 @@
 - Mobile: on list screens (Live, News, Social, …) toasts dock above the bottom nav instead of covering the screen header.
 - History: 📜 Export chronicle — the world's story as Markdown (premise, year reviews, sagas, historic events, interventions, the world today), copied to the clipboard or shared via the Web Share sheet on phones.
 - Fix: yearly reviews were almost always titled "A Quiet Year" because unclassified events counted toward "quiet"; years are now named by what actually dominated them.
+- Live: "Developing stories" strip — causal chains still producing events, named like sagas, each card jumping to the latest event.
 - Accessibility: modals trap focus, close on Escape and return focus to the opener; the inspector takes focus when it opens and gives it back when dismissed.
 - Keyboard map: focus the map and use arrow keys to pan, + / − to zoom, Enter to select what is under the crosshair (or the nearest city), Home to reset.
 

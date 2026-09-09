@@ -119,7 +119,7 @@ export function collectChain(world: { events: WorldEvent[] }, rootId: string): W
   return out.sort((a, b) => a.day - b.day);
 }
 
-function sagaTitle(world: { countries: Record<string, { name: string }> }, root: { type: string; title: string; location: { countryId?: string }; actors: { kind: string; id: string }[] }, chain: { type: string }[]): string {
+export function sagaTitle(world: { countries: Record<string, { name: string }> }, root: { type: string; title: string; location: { countryId?: string }; actors: { kind: string; id: string }[] }, chain: { type: string }[]): string {
   const c = root.location.countryId ? world.countries[root.location.countryId]?.name : undefined;
   const types = new Set(chain.map((e) => e.type));
   if (root.type === 'war.declared') return `The ${c ?? ''} war`.replace('  ', ' ');
