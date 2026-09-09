@@ -68,4 +68,4 @@ Deterministic daily/monthly/yearly summaries: major events, wars, market change,
 
 ## Limits and caps
 
-Events capped at 4000 (old minor ones trimmed; historic kept), news 600, social 900, histories 60 entries per entity, memories 30, price histories 120 days.
+Events capped at 3000 (old minor ones trimmed; historic kept), news 600, social 900, histories 60 entries per entity (people compacted to 30 yearly), memories 30, price histories 120 days. Behavioural caps: at most four live movements per country (new ones merge into the strongest), one government collapse or coup per country per two years, one anniversary commemoration a day, persuaded objectives at most 80 characters, six dialogue turns kept per LLM thread, one editorial per outlet per week (2–4 outlets).
