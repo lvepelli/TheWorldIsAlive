@@ -69,10 +69,14 @@ function Onboarding(): React.ReactElement | null {
   const onboarded = useGame((s) => s.onboarded);
   const setOnboarded = useGame((s) => s.setOnboarded);
   const setScreen = useGame((s) => s.setScreen);
+  const world = useGame((s) => s.world)!;
   if (onboarded) return null;
+  const cs = Object.values(world.countries); const pop = cs.reduce((a, c) => a + c.population, 0); const wars = cs.reduce((a, c) => a + c.atWarWith.length, 0) / 2;
+  const biggest = cs.slice().sort((a, b) => b.gdp - a.gdp)[0]; const fragile = cs.slice().sort((a, b) => a.stability - b.stability)[0];
   return (
     <div className="panel" style={{ padding: '10px 12px', borderColor: 'rgba(240,179,90,0.4)', maxWidth: 520, alignSelf: 'flex-start' }} role="note">
-      <div className="kicker" style={{ color: 'var(--accent)' }}>Welcome, observer</div>
+      <div className="kicker" style={{ color: 'var(--accent)' }}>{world.meta.name} · year {world.meta.startYear}</div>
+      <div className="row wrap" style={{ gap: 12, margin: '4px 0 6px', fontSize: 12 }}><span><b className="mono">{cs.length}</b> nations</span><span><b className="mono">{(pop / 1e9).toFixed(1)}B</b> people</span><span><b className="mono">{wars}</b> war{wars === 1 ? '' : 's'}</span><span>Superpower: <b>{biggest?.name}</b></span><span>Most fragile: <b>{fragile?.name}</b></span></div>
       <div style={{ fontSize: 13, marginTop: 4 }}>Tap a glowing city or a nation to inspect it. Time runs at the top. When you are ready to make history, open <b>✦ God Mode</b>.</div>
       <div className="row" style={{ marginTop: 8 }}><button className="btn sm primary" onClick={() => { setOnboarded(); setScreen('god'); }}>Open God Mode</button><button className="btn sm ghost" onClick={setOnboarded}>Got it</button></div>
     </div>
