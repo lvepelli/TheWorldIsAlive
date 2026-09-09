@@ -9,7 +9,7 @@ import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
 import { relate } from './relations';
 import { makePerson } from '../generator/world';
-import { pivotForObjective, leaderActsOnObjective, fieldFromObjective } from './objectives';
+import { pivotForObjective, leaderActsOnObjective, fieldFromObjective, regionalistActsOnObjective } from './objectives';
 export { fieldFromObjective } from './objectives';
 
 export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
@@ -86,6 +86,7 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
 function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
   const c = world.countries[p.countryId];
   if (c && c.leaderId === p.id) { const acted = leaderActsOnObjective(world, rng, p, c); if (acted) return acted; }
+  else { const acted = regionalistActsOnObjective(world, rng, p); if (acted) return acted; }
   switch (p.profession) {
     case 'entrepreneur':
     case 'engineer':

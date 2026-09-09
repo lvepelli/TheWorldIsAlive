@@ -5,7 +5,7 @@
  * their companies; researchers chase the implied field. Keep the regex tables
  * human-readable — any code that sets an objective string steers the world.
  */
-import { RNG } from '../rng';
+import { RNG, clamp } from '../rng';
 import type { World, Person, WorldEvent, Sector, Company, Country } from '../types';
 import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
@@ -62,4 +62,44 @@ export function leaderActsOnObjective(world: World, rng: RNG, p: Person, c: Coun
       return createEvent(world, { category: 'political', type: 'policy', severity: 3, title: `${c.name} loosens the state's grip: reform package passes`, description: `${p.name} pushed through ${rng.pick(['a press-freedom law', 'an amnesty for political prisoners', 'independent courts', 'a bill of rights'])}, calling it "${rng.pick(['overdue', 'the beginning', 'what I promised'])}". Hardliners are furious.`, location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('country', c.id, 'freedom', 10), fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', -2), fx('country', c.id, 'polarization', 3)], tags: ['reform', 'politics', c.code] });
     }
     return null;
+}
+
+
+/**
+ * Regionalists: a character whose objective is to free / win autonomy or independence for a region
+ * (ousted governors, separatist governors) founds a liberation movement there or rallies the one that exists.
+ * Returns an event when they act; `force` skips the monthly dice (used by tests and God Mode).
+ */
+export function regionalistActsOnObjective(world: World, rng: RNG, p: Person, force = false): WorldEvent | null {
+  const m = p.objective.match(/^(?:free|liberate|win (?:autonomy|independence|self-rule) for)\s+(.+?)(?:\s+from\s+(.+))?$/i);
+  if (!m) return null;
+  const name = m[1].trim().toLowerCase();
+  const region = Object.values(world.regions ?? {}).find((r) => r.name.toLowerCase() === name); if (!region) return null;
+  const c = world.countries[region.countryId]; if (!c || c.leaderId === p.id) return null;
+  if (!force && !rng.bool(0.12 + p.personality.ambition * 0.1)) return null;
+  const anchor = world.cities[region.cityIds[0]];
+  const existing = c.movements.map((id) => world.organizations[id]).find((o) => o && o.alive && o.agenda === 'independence' && o.name.toLowerCase().includes(name.split(' ')[0]));
+  if (existing) {
+    existing.support = clamp(existing.support + 3 + p.influence * 0.05, 0, 100); region.unrest = clamp(region.unrest + 4, 0, 100);
+    if (!p.affiliations.includes(existing.id)) p.affiliations.push(existing.id);
+    if (!existing.leaderId || !world.people[existing.leaderId]?.alive) existing.leaderId = p.id;
+    if (!force && !rng.bool(0.5)) return null;
+    p.history.push({ day: world.day, text: `Rallied ${region.name} behind ${existing.name}.` });
+    return createEvent(world, {
+      category: 'social', type: 'region.rally', severity: 2, title: `${p.name} rallies ${region.name} for ${existing.name}`,
+      description: `${p.name} ${rng.pick(['filled the main square of', 'marched through', 'spoke from a balcony in'])} ${anchor?.name ?? region.name}, ${rng.pick(['promising that the region would decide its own future', 'calling the capital "a foreign power"', 'reading out the names of those arrested last time'])}. ${c.name}'s government ${rng.pick(['called it sedition.', 'sent more police.', 'pretended not to notice.'])}`,
+      location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('person', p.id), ref('organization', existing.id), ref('country', c.id)],
+      effects: [fx('country', c.id, 'unrest', 2)], tags: ['region', 'rally', c.code], data: { regionId: region.id, region: region.name },
+    });
+  }
+  const ev = A.createMovement(world, rng, c, 'simulation', false, 'nationalist', `${region.name} ${rng.pick(['Liberation Front', 'League', 'Assembly', 'Free Movement'])}`, 'independence');
+  const orgRef = ev.actors.find((a) => a.kind === 'organization'); const org = orgRef ? world.organizations[orgRef.id] : undefined;
+  if (org && ev.type !== 'movement.merged') {
+    org.leaderId = p.id; if (!p.affiliations.includes(org.id)) p.affiliations.push(org.id); p.influence = clamp(p.influence + 5, 0, 100); p.fame = clamp(p.fame + 8, 0, 100);
+    p.history.push({ day: world.day, text: `Founded ${org.name}.` }); region.unrest = clamp(region.unrest + 6, 0, 100);
+    ev.title = `${p.name} founds ${org.name}`; ev.description = `${p.name}, ${p.title ?? (p.history.some((h) => /Governor/.test(h.text)) ? `once governor of ${region.name}` : 'a regional politician')}, launched ${org.name} in ${anchor?.name ?? region.name} with one demand: ${/independence|free|liberate/i.test(p.objective) ? 'independence' : 'self-rule'} for ${region.name}. ${rng.pick(['The first rally overflowed the square.', 'The capital banned the flag within a day.', 'Old party colleagues quietly signed up.'])}`;
+    if (!ev.actors.some((a) => a.kind === 'person' && a.id === p.id)) ev.actors.unshift(ref('person', p.id));
+    ev.data = { ...(ev.data ?? {}), regionId: region.id, region: region.name };
+  }
+  return ev;
 }

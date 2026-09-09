@@ -5,6 +5,7 @@ import { declareWar, transferRegion } from '../src/engine/events/actions';
 import { RNG } from '../src/engine/rng';
 import { serialize, deserialize, validateWorld } from '../src/engine/persistence/storage';
 import { CONSEQUENCE_RULES, react } from '../src/engine/events/consequences';
+import { regionalistActsOnObjective } from '../src/engine/simulation/objectives';
 import { createEvent } from '../src/engine/events/engine';
 import { localGodInterpreter } from '../src/engine/godmode/interpreter';
 import { executePlan } from '../src/engine/godmode/execute';
@@ -385,5 +386,19 @@ describe('regions', () => {
     for (const p of Object.values(w.people)) if (cities.includes(p.cityId) && p.id !== from.leaderId) expect(p.countryId).toBe(to.id);
     for (let i = 0; i < 60; i++) tickDay(w, rng);
     expect(w.pending.some((q) => q.ruleId === 'annex.insurgency') || w.events.some((e) => e.type === 'annex.insurgency')).toBe(true);
+  });
+  it('an ousted governor founds a liberation movement for the lost region', () => {
+    const w = generateWorld({ seed: 'annex' }); const rng = new RNG('annex');
+    const from = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const to = w.countries[from.neighbors[0]]; const r = (from.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(from.capitalId))!;
+    const ousted = w.people[r.governorId!];
+    expect(transferRegion(w, rng, r, to, 'simulation', false)?.type).toBe('region.annexed');
+    expect(ousted.objective).toBe(`free ${r.name} from ${to.name}`);
+    const ev = regionalistActsOnObjective(w, rng, ousted, true)!;
+    expect(ev.type).not.toBe('movement.merged'); expect(ev.title).toContain(ousted.name);
+    const org = w.organizations[ev.actors.find((a) => a.kind === 'organization')!.id];
+    expect(org.leaderId).toBe(ousted.id); expect(org.agenda).toBe('independence'); expect(org.countryId).toBe(to.id); expect(org.name).toContain(r.name);
+    const rally = regionalistActsOnObjective(w, rng, ousted, true)!;
+    expect(rally.type).toBe('region.rally');
   });
 });
