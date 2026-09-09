@@ -39,11 +39,11 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Incomplete / simplified (honest list)
 
-- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`); an LLM version is not wired yet (prompt exists). Relationships are generated and updated by scandals, leadership changes, feuds, breakups and funding withdrawals (`simulation/relations.ts`), and they drive consequences (`consequences.ts`: rival pounce, ally rally, rival ascends, mentor endorsement, purge/opposition). Weekly editorials live in `information.ts` (`generateEditorials`). Starting situations ("premises") are in `generator/premise.ts`; add one by appending to `PREMISES` (deterministic from the seed, so existing seeds change if the list order changes).
+- **Character conversations** use a template-based local provider (`engine/ai/dialogue.ts`) by default; `LLMDialogueProvider` (`engine/ai/llm.ts`, prompt `prompts/character_dialogue.md`) is wired and falls back to the local one, but was only exercised against a mocked endpoint. Relationships are generated and updated by scandals, leadership changes, feuds, breakups and funding withdrawals (`simulation/relations.ts`), and they drive consequences (`consequences.ts`: rival pounce, ally rally, rival ascends, mentor endorsement, purge/opposition). Weekly editorials live in `information.ts` (`generateEditorials`). Starting situations ("premises") are in `generator/premise.ts`; add one by appending to `PREMISES` (deterministic from the seed, so existing seeds change if the list order changes).
 - **Regions** exist (2–4 per country, own unrest/identity/autonomy, autonomy → concession/crackdown → secession) and have a Regions overlay plus dotted seams on the political map at zoom (`renderer.ts` `regionCells`, `regionSeams`, `drawRegionSeams`); there is no regional economy or governor character yet; `Region` carries cities only.
 - **Trade** is a volume model (`simulation/trade.ts`) that feeds growth, map arcs and the Trade overlay; there are no tariffs, sanctions or supply chains beyond the grain export ban.
 - **Weather** is five drifting storm cells plus a dry season (`simulation/weather.ts`); it steers disasters and the forecast line but there is no rainfall, temperature or crop model beyond the yearly harvest ratio.
-- **Country creation** splits by distance from the capital; borders of the new state can look arbitrary. Recomputes neighbors; relations copied at half strength.
+- **Country creation** follows a region when one is given (secessions, annexations, God commands naming a region: the new state takes the cells nearest to the region's cities); the older distance-from-capital split remains as the fallback for the generic "create country" preset and movement-driven referendums. Recomputes neighbours; relations copied at half strength.
 - **LLM path is tested only against a mocked endpoint** (`tests/llm.test.ts`); no live provider was available during development. `chat()` parsing supports OpenAI and Anthropic shapes.
 - **Audio** is a small synthesized set; no ambient music assets.
 - **Service worker** caches the shell only; hashed assets are cached on first fetch (cache-first). Bump `CACHE` in `sw.js` when you need to force refresh.
@@ -77,7 +77,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 
 ## Technical debt
 
-- `Inspector.tsx` is large (one file, seven views); split per entity kind when touching it seriously.
+- `Inspector.tsx` is large (one file, eight views incl. `RegionView`); split per entity kind when touching it seriously.
 - Objective-driven behaviour lives in `simulation/objectives.ts` (`leaderActsOnObjective`, `pivotForObjective`, `fieldFromObjective` with their regex tables); `characters.ts` keeps the monthly loop, succession, prizes and journalist profiles.
 - CI runs are serialized by the `pages` concurrency group; each push cancels queued (not running) runs, so a burst of pushes means only the last one gets QA'd. Fine for solo work; switch to per-SHA groups if several people push.
 - Some inline styles in screens should migrate to CSS classes.
