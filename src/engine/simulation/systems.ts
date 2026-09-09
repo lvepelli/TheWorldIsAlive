@@ -137,6 +137,21 @@ export function yearlyTick(world: World, rng: RNG): WorldEvent[] {
       actors: worst.map((c) => ref('country', c.id)), effects: worst.map((c) => fx('country', c.id, 'climateRisk', 2)), tags: ['climate', 'environment', 'global'],
     }));
   }
+  // World Games every four years: a global cultural moment with a host and a champion.
+  if (year % 4 === 0) {
+    const cs = Object.values(world.countries);
+    const host = rng.pickWeighted(cs, (c) => c.gdp + c.stability * 5);
+    const athletes = Object.values(world.people).filter((p) => p.alive && !p.retired && p.profession === 'athlete');
+    const champ = athletes.length ? rng.pickWeighted(athletes, (p) => p.fame + 10) : undefined;
+    const winner = champ ? world.countries[champ.countryId] : rng.pickWeighted(cs, (c) => c.population);
+    if (champ) { champ.fame = clamp(champ.fame + 25, 0, 100); champ.wealth += 5; champ.history.push({ day: world.day, text: `Became champion of the ${year} World Games in ${world.cities[host.capitalId]?.name}.` }); }
+    out.push(createEvent(world, {
+      category: 'cultural', type: 'world.games', severity: 3, title: `${year} World Games in ${world.cities[host.capitalId]?.name ?? host.name}: ${winner.name} triumphs`,
+      description: `Billions watched the ${year} World Games hosted by ${host.name}. ${champ ? `${champ.name} became the face of the games with a stunning victory, ` : ''}${winner.name} topped the medal table. ${rng.pick(["The opening ceremony cost more than a small country's budget.", 'Politics stayed at the door, mostly.', 'A doping scandal shadowed the final week.', 'The host city gained a new stadium and a large debt.'])}`,
+      location: { countryId: host.id }, actors: [ref('country', host.id), ref('country', winner.id), ...(champ ? [ref('person', champ.id)] : [])],
+      effects: [fx('country', host.id, 'happiness', 4), fx('country', host.id, 'debt', 2), fx('country', winner.id, 'happiness', 5), fx('country', winner.id, 'approval', 2)], tags: ['culture', 'sports', host.code, winner.code],
+    }));
+  }
   return out;
 }
 
