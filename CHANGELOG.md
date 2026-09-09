@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Narrative: a decisive war's ending notes that negotiators are still arguing over the loser's border regions when an annexation is on the table.
 - Balance: automation shocks hit a given country at most once a year (they used to recur every few weeks in high-tech states), and a universal basic dividend is introduced once per country instead of again and again. Ten years on `diag`: 158 shocks (was ~345) and 37 dividends (was 121).
 - Policies: a restless region (unrest > 45) pushes two regional policies onto the leader's agenda — a regional development fund (city prosperity up, regional unrest down, debt up) and, in freer states, a devolution act (autonomy up, unrest down) — each named after the region in the policy story. About 9 funds and 7 devolution acts per decade on `diag`.
 - Inspector: a "Show on map" button next to a country's regions switches to the Regions overlay and focuses the country.

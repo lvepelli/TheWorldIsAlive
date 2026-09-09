@@ -71,7 +71,7 @@ export function endWar(world: World, rng: RNG, a: Country, b: Country, cause: Ca
     category: 'diplomatic', type: 'war.ended', severity: 4, ...base(cause, player),
     title: winner ? `${winner.name} prevails as war with ${loser!.name} ends` : `Ceasefire ends the ${a.name}–${b.name} war`,
     description: winner
-      ? `After ${rng.pick(['months', 'a brutal campaign', 'a war of attrition'])}, ${loser!.name} accepted terms. ${winner.name} emerges strengthened, but the human cost on both sides is enormous.`
+      ? `After ${rng.pick(['months', 'a brutal campaign', 'a war of attrition'])}, ${loser!.name} accepted terms. ${winner.name} emerges strengthened, but the human cost on both sides is enormous.${winner.military >= loser!.military * 1.15 && (loser!.regionIds ?? []).length >= 2 ? ` Negotiators are still arguing over ${loser!.adjective} border regions.` : ''}`
       : `Negotiators announced a ceasefire between ${a.name} and ${b.name}. Neither side achieved its objectives; both leaders declared victory to their own populations.`,
     location: { countryId: (winner ?? a).id }, actors: [ref('country', a.id), ref('country', b.id)], effects, tags: ['peace', 'war', a.code, b.code], historic: true,
     data: { outcome: res, winner: winner?.id, loser: loser?.id },
