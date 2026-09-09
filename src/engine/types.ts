@@ -6,7 +6,7 @@
 
 export type ID = string;
 
-export type EntityKind = 'country' | 'city' | 'person' | 'company' | 'organization' | 'outlet' | 'event';
+export type EntityKind = 'country' | 'city' | 'region' | 'person' | 'company' | 'organization' | 'outlet' | 'event';
 
 export interface EntityRef { kind: EntityKind; id: ID; }
 

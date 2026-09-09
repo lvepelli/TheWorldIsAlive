@@ -93,10 +93,11 @@ export function createEvent(world: World, draft: EventDraft): WorldEvent {
   return ev;
 }
 
-export function getEntity(world: World, ref: EntityRef): Country | City | Person | Company | Organization | WorldEvent | import('../types').MediaOutlet | undefined {
+export function getEntity(world: World, ref: EntityRef): Country | City | import('../types').Region | Person | Company | Organization | WorldEvent | import('../types').MediaOutlet | undefined {
   switch (ref.kind) {
     case 'country': return world.countries[ref.id];
     case 'city': return world.cities[ref.id];
+    case 'region': return world.regions?.[ref.id];
     case 'person': return world.people[ref.id];
     case 'company': return world.companies[ref.id];
     case 'organization': return world.organizations[ref.id];

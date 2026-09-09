@@ -11,6 +11,7 @@ export function EntityRow({ refx, name, sub, right, icon }: { refx: EntityRef; n
   if (!lead) {
     if (refx.kind === 'person') { const p = world.people[refx.id]; lead = p ? <Avatar name={p.name} id={p.id} alive={p.alive} /> : null; }
     else if (refx.kind === 'country') { const c = world.countries[refx.id]; lead = c ? <Flag spec={c.flag} /> : null; }
+    else if (refx.kind === 'region') lead = <span className="avatar" style={{ background: 'rgba(240,179,90,0.15)', color: 'var(--accent)' }}>▦</span>;
     else if (refx.kind === 'city') lead = <span className="avatar" style={{ background: 'rgba(143,211,255,0.15)', color: 'var(--data)' }}>◉</span>;
     else if (refx.kind === 'company') lead = <span className="avatar" style={{ background: 'rgba(96,165,250,0.18)', color: '#9cc4ff', fontSize: 10 }}>{world.companies[refx.id]?.ticker.slice(0, 4)}</span>;
     else if (refx.kind === 'organization') lead = <span className="avatar" style={{ background: 'rgba(167,139,250,0.18)', color: '#c9b8ff' }}>⌘</span>;
