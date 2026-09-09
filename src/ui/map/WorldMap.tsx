@@ -126,15 +126,35 @@ export function WorldMap(): React.ReactElement {
     };
     const onWheel = (e: WheelEvent) => { e.preventDefault(); target.current = null; const p = { x: e.clientX - canvas.getBoundingClientRect().left, y: e.clientY - canvas.getBoundingClientRect().top }; zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0016)); };
     const onLeave = () => { hoverRef.current = null; setHover(null); };
+    // Keyboard: arrows pan, +/- zoom, Enter selects what is under the crosshair (screen center), Home returns to the populated center.
+    const onKey = (e: KeyboardEvent) => {
+      const step = (r.width * 0.12) / r.camera.scale;
+      const k = e.key;
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); target.current = null; if (k === 'ArrowLeft') r.camera.x -= step; if (k === 'ArrowRight') r.camera.x += step; if (k === 'ArrowUp') r.camera.y -= step; if (k === 'ArrowDown') r.camera.y += step; return; }
+      if (k === '+' || k === '=' || k === '-' || k === '_') { e.preventDefault(); target.current = null; zoomAt(r.width / 2, r.height / 2, k === '+' || k === '=' ? 1.35 : 1 / 1.35); return; }
+      if (k === 'Enter') {
+        e.preventDefault();
+        let hit = r.hitTest(r.width / 2, r.height / 2);
+        if (!hit) { // ocean under the crosshair: pick the nearest city within reach
+          const w = useGame.getState().world; const W = r.W; let best: { id: string; d: number } | null = null;
+          if (w) for (const c of Object.values(w.cities)) for (const ox of [-W, 0, W]) { const [sx, sy] = r.worldToScreen(c.x + ox, c.y); const d = Math.hypot(sx - r.width / 2, sy - r.height / 2); if (d < 160 && (!best || d < best.d)) best = { id: c.id, d }; }
+          if (best) hit = { kind: 'city', id: best.id };
+        }
+        select(hit); return;
+      }
+      if (k === 'Home') { e.preventDefault(); const h = r.homeCenter(); target.current = { x: h.x, y: h.y, scale: r.fitScale() }; }
+    };
+    canvas.addEventListener('keydown', onKey);
     canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove); canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onUp);
     canvas.addEventListener('wheel', onWheel, { passive: false }); canvas.addEventListener('pointerleave', onLeave);
-    return () => { canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerup', onUp); canvas.removeEventListener('pointercancel', onUp); canvas.removeEventListener('wheel', onWheel); canvas.removeEventListener('pointerleave', onLeave); };
+    return () => { canvas.removeEventListener('keydown', onKey); canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerup', onUp); canvas.removeEventListener('pointercancel', onUp); canvas.removeEventListener('wheel', onWheel); canvas.removeEventListener('pointerleave', onLeave); };
   }, [select]);
 
   const hoverName = hover && world ? (hover.kind === 'city' ? world.cities[hover.id]?.name : world.countries[hover.id]?.name) : null;
   return (
     <>
-      <canvas ref={canvasRef} className="map-canvas" aria-label="World map" role="img" />
+      <canvas ref={canvasRef} className="map-canvas" tabIndex={0} role="application" aria-label="World map. Arrow keys pan, plus and minus zoom, Enter selects the nation or city at the center, Home resets the view." />
+      <div className="map-crosshair" aria-hidden />
       {hoverName && <div className="hide-mobile" style={{ position: 'absolute', left: 12, bottom: 96, pointerEvents: 'none', fontSize: 12, color: 'var(--text-2)', background: 'rgba(6,8,15,0.7)', padding: '3px 8px', borderRadius: 4, zIndex: 6 }}>{hoverName}</div>}
     </>
   );
