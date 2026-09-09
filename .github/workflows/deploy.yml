@@ -26,8 +26,8 @@ jobs:
       - run: npm ci
       - name: Unit tests
         run: npm test
-      - name: Build (sub-path for GitHub Pages)
-        run: BASE_PATH=/${{ github.event.repository.name }}/ npm run build
+      - name: Build (path-relative, runs on Pages, CDN mirror or any static host)
+        run: npm run build
       - name: Stamp build id (lets QA wait for the new deploy)
         run: echo "${GITHUB_SHA}" > dist/build-id.txt && touch dist/.nojekyll
       - name: Publish to gh-pages branch (GitHub Pages)
@@ -52,20 +52,36 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Wait for GitHub Pages to serve this build
-        env:
-          DEPLOY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+      - name: Resolve the live URL (GitHub Pages if enabled, otherwise the jsDelivr mirror of gh-pages)
+        id: live
         run: |
-          for i in $(seq 1 60); do
-            got=$(curl -fsSL "${DEPLOY_URL}build-id.txt" 2>/dev/null || true)
-            if [ "$got" = "${GITHUB_SHA}" ]; then echo "live: $got"; exit 0; fi
-            echo "waiting ($i): $got"; sleep 10
+          PAGES="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          SHA_GH=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
+          MIRROR="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${SHA_GH}/index.html"
+          LATEST="https://cdn.jsdelivr.net/gh/${{ github.repository }}@gh-pages/index.html"
+          # purge the branch-ref mirror so the "latest" link refreshes quickly
+          for f in index.html sw.js manifest.webmanifest build-id.txt; do curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@gh-pages/$f" >/dev/null || true; done
+          URL=""
+          for i in $(seq 1 18); do
+            got=$(curl -fsSL "${PAGES}build-id.txt" 2>/dev/null || true)
+            if [ "$got" = "${GITHUB_SHA}" ]; then URL="$PAGES"; echo "GitHub Pages is live"; break; fi
+            echo "Pages not serving this build yet ($i): '$got'"; sleep 10
           done
-          echo "::error::GitHub Pages did not serve build ${GITHUB_SHA} within 10 minutes. If this is the first deploy, enable Pages: Settings → Pages → Source: Deploy from a branch → gh-pages / (root)."
-          exit 1
+          if [ -z "$URL" ]; then
+            echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using the jsDelivr mirror for QA."
+            for i in $(seq 1 12); do
+              got=$(curl -fsSL "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${SHA_GH}/build-id.txt" 2>/dev/null || true)
+              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; break; fi
+              echo "mirror not ready ($i): '$got'"; sleep 10
+            done
+          fi
+          if [ -z "$URL" ]; then echo "::error::No live URL serves build ${GITHUB_SHA}"; exit 1; fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          mkdir -p docs/qa
+          { echo "Pages (needs one-time enabling by the repo owner): $PAGES"; echo "Mirror, pinned to this deploy: $MIRROR"; echo "Mirror, latest: $LATEST"; echo "QA ran against: $URL"; } > docs/qa/LIVE_URL.txt
       - name: QA against the deployed site
         env:
-          DEPLOY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          DEPLOY_URL: ${{ steps.live.outputs.url }}
         run: node tests/e2e/deployed.mjs
       - name: Commit QA report
         run: |

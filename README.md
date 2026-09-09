@@ -26,11 +26,13 @@ Share a world: append `?seed=your-seed` to the URL (the 🔗 button copies it).
 
 ## Play it now (mobile-friendly)
 
-**Live build:** https://lvepelli.github.io/TheWorldIsAlive/
+**Live build (works now, CDN mirror of the `gh-pages` branch):** https://cdn.jsdelivr.net/gh/lvepelli/TheWorldIsAlive@gh-pages/index.html
 
-Open that URL in Safari (iPhone) or Chrome (Android). It is a static site over HTTPS, works offline after the first load, and can be installed to the home screen (Share → *Add to Home Screen* on iOS; the install banner or menu → *Add to Home screen* on Android). Deep links work: `https://lvepelli.github.io/TheWorldIsAlive/?seed=amber-tide-1234`.
+**GitHub Pages URL:** https://lvepelli.github.io/TheWorldIsAlive/ — becomes active after a one-time click by the repository owner: *Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `gh-pages` / (root) → Save*. (The Actions token cannot enable Pages by itself.) Every later push updates it automatically.
 
-Deployment is automatic: every push to the main development branch runs `.github/workflows/deploy.yml`, which tests, builds (`BASE_PATH=/TheWorldIsAlive/`), publishes to GitHub Pages, then runs a Playwright QA pass against the live URL on 360×800, 390×844, 430×932 and desktop viewports and commits the screenshots + `docs/qa/REPORT.md` back to the repo. To redeploy manually: *Actions → Deploy & QA → Run workflow*. A `netlify.toml` is included as well, so the repo can be connected to Netlify with one click if a second host is wanted.
+Open either URL in Safari (iPhone) or Chrome (Android). It is a static site over HTTPS, works offline after the first load, and can be installed to the home screen (Share → *Add to Home Screen* on iOS; the install banner or menu → *Add to Home screen* on Android). Deep links work: append `?seed=amber-tide-1234` to either URL.
+
+Deployment is automatic: every push to the main development branch runs `.github/workflows/deploy.yml`, which tests, builds (path-relative), publishes `dist/` to the `gh-pages` branch, purges the jsDelivr mirror, picks the live URL (Pages if enabled, else the mirror pinned to that deploy; see `docs/qa/LIVE_URL.txt`), then runs a Playwright QA pass against it on 360×800, 390×844, 430×932 and desktop viewports and commits the screenshots + `docs/qa/REPORT.md` back to the repo. To redeploy manually: *Actions → Deploy & QA → Run workflow*. A `netlify.toml` is included as well, so the repo can be connected to Netlify with one click if a second host is wanted.
 
 ## Quick start
 

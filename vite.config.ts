@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
-// BASE_PATH lets the same build live under a sub-path (GitHub Pages: /TheWorldIsAlive/).
-const base = process.env.BASE_PATH || '/';
+// Relative base: the same build runs at a domain root, under a sub-path (GitHub Pages) or on a CDN mirror.
+// Set BASE_PATH to force an absolute base if a host needs it.
+const base = process.env.BASE_PATH || './';
 
 export default defineConfig({
   base,
