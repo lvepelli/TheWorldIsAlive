@@ -116,6 +116,7 @@ export interface Region {
   identity: number;       // 0..1 how distinct the region feels from the capital (language, distance, history)
   unrest: number;         // 0..100 regional grievance, drifts toward what the country and prosperity gap sustain
   autonomy: number;       // 0..100 devolved powers (concessions raise it, crackdowns lower it)
+  governorId?: ID;        // the politician who runs the region (generator/world.ts appointGovernor)
   history: { day: number; text: string; eventId?: ID }[];
 }
 

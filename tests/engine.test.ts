@@ -341,6 +341,7 @@ describe('regions', () => {
       expect(covered).toEqual(c.cityIds.slice().sort());
       if (c.cityIds.length >= 3) expect(regions.length).toBeGreaterThanOrEqual(2);
       for (const r of regions) { expect(r.countryId).toBe(c.id); for (const id of r.cityIds) expect(w.cities[id].regionId).toBe(r.id); }
+      for (const r of regions) { const gov = w.people[r.governorId!]; expect(gov?.alive).toBe(true); expect(gov.title).toBe(`Governor of ${r.name}`); expect(gov.countryId).toBe(c.id); expect(r.cityIds).toContain(gov.cityId); }
       expect(regions.filter((r) => r.cityIds.includes(c.capitalId)).length).toBe(1);
     }
   });
@@ -349,12 +350,13 @@ describe('regions', () => {
     const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
     const r = (c.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(c.capitalId))!;
     r.unrest = 90; c.stability = 30;
-    const before = Object.keys(w.countries).length; const cities = r.cityIds.slice();
+    const before = Object.keys(w.countries).length; const cities = r.cityIds.slice(); const governor = w.people[r.governorId!];
     const demand = createEvent(w, { category: 'political', type: 'region.crackdown', severity: 3, title: 'x', description: 'x', location: { countryId: c.id }, data: { regionId: r.id, region: r.name } });
     const ev = CONSEQUENCE_RULES['region.secession'](w, rng, demand, {});
     expect(ev?.type).toBe('country.founded');
     expect(Object.keys(w.countries).length).toBe(before + 1);
     const nc = w.countries[r.countryId]; expect(nc.id).not.toBe(c.id);
+    expect(nc.leaderId).toBe(governor.id); expect(governor.countryId).toBe(nc.id); expect(w.people[r.governorId!].id).not.toBe(governor.id); // the governor leads the new state and a new governor is appointed
     expect(nc.cityIds.slice().sort()).toEqual(cities.sort()); expect(nc.regionIds).toEqual([r.id]);
     for (const id of cities) expect(w.cities[id].countryId).toBe(nc.id);
     expect(c.cityIds.some((id) => cities.includes(id))).toBe(false);

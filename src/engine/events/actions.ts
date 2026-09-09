@@ -7,7 +7,7 @@ import { RNG, clamp } from '../rng';
 import type { World, Country, Region, Person, Company, Organization, ID, Sector, Ideology, GovernmentType, Profession, WorldEvent, EntityRef } from '../types';
 import { DAYS_PER_YEAR } from '../types';
 import { createEvent, fx, ref, type EventDraft } from './engine';
-import { makePerson, makeCompany, makeOrg, leaderTitle } from '../generator/world';
+import { makePerson, makeCompany, makeOrg, leaderTitle, appointGovernor } from '../generator/world';
 import * as N from '../names';
 import { yearOf } from '../time';
 import { shiftRelationships, relate } from '../simulation/relations';
@@ -316,9 +316,11 @@ export function createCountry(world: World, rng: RNG, parent: Country, cause: Ca
   // people in moved cities
   for (const p of Object.values(world.people)) if (movedCities.includes(p.cityId)) { if (p.id === parent.leaderId) { p.cityId = parent.capitalId; continue; } p.countryId = nc.id; } // the sitting leader stays with the old capital
   for (const co of Object.values(world.companies)) if (movedCities.includes(co.cityId)) co.countryId = nc.id;
-  const leader = makePerson(world, rng, fam, nc, world.cities[nc.capitalId], 'politician', 1);
-  leader.title = leaderTitle(nc.government); leader.influence = 60; leader.fame = 70; nc.leaderId = leader.id;
+  const governor = region?.governorId ? world.people[region.governorId] : undefined;
+  const leader = governor && governor.alive && !governor.retired ? governor : makePerson(world, rng, fam, nc, world.cities[nc.capitalId], 'politician', 1);
+  leader.title = leaderTitle(nc.government); leader.influence = Math.max(60, leader.influence); leader.fame = Math.max(70, leader.fame); leader.tier = 1; leader.countryId = nc.id; leader.cityId = nc.capitalId; nc.leaderId = leader.id;
   leader.history.push({ day: world.day, text: `Became the founding leader of ${nc.name}.` });
+  if (region) { region.governorId = undefined; appointGovernor(world, rng, region, true); }
   makeOrg(world, rng, fam, nc, 'government', `${nc.name} Government`, leader.id, nc.ideology, 'build the new state');
   return createEvent(world, {
     category: 'political', type: 'country.founded', severity: 5, ...base(cause, player),

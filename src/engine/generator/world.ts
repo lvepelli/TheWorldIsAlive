@@ -13,6 +13,7 @@ import * as N from '../names';
 import { fillMarkets } from '../simulation/markets';
 import { applyPremise } from './premise';
 import { assignRegions } from './regions';
+import type { Region } from '../types';
 
 const GOVS: GovernmentType[] = ['democracy', 'republic', 'monarchy', 'technocracy', 'autocracy', 'military-junta', 'theocracy', 'federation', 'oligarchy', 'council'];
 const IDEOS: Ideology[] = ['liberal', 'conservative', 'socialist', 'nationalist', 'technocratic', 'green', 'libertarian', 'populist', 'traditionalist', 'progressive'];
@@ -140,6 +141,7 @@ export function generateWorld(opts: GenerateOptions): World {
 
   // ---- Regions inside countries ------------------------------------------
   assignRegions(world, new RNG(`${opts.seed}:regions`));
+  { const grng = new RNG(`${opts.seed}:governors`); for (const r of Object.values(world.regions)) appointGovernor(world, grng, r); }
 
   // ---- International relations ---------------------------------------------
   const relRng = rng.fork('relations');
@@ -342,6 +344,23 @@ function agendaFor(rng: RNG, t: OrgType): string {
 function makePersonality(rng: RNG): Personality {
   return { ambition: rng.float(0.1, 1), charisma: rng.float(0.1, 1), integrity: rng.float(0.05, 1), aggression: rng.float(0, 1), openness: rng.float(0, 1), caution: rng.float(0, 1) };
 }
+
+/** Appoint (or replace) the politician who runs a region: a tier-2 character in its biggest city whose ambitions follow the region's identity. */
+export function appointGovernor(world: World, rng: RNG, region: Region, loyal = false): Person | undefined {
+  const c = world.countries[region.countryId]; if (!c) return undefined;
+  const city = region.cityIds.map((id) => world.cities[id]).filter(Boolean).sort((a, b) => b.population - a.population)[0]; if (!city) return undefined;
+  const fam = familyFor(c);
+  const separatist = !loyal && region.identity > 0.5 && rng.bool(0.6);
+  const objective = separatist ? `win autonomy for ${region.name}` : region.identity > 0.4 && !loyal ? rng.pick([`get ${region.name} a fair share of the budget`, `be heard in ${c.name}'s capital`, `keep the peace in ${region.name}`]) : rng.pick([`keep ${region.name} loyal to ${c.name}`, `bring investment to ${region.name}`, 'become a minister one day']);
+  const p = makePerson(world, rng, fam, c, city, 'politician', 2, { title: `Governor of ${region.name}`, objective, ideology: separatist ? 'nationalist' : undefined });
+  if (!p.ideology) p.ideology = rng.bool(0.5) ? c.ideology : p.ideology;
+  p.history.push({ day: world.day, text: `Became Governor of ${region.name}.` });
+  const old = region.governorId ? world.people[region.governorId] : undefined; if (old && old.alive && old.title === `Governor of ${region.name}`) old.title = undefined;
+  region.governorId = p.id;
+  return p;
+}
+
+function familyFor(c: Country): N.LanguageFamily { const fams = ['latin', 'nordic', 'east', 'african', 'anglo', 'slavic', 'arabic']; return N.familyById(fams[RNG.hash(c.name)[0] % fams.length]); }
 
 export function makePerson(world: World, rng: RNG, fam: N.LanguageFamily, country: Country, city: City, profession: Profession, tier: 1 | 2 | 3, opts: Partial<Person> = {}): Person {
   const gender: 'm' | 'f' | 'x' = rng.bool(0.03) ? 'x' : rng.bool(0.5) ? 'm' : 'f';

@@ -9,6 +9,7 @@ import * as A from './actions';
 import { createEvent, fx, ref, schedule } from './engine';
 import type { MarketShock } from '../simulation/markets';
 import { relate } from '../simulation/relations';
+import { appointGovernor } from '../generator/world';
 
 export type ConsequenceRule = (world: World, rng: RNG, source: WorldEvent, payload: Record<string, unknown>) => WorldEvent | null | void;
 
@@ -420,8 +421,10 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     if (!c || !r || r.countryId !== c.id) return null;
     const anchor = w.cities[r.cityIds[0]];
     const concede = c.freedom > 55 ? rng.bool(0.7) : c.stability < 40 ? rng.bool(0.45) : rng.bool(0.2);
+    const gov = r.governorId ? w.people[r.governorId] : undefined;
     if (concede) {
       r.autonomy = clamp(r.autonomy + 25, 0, 100); r.unrest = clamp(r.unrest - 25, 0, 100); r.history.push({ day: w.day, text: `Granted autonomy by ${c.name}.` });
+      if (gov && src.data?.governorLed) { gov.fame = clamp(gov.fame + 8, 0, 100); gov.reputation = clamp(gov.reputation + 10, -100, 100); gov.history.push({ day: w.day, text: `Won self-rule for ${r.name}.` }); }
       return createEvent(w, {
         category: 'political', type: 'region.concession', severity: 2, causedBy: src.id, title: `${c.name} grants ${r.name} self-rule`,
         description: `A devolution law gives ${r.name} its own assembly, control of ${rng.pick(['schools and language', 'its tax revenue', 'policing', 'its ports and roads'])}. ${rng.pick(['Hardliners in the capital called it the beginning of the end.', 'The regional council met the same week.', 'Nationalists in the region said it was not enough — but they said it quietly.'])}`,
@@ -430,10 +433,12 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       });
     }
     r.unrest = clamp(r.unrest + 12, 0, 100); r.autonomy = clamp(r.autonomy - 10, 0, 100); r.history.push({ day: w.day, text: `Crackdown ordered by ${c.name}.` });
+    let dismissed: string | undefined;
+    if (gov && src.data?.governorLed && rng.bool(0.7)) { gov.title = undefined; gov.history.push({ day: w.day, text: `Dismissed as Governor of ${r.name} after the crackdown.` }); gov.memories.push({ day: w.day, text: `${c.name} sent soldiers and took my office. ${r.name} will remember.`, weight: 0.8 }); gov.objective = `win independence for ${r.name}`; gov.ideology = 'nationalist'; const leader = w.people[c.leaderId]; if (leader) relate(w, gov, leader, 'enemy', -0.8); r.governorId = undefined; appointGovernor(w, rng, r, true); dismissed = gov.name; }
     return createEvent(w, {
       category: 'political', type: 'region.crackdown', severity: 3, causedBy: src.id, title: `${c.name} sends troops into ${r.name}`,
-      description: `${c.name} answered the autonomy demand with ${rng.pick(['a curfew and mass arrests', 'soldiers on every square', 'the dissolution of the regional council', 'a ban on the regional language in schools'])}. ${rng.pick(['The region went quiet, and angrier.', 'Videos from ' + (anchor?.name ?? r.name) + ' spread faster than the censors.', 'Neighbours called for restraint.'])}`,
-      location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id)],
+      description: `${c.name} answered the autonomy demand with ${rng.pick(['a curfew and mass arrests', 'soldiers on every square', 'the dissolution of the regional council', 'a ban on the regional language in schools'])}. ${dismissed ? `Governor ${dismissed} was dismissed and marched out of the regional palace. ` : ''}${rng.pick(['The region went quiet, and angrier.', 'Videos from ' + (anchor?.name ?? r.name) + ' spread faster than the censors.', 'Neighbours called for restraint.'])}`,
+      location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(dismissed && gov ? [ref('person', gov.id)] : [])],
       effects: [fx('country', c.id, 'freedom', -3), fx('country', c.id, 'unrest', 5), fx('country', c.id, 'approval', -3)], tags: ['region', 'crackdown', c.code], data: { regionId: r.id, region: r.name },
     });
   },
@@ -449,8 +454,9 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
     if (!c || !r || r.countryId !== c.id) return null;
     if (r.unrest < 70 || c.stability > 55) { if (r.unrest > 50 && rng.bool(0.5)) schedule(w, 'region.secession', src.id, rng.int(120, 300)); return null; }
+    if (c.history.some((h) => /broke away/.test(h.text) && w.day - h.day < 3 * 365)) return null; // one lost region per three years: the state digs in after a split
     const ev = A.createCountry(w, rng, c, src.id, false, undefined, r.id);
-    if (ev) { ev.title = `${r.name} breaks away from ${c.name}`; ev.description = `After ${rng.pick(['months of strikes', 'a referendum the capital refused to recognise', 'the regional assembly voted for independence and'])}, ${r.name} declared itself a sovereign state. ${ev.description}`; }
+    if (ev) { c.history.push({ day: w.day, text: `${r.name} broke away.`, eventId: ev.id }); ev.title = `${r.name} breaks away from ${c.name}`; ev.description = `After ${rng.pick(['months of strikes', 'a referendum the capital refused to recognise', 'the regional assembly voted for independence and'])}, ${r.name} declared itself a sovereign state. ${ev.description}`; }
     return ev;
   },
   'summit.outcome': (w, rng, src) => {
