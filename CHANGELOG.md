@@ -56,6 +56,7 @@
 - God Mode: Rains Return preset breaks a drought (water +12, cheer, grain eases, the drought zone fades within days); the interpreter understands "end the drought in X", "make it rain", "let it rain".
 - Grain export bans: during a food crisis a breadbasket nation may seal its silos (grain +4%, importers' inflation and relations suffer, domestic relief); also a God preset and interpreter phrasing ("X bans grain exports").
 - Water disputes: a thirsty nation (water under 35) with a water-rich neighbour sees relations sour over dams, diversions and shared aquifers (about two flare-ups a year world-wide), feeding the existing border-clash and war logic.
+- History → Sagas: chains rooted in a tension rise are named ("The water war", "Rivers and grudges", "The road to war in X").
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.5.0 — rivals, fronts and editorials
