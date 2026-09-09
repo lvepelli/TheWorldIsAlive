@@ -65,6 +65,20 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     case 'entrepreneur':
     case 'engineer':
     case 'scientist': {
+      // Tycoon arc: the very rich buy influence, then sometimes run for office.
+      if (p.profession === 'entrepreneur' && p.wealth > 3000) {
+        const parties = Object.values(world.organizations).filter((o) => o.alive && o.countryId === c.id && (o.type === 'party' || o.type === 'movement'));
+        if (parties.length && rng.bool(0.35)) {
+          const party = rng.pickWeighted(parties, (o) => (o.ideology === p.ideology ? 3 : 1));
+          party.support = clamp(party.support + 4, 0, 100); party.influence = clamp(party.influence + 6, 0, 100);
+          if (!p.affiliations.includes(party.id)) p.affiliations.push(party.id);
+          return createEvent(world, { category: 'political', type: 'donation', severity: 2, title: `${p.name} pours a fortune into ${party.name}`, description: `The ${c.adjective} billionaire ${p.name} announced $${Math.round(p.wealth * 0.02)}M in funding for ${party.name}, calling it "an investment in the country's future". Critics called it buying a government.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('organization', party.id), ref('country', c.id)], effects: [fx('person', p.id, 'influence', 8), fx('person', p.id, 'reputation', -4), fx('country', c.id, 'corruption', 1.5), fx('country', c.id, 'polarization', 2)], tags: ['money', 'politics', c.code] });
+        }
+        if (p.personality.ambition > 0.7 && p.influence > 55 && rng.bool(0.2)) {
+          p.profession = 'politician'; p.objective = 'reach the top office'; p.tier = 1;
+          return createEvent(world, { category: 'political', type: 'career.politics', severity: 3, title: `Tycoon ${p.name} runs for office in ${c.name}`, description: `${p.name} traded the boardroom for the campaign trail, promising to "run the country like a company". Rivals warn of a plutocracy; supporters call it competence.`, location: { cityId: p.cityId }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('person', p.id, 'fame', 15), fx('person', p.id, 'influence', 10), fx('country', c.id, 'polarization', 4)], tags: ['politics', 'tycoon', c.code] });
+        }
+      }
       if (p.affiliations.length === 0 && rng.bool(p.profession === 'entrepreneur' ? 0.6 : 0.25)) {
         const sector: Sector = p.profession === 'scientist' ? rng.pick(['biotech', 'technology', 'energy', 'aerospace']) : rng.pick(SECTORS);
         const ev = A.foundCompany(world, rng, c, sector, 'simulation', false, p);
