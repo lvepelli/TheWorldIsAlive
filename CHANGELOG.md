@@ -34,6 +34,7 @@
 - Companies act on their CEO's objectives: a chief persuaded toward a field (a cure, space, clean energy, AI, defense, transport, food, finance) pivots the company into that sector, sometimes with a breakthrough to match; freshly adopted objectives are pursued with urgency for about eight months.
 - Journalists quote your interviews: a famous character you questioned may get a profile piece ("…: X speaks") built on what they told you, with fame and reputation effects; researchers persuaded toward a field chase breakthroughs in it.
 - Mobile: toasts stay at the top while the inspector sheet is open on a list screen, so they never cover the sheet.
+- People: a "Changed course" panel lists characters you persuaded and what they did about it; the inspector marks an objective that came from an interview.
 
 ## 0.5.0 — rivals, fronts and editorials
 
