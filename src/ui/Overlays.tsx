@@ -34,8 +34,10 @@ export function Toasts(): React.ReactElement {
   const toasts = useGame((s) => s.toasts);
   const select = useGame((s) => s.select);
   const dismiss = useGame((s) => s.dismissToast);
+  const screen = useGame((s) => s.screen);
+  // On phones, list screens keep their headers readable: toasts dock above the bottom nav instead of covering the top.
   return (
-    <div className="toasts" aria-live="polite">
+    <div className={`toasts ${screen !== 'world' ? 'docked' : ''}`} aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className="toast" style={{ ['--c' as string]: t.event.playerIntervention ? 'var(--accent)' : catVar(t.event.category) }} onClick={() => { dismiss(t.id); select({ kind: 'event', id: t.event.id }); }}>
           <div className="rail" />

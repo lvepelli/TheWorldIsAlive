@@ -282,6 +282,7 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
 
 /* ---- Toasts ------------------------------------------------------------------- */
 .toasts { position: fixed; top: calc(70px + var(--safe-top)); right: 8px; left: 8px; z-index: 60; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+@media (max-width: 899px) { .toasts.docked { top: auto; bottom: calc(64px + var(--safe-bottom, 0px)); flex-direction: column-reverse; } }
 .toast { pointer-events: auto; display: grid; grid-template-columns: 4px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow); animation: slidein 300ms cubic-bezier(0.2, 0.8, 0.2, 1); cursor: pointer; }
 .toast .rail { height: 100%; border-radius: 4px; background: var(--c); box-shadow: 0 0 10px var(--c); }
 .toast .t { font-weight: 700; font-size: 13px; }
