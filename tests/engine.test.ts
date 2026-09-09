@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { generateWorld } from '../src/engine/generator/world';
 import { tickDay } from '../src/engine/simulation/tick';
-import { declareWar } from '../src/engine/events/actions';
+import { declareWar, transferRegion } from '../src/engine/events/actions';
 import { RNG } from '../src/engine/rng';
 import { serialize, deserialize, validateWorld } from '../src/engine/persistence/storage';
-import { CONSEQUENCE_RULES } from '../src/engine/events/consequences';
+import { CONSEQUENCE_RULES, react } from '../src/engine/events/consequences';
 import { createEvent } from '../src/engine/events/engine';
 import { localGodInterpreter } from '../src/engine/godmode/interpreter';
 import { executePlan } from '../src/engine/godmode/execute';
@@ -369,5 +369,21 @@ describe('regions', () => {
     const back = validateWorld(raw);
     expect(Object.keys(back.regions).length).toBeGreaterThan(30);
     for (const c of Object.values(back.countries)) expect((c.regionIds ?? []).flatMap((id) => back.regions[id].cityIds).sort()).toEqual(c.cityIds.slice().sort());
+  });
+  it('moves a region between countries with its cities, cells and people', () => {
+    const w = generateWorld({ seed: 'annex' }); const rng = new RNG('annex');
+    const from = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const to = w.countries[from.neighbors[0]]; const r = (from.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(from.capitalId))!;
+    const cities = r.cityIds.slice(); const areaFrom = from.area, areaTo = to.area; const v0 = w.geography.version ?? 0;
+    const ev = transferRegion(w, rng, r, to, 'simulation', false);
+    expect(ev?.type).toBe('region.annexed'); react(w, rng, ev!);
+    expect(r.countryId).toBe(to.id); expect(to.regionIds).toContain(r.id); expect(from.regionIds).not.toContain(r.id);
+    for (const id of cities) { expect(w.cities[id].countryId).toBe(to.id); expect(to.cityIds).toContain(id); expect(from.cityIds).not.toContain(id); }
+    expect(from.area).toBeLessThan(areaFrom); expect(to.area).toBeGreaterThan(areaTo); expect(w.geography.version).toBe(v0 + 1);
+    const toIdx = w.geography.countryOrder.indexOf(to.id); expect(w.geography.cells.filter((c) => c === toIdx).length).toBe(to.area);
+    expect(w.people[r.governorId!].countryId).toBe(to.id);
+    for (const p of Object.values(w.people)) if (cities.includes(p.cityId) && p.id !== from.leaderId) expect(p.countryId).toBe(to.id);
+    for (let i = 0; i < 60; i++) tickDay(w, rng);
+    expect(w.pending.some((q) => q.ruleId === 'annex.insurgency') || w.events.some((e) => e.type === 'annex.insurgency')).toBe(true);
   });
 });

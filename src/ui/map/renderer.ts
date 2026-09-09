@@ -68,10 +68,11 @@ export class MapRenderer {
   maxScale(): number { return this.fitScale() * 12; }
 
   setWorld(world: World, version: number): void {
-    const key = `${world.meta.seed}:${world.geography.countryOrder.length}`;
+    const key = `${world.meta.seed}:${world.geography.countryOrder.length}:${world.geography.version ?? 0}`;
     if (this.world !== world || key !== this.shapeVersionKey) {
       this.world = world;
       this.shapes = buildContours(world.geography);
+      this.frontCache.clear(); this.seamCache = null; this.staticCanvas = null;
       this.shapeVersionKey = key;
       this.countryIndex.clear();
       world.geography.countryOrder.forEach((id, i) => this.countryIndex.set(id, i));
@@ -207,7 +208,7 @@ export class MapRenderer {
   private seamCache: { key: string; segs: Float32Array } | null = null;
   private regionSeams(world: World): Float32Array {
     const geo = world.geography; const W = geo.width, H = geo.height;
-    const key = `${Object.keys(world.regions ?? {}).length}:${geo.countryOrder.length}:${Object.keys(world.cities).length}`;
+    const key = `${Object.keys(world.regions ?? {}).length}:${geo.countryOrder.length}:${Object.keys(world.cities).length}:${geo.version ?? 0}`;
     if (this.seamCache?.key === key) return this.seamCache.segs;
     const { idx } = this.regionCells(world); const out: number[] = [];
     for (let i = 0; i < W * H; i++) {
@@ -474,7 +475,7 @@ export class MapRenderer {
   private frontCache = new Map<string, number[][]>();
   private harvestMemo: { len: number; yields?: Record<string, number> } = { len: -1 };
   private frontsFor(world: World, ra: number, rb: number): number[][] {
-    const key = `${ra}:${rb}:${world.geography.countryOrder.length}`;
+    const key = `${ra}:${rb}:${world.geography.countryOrder.length}:${world.geography.version ?? 0}`;
     const hit = this.frontCache.get(key); if (hit) return hit;
     const W = this.W;
     const polysA = this.shapes?.byCountry.get(ra) ?? [], polysB = this.shapes?.byCountry.get(rb) ?? [];

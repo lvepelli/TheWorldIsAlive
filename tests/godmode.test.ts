@@ -56,4 +56,13 @@ describe('god mode', () => {
     expect(born.type).toBe('country.founded'); expect(Object.keys(w.countries).length).toBe(before + 1);
     expect(w.countries[r.countryId].cityIds.slice().sort()).toEqual(cities.sort());
   });
+  it('annexes a named region for the other country in the sentence', async () => {
+    const w = generateWorld({ seed: 'annex' }); const rng = new RNG('annex'); const interp = new LocalGodInterpreter();
+    const from = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const to = w.countries[from.neighbors[0]]; const r = (from.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(from.capitalId))!;
+    const plan = await interp.interpret(w, `${to.name} annexes ${r.name}`);
+    expect(plan.action).toBe('annex'); expect(plan.params.a).toBe(to.id); expect(plan.params.b).toBe(from.id); expect(plan.params.region).toBe(r.id);
+    const ev = GOD_PRESETS.find((p) => p.id === 'annex')!.run(w, rng, plan.params)!;
+    expect(ev.type).toBe('region.annexed'); expect(r.countryId).toBe(to.id); expect(ev.playerIntervention).toBe(true);
+  });
 });

@@ -74,7 +74,46 @@ export function endWar(world: World, rng: RNG, a: Country, b: Country, cause: Ca
       ? `After ${rng.pick(['months', 'a brutal campaign', 'a war of attrition'])}, ${loser!.name} accepted terms. ${winner.name} emerges strengthened, but the human cost on both sides is enormous.`
       : `Negotiators announced a ceasefire between ${a.name} and ${b.name}. Neither side achieved its objectives; both leaders declared victory to their own populations.`,
     location: { countryId: (winner ?? a).id }, actors: [ref('country', a.id), ref('country', b.id)], effects, tags: ['peace', 'war', a.code, b.code], historic: true,
-    data: { outcome: res },
+    data: { outcome: res, winner: winner?.id, loser: loser?.id },
+  });
+}
+
+/** Move a whole region (its cities and the cells nearest to them) from its country to another. Used by peace terms and God Mode. */
+export function transferRegion(world: World, rng: RNG, region: Region, to: Country, cause: Cause = 'simulation', player = false, reason?: string): WorldEvent | null {
+  const from = world.countries[region.countryId]; if (!from || from.id === to.id) return null;
+  if ((from.regionIds ?? []).length < 2 || region.cityIds.includes(from.capitalId)) return null;
+  const geo = world.geography; const fromIdx = geo.countryOrder.indexOf(from.id), toIdx = geo.countryOrder.indexOf(to.id); if (fromIdx < 0 || toIdx < 0) return null;
+  const wrapDx = (a: number, b: number) => { const d = Math.abs(a - b); return Math.min(d, geo.width - d); };
+  const nearestRegion = (x: number, y: number): ID | undefined => { let best: ID | undefined, bd = Infinity; for (const id of from.cityIds) { const ct = world.cities[id]; const d = wrapDx(x + 0.5, ct.x) ** 2 + (y + 0.5 - ct.y) ** 2; if (d < bd) { bd = d; best = ct.regionId; } } return best; };
+  let moved = 0;
+  for (let i = 0; i < geo.cells.length; i++) if (geo.cells[i] === fromIdx && nearestRegion(i % geo.width, Math.floor(i / geo.width)) === region.id) { geo.cells[i] = toIdx; moved++; }
+  if (moved < 4) return null;
+  geo.version = (geo.version ?? 0) + 1;
+  const cities = region.cityIds.slice();
+  for (const id of cities) { const ct = world.cities[id]; ct.countryId = to.id; ct.capital = false; ct.unrest = clamp(ct.unrest + 20, 0, 100); }
+  from.cityIds = from.cityIds.filter((id) => !cities.includes(id)); to.cityIds.push(...cities);
+  from.regionIds = (from.regionIds ?? []).filter((id) => id !== region.id); to.regionIds = [...(to.regionIds ?? []), region.id];
+  const popShare = clamp(cities.reduce((s, id) => s + world.cities[id].population, 0) / Math.max(1, from.cityIds.concat(cities).reduce((s, id) => s + world.cities[id].population, 0)), 0.05, 0.5);
+  const pop = Math.round(from.population * popShare); from.population = Math.max(10_000, from.population - pop); to.population += pop;
+  const gdp = from.gdp * popShare * 0.8; from.gdp = Math.max(1, from.gdp - gdp); to.gdp += gdp;
+  from.area = Math.max(1, from.area - moved); to.area += moved;
+  for (const p of Object.values(world.people)) if (cities.includes(p.cityId) && p.id !== from.leaderId) p.countryId = to.id;
+  for (const co of Object.values(world.companies)) if (cities.includes(co.cityId)) co.countryId = to.id;
+  const oldGov = region.governorId ? world.people[region.governorId] : undefined;
+  if (oldGov) { if (oldGov.title === `Governor of ${region.name}`) oldGov.title = undefined; oldGov.history.push({ day: world.day, text: `Lost the governorship of ${region.name} when ${to.name} took it.` }); oldGov.memories.push({ day: world.day, text: `${to.name} took ${region.name}. I will not forget.`, weight: 0.8 }); oldGov.objective = `free ${region.name} from ${to.name}`; }
+  region.countryId = to.id; region.unrest = clamp(Math.max(region.unrest, 65) + 5, 0, 100); region.identity = clamp(region.identity + 0.25, 0, 1); region.autonomy = 0; region.governorId = undefined; appointGovernor(world, rng, region, true);
+  region.history.push({ day: world.day, text: `Annexed by ${to.name} from ${from.name}.` });
+  from.history.push({ day: world.day, text: `Lost ${region.name} to ${to.name}.` }); to.history.push({ day: world.day, text: `Annexed ${region.name} from ${from.name}.` });
+  from.relations[to.id] = Math.min(from.relations[to.id] ?? 0, -70); to.relations[from.id] = Math.min(to.relations[from.id] ?? 0, -40);
+  recomputeNeighbors(world);
+  const anchor = world.cities[cities[0]];
+  return createEvent(world, {
+    category: 'military', type: 'region.annexed', severity: 4, ...base(cause, player), historic: true,
+    title: `${to.name} annexes ${region.name}`,
+    description: `${reason ?? `${to.name} took ${region.name} from ${from.name}`}: ${cities.length} ${cities.length === 1 ? 'city' : 'cities'} and ${(popShare * 100).toFixed(0)}% of ${from.adjective} people changed flags overnight. ${rng.pick([`In ${anchor?.name ?? region.name} the new flag went up at dawn and came down by noon.`, 'Families are split by a border that did not exist last week.', `${from.name} calls it an occupation and refuses to recognise the line.`, 'Neighbours are quietly checking their own borders.'])}`,
+    location: { countryId: to.id, cityId: anchor?.id, x: anchor?.x ?? to.centroid.x, y: anchor?.y ?? to.centroid.y }, actors: [ref('country', to.id), ref('country', from.id)],
+    effects: [fx('country', to.id, 'approval', 8), fx('country', to.id, 'unrest', 3), fx('country', from.id, 'approval', -12), fx('country', from.id, 'unrest', 8), fx('country', from.id, 'stability', -5)],
+    tags: ['annexation', 'borders', 'region', to.code, from.code], data: { regionId: region.id, region: region.name, from: from.id, to: to.id },
   });
 }
 
@@ -293,6 +332,7 @@ export function createCountry(world: World, rng: RNG, parent: Country, cause: Ca
   const idx = geo.countryOrder.length;
   geo.countryOrder.push(nc.id);
   for (const i of take) geo.cells[i] = idx;
+  geo.version = (geo.version ?? 0) + 1;
   for (const id of movedCities) { world.cities[id].countryId = nc.id; world.cities[id].capital = id === nc.capitalId; }
   // Regions: the seceding region becomes the new country's only region; other regions lose any city that moved with it.
   if (world.regions) {

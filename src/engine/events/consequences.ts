@@ -417,6 +417,29 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       effects: [fx('company', a.id, 'value', 5), fx('company', b.id, 'value', 5), fx('country', ca.id, 'gdpGrowth', 0.1), fx('country', cb.id, 'gdpGrowth', 0.1)], tags: ['business', 'trade', ca.code, cb.code], data: { shocks: [{ sector: a.sector, pct: 0.015 }] },
     });
   },
+  // Peace terms: a decisive victory can take a border region from the loser; annexed regions resist.
+  'war.annex': (w, rng, src) => {
+    const winner = c$(w, src.data?.winner as ID), loser = c$(w, src.data?.loser as ID); if (!winner || !loser) return null;
+    if (winner.military < loser.military * 1.15 || (loser.regionIds ?? []).length < 2) return null;
+    const regions = (loser.regionIds ?? []).map((id) => w.regions?.[id]).filter((r): r is NonNullable<typeof r> => !!r && !r.cityIds.includes(loser.capitalId));
+    if (!regions.length) return null;
+    const W = w.geography.width; const wx = (a: number, b: number) => { const d = Math.abs(a - b); return Math.min(d, W - d); };
+    const dist = (r: typeof regions[number]) => Math.min(...r.cityIds.map((id) => { const ct = w.cities[id]; return Math.min(...winner.cityIds.map((wid) => { const wc = w.cities[wid]; return wx(ct.x, wc.x) ** 2 + (ct.y - wc.y) ** 2; })); }));
+    const target = regions.sort((a, b) => dist(a) - dist(b))[0];
+    return A.transferRegion(w, rng, target, winner, src.id, false, `Under the peace terms, ${loser.name} ceded ${target.name} to ${winner.name}`);
+  },
+  'annex.insurgency': (w, rng, src) => {
+    const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined; const to = c$(w, src.data?.to as ID), from = c$(w, src.data?.from as ID);
+    if (!r || !to || r.countryId !== to.id) return null;
+    r.unrest = clamp(r.unrest + 10, 0, 100); const anchor = w.cities[r.cityIds[0]];
+    if (from) { from.relations[to.id] = clamp((from.relations[to.id] ?? 0) - 5, -100, 100); }
+    return createEvent(w, {
+      category: 'military', type: 'annex.insurgency', severity: 3, causedBy: src.id, title: `Insurgency flares in annexed ${r.name}`,
+      description: `${rng.pick(['Roadside bombs', 'A general strike and night-time sabotage', 'Armed men in the hills', 'A boycott of everything from the capital'])} greet ${to.name}'s administrators in ${r.name}. ${from ? `${from.name} denies arming them, unconvincingly.` : 'Nobody claims responsibility; everybody knows.'} ${rng.pick(['Curfew in ' + (anchor?.name ?? r.name) + '.', 'The governor sleeps in the barracks.', 'Refugees move both ways across the new line.'])}`,
+      location: { countryId: to.id, cityId: anchor?.id, x: anchor?.x ?? to.centroid.x, y: anchor?.y ?? to.centroid.y }, actors: [ref('country', to.id), ...(from ? [ref('country', from.id)] : [])],
+      effects: [fx('country', to.id, 'unrest', 4), fx('country', to.id, 'stability', -3), fx('country', to.id, 'military', 1)], tags: ['insurgency', 'region', to.code], data: { regionId: r.id, region: r.name, from: from?.id, to: to.id },
+    });
+  },
   // Regions: an autonomy demand is answered with a concession or a crackdown; crackdowns can end in secession along regional lines.
   'region.response': (w, rng, src) => {
     const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
@@ -945,6 +968,8 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
   { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
   { match: (e) => e.type === 'festival.film' && !!e.data?.political, rule: 'festival.banned', delay: [1, 12], p: 0.7 },
+  { match: (e) => e.type === 'war.ended' && !!e.data?.winner, rule: 'war.annex', delay: [5, 30], p: 0.45 },
+  { match: (e) => e.type === 'region.annexed', rule: 'annex.insurgency', delay: [30, 200], p: 0.6 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.response', delay: [15, 90], p: 0.9 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.movement', delay: [5, 40], p: 0.5 },
   { match: (e) => e.type === 'region.crackdown', rule: 'region.secession', delay: [60, 240], p: 0.4 },

@@ -61,6 +61,7 @@ const INTENTS: Intent[] = [
   { action: 'revolution', test: /\b(revolution|uprising|overthrow|revolt|rebellion)\b/i },
   { action: 'coup', test: /\b(coup|junta|generals? seize)\b/i },
   { action: 'collapse-government', test: /\b(government|state|regime)\b.*\b(collapse|fall|fails?|crumble)s?\b|\b(collapse|fall)\b.*\b(government|regime|state)\b/i },
+  { action: 'annex', test: /\b(annex(es|ed|ation)?|cedes?|seiz(e|es|ed) (the )?(region|province|coast|valley|highlands))\b/i },
   { action: 'autonomy', test: /\b(autonomy|self-rule|self rule|devolution|home rule|devolve)\b/i },
   { action: 'create-country', test: /\b(independen|seced|new (country|nation|state)|breaks? away|declares? (itself )?a (country|nation))/i },
   { action: 'change-government', test: /\b(becomes?|turns? into|transform|establish)\b.*\b(democracy|republic|monarchy|technocracy|autocracy|junta|theocracy|federation|oligarchy|council|dictatorship)\b/i, params: (m) => ({ gov: normalizeGov(m[2]) }) },
@@ -117,7 +118,8 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     // Country params
     if (countries[0]) { params.a = countries[0].id; targets.push({ kind: 'country', id: countries[0].id }); }
     if (countries[1]) { params.b = countries[1].id; targets.push({ kind: 'country', id: countries[1].id }); }
-    if (regions[0]) { params.region = regions[0].id; if (!params.a || params.a !== regions[0].countryId) { params.a = regions[0].countryId; targets.unshift({ kind: 'country', id: regions[0].countryId }); } notes.push(`${regions[0].name} is a region of ${world.countries[regions[0].countryId]?.name ?? '?'}.`); }
+    if (regions[0] && intent?.action === 'annex') { params.region = regions[0].id; params.b = regions[0].countryId; const annexer = countries.find((x) => x.id !== regions[0].countryId); if (annexer) params.a = annexer.id; else delete params.a; notes.push(`${regions[0].name} belongs to ${world.countries[regions[0].countryId]?.name ?? '?'}.`); }
+    else if (regions[0]) { params.region = regions[0].id; if (!params.a || params.a !== regions[0].countryId) { params.a = regions[0].countryId; targets.unshift({ kind: 'country', id: regions[0].countryId }); } notes.push(`${regions[0].name} is a region of ${world.countries[regions[0].countryId]?.name ?? '?'}.`); }
     if (companies[0]) { params.co = companies[0].id; targets.push({ kind: 'company', id: companies[0].id }); if (!params.a) params.a = companies[0].countryId; }
     if (people[0]) { params.p = people[0].id; targets.push({ kind: 'person', id: people[0].id }); if (!params.a) params.a = people[0].countryId; }
     if (people[1]) { params.p2 = people[1].id; targets.push({ kind: 'person', id: people[1].id }); }

@@ -340,6 +340,8 @@ export interface Geography {
   moisture: number[];
   /** ordered list of country ids matching cell indexes */
   countryOrder: ID[];
+  /** bumped whenever cell ownership changes (secession, annexation) so renderers rebuild shapes */
+  version?: number;
 }
 
 export interface WorldMeta {
