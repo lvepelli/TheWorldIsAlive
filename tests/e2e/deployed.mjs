@@ -80,6 +80,23 @@ async function run(name, viewport, mobile) {
     const nav = async (label) => { if (mobile && !['World', 'Live', 'News', 'God'].includes(label)) { await page.click('.bottom-nav button[aria-label="More"]'); await page.click(`.modal button:has-text("${label}")`); } else await page.click(`${mobile ? '.bottom-nav' : '.side-nav'} button[aria-label="${label}"]`); await page.waitForTimeout(400); };
     for (const s of ['Live', 'News', 'Social', 'Markets', 'History']) { await nav(s); const ov = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1); check((await page.locator('.screen-title').count()) > 0 && !ov, `${s} screen renders without overflow`); }
     await shot('04-news');
+    // v0.6 features: editorials, developing stories, chronicle export, conversations, delayed God commands
+    await nav('News'); await page.click('.chip:has-text("Editorials")'); await page.waitForTimeout(400);
+    check((await page.locator('.tag:has-text("editorial")').count()) > 0, 'News shows weekly editorials');
+    await nav('Live');
+    check((await page.locator('.story-card').count()) > 0 || (await page.locator('.event-card').count()) > 0, 'Live shows developing stories or events');
+    await nav('History');
+    check((await page.locator('button:has-text("Export chronicle")').count()) > 0, 'History offers the chronicle export');
+    await nav('People');
+    await page.locator('.entity-row').first().click(); await page.waitForTimeout(500);
+    const ask = page.locator('.inspector input[placeholder^="Ask"]');
+    if (await ask.count()) { await ask.fill('You should make peace with your rivals'); await ask.press('Enter'); await page.waitForTimeout(500); }
+    check((await page.locator('.inspector .card').count()) > 0, 'a character answers a question');
+    await page.click('.inspector-head button[aria-label="Close"]');
+    await nav('God');
+    await page.fill('textarea.god-input', 'In 2 weeks, a global pandemic begins'); await page.waitForTimeout(500);
+    check((await page.locator('text=Scheduled: in 2 weeks').count()) > 0, 'delayed God command is understood');
+    await page.fill('textarea.god-input', ''); await page.waitForTimeout(200);
     await nav('Live');
     await page.locator('.event-card').first().click(); await page.waitForTimeout(400);
     check((await page.locator('.chain').count()) > 0, 'event inspector shows causal chain');
