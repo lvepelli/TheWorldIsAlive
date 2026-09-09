@@ -91,4 +91,5 @@ export const es: Record<string, string> = {
   'alerts.possible.society': 'Movimientos, tendencias en la red, rivalidades, escándalos, cambios de opinión pública y decisiones personales de las figuras implicadas.',
   'alerts.possible.technology': 'Empresas que despegan o quiebran, cambios en el poder relativo de los países, premios, adopción y efectos laborales.',
   'alerts.possible.disaster': 'Víctimas, migraciones, presión sanitaria, ayuda internacional o desamparo, protestas y caída del gobierno si la respuesta falla.',
+  'com.oil': 'Petróleo', 'com.gas': 'Gas natural', 'com.grain': 'Grano', 'com.copper': 'Cobre', 'com.lithium': 'Litio', 'com.gold': 'Oro', 'com.rareEarth': 'Tierras raras', 'com.compute': 'Cómputo', 'index.global': 'Índice mundial',
 };

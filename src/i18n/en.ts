@@ -72,4 +72,5 @@ export const en: Record<string, string> = {
   'alerts.possible.society': 'Movements, trending topics, rivalries, scandals, shifts in public opinion and personal choices of the people involved.',
   'alerts.possible.technology': 'Companies that soar or fail, shifts in the balance of power, prizes, adoption and effects on jobs.',
   'alerts.possible.disaster': 'Casualties, migration, health pressure, international aid or neglect, protests and a government fall if the response fails.',
+  'com.oil': 'Crude oil', 'com.gas': 'Natural gas', 'com.grain': 'Grain', 'com.copper': 'Copper', 'com.lithium': 'Lithium', 'com.gold': 'Gold', 'com.rareEarth': 'Rare earths', 'com.compute': 'Compute credits', 'index.global': 'World composite',
 };

@@ -248,6 +248,9 @@ textarea.input { resize: vertical; min-height: 72px; line-height: 1.4; }
 .table tr.clickable:hover td { background: rgba(143, 211, 255, 0.05); }
 .table .num { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
 .table-wrap { overflow-x: auto; }
+.econ-head { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.econ-head > .card:last-child { grid-column: 1 / -1; }
+@media (max-width: 899px) { .econ-head { grid-template-columns: 1fr; } .econ-head .rel-chip { flex: 1 1 auto; justify-content: space-between; } }
 
 /* ---- God mode --------------------------------------------------------------- */
 .god-hero { position: relative; padding: 22px 18px; border-radius: var(--radius-lg); border: 1px solid rgba(240, 179, 90, 0.35); background: radial-gradient(120% 140% at 50% 0%, rgba(240, 179, 90, 0.18), rgba(6, 8, 15, 0.2) 60%), var(--panel-solid); overflow: hidden; }
