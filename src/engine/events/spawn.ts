@@ -7,6 +7,7 @@ import { RNG, clamp } from '../rng';
 import type { World, Country, WorldEvent, Sector } from '../types';
 import { SECTORS } from '../types';
 import * as A from './actions';
+import { relate } from '../simulation/relations';
 import { createEvent, fx, ref } from './engine';
 
 export interface SpawnRule {
@@ -442,6 +443,62 @@ SPAWN_RULES.push({
       location: { cityId: a.cityId }, actors: [ref('person', a.id), ref('person', b.id)],
       effects: [fx('person', a.id, 'fame', 6), fx('person', b.id, 'fame', 6), fx('person', a.id, 'reputation', -4), fx('person', b.id, 'reputation', -4), ...(c ? [fx('country', c.id, 'polarization', 1)] : [])],
       tags: ['feud', 'people', ...(c ? [c.code] : [])],
+    });
+  },
+});
+
+SPAWN_RULES.push({
+  id: 'partner.breakup',
+  weight: () => 0.12,
+  run: (w, rng) => {
+    const pool = livePeople(w).filter((p) => p.fame > 30 && p.relationships.some((r) => r.type === 'partner' && w.people[r.target.id]?.alive));
+    if (!pool.length) return null;
+    // Recent scandals, feuds and downfalls strain partnerships the most.
+    const strained = new Set(w.events.slice(-400).filter((e) => /scandal|feud|downfall|purge/.test(e.type)).flatMap((e) => e.actors.filter((a) => a.kind === 'person').map((a) => a.id)));
+    const a = rng.pickWeighted(pool, (p) => (strained.has(p.id) ? 6 : 1) + p.personality.ambition * 2);
+    const rel = a.relationships.find((r) => r.type === 'partner' && w.people[r.target.id]?.alive)!;
+    const b = w.people[rel.target.id];
+    if (!strained.has(a.id) && rng.next() > 0.35) return null;
+    a.relationships = a.relationships.filter((r) => r !== rel);
+    b.relationships = b.relationships.filter((r) => r.target.id !== a.id);
+    relate(w, a, b, rng.bool(0.4) ? 'enemy' : 'friend', rng.bool(0.4) ? -0.6 : 0.1);
+    a.history.push({ day: w.day, text: `Separated from ${b.name}.` }); b.history.push({ day: w.day, text: `Separated from ${a.name}.` });
+    const c = w.countries[a.countryId];
+    const famous = a.fame > 60 || b.fame > 60;
+    return createEvent(w, {
+      category: 'personal', type: 'breakup', severity: famous ? 2 : 1,
+      title: `${a.name} and ${b.name} split`,
+      description: `${famous ? 'After weeks of speculation, ' : ''}${a.name} and ${b.name} confirmed they have separated${strained.has(a.id) ? `, citing "the pressure of recent events"` : ''}. ${rng.pick(['Neither will comment further.', 'Lawyers are reportedly involved.', 'Friends say the split was amicable.', 'A joint statement asked for privacy.'])}`,
+      location: { cityId: a.cityId }, actors: [ref('person', a.id), ref('person', b.id)],
+      effects: [fx('person', a.id, 'fame', famous ? 3 : 1), fx('person', a.id, 'wealth%', -8)],
+      tags: ['personal', 'breakup', ...(c ? [c.code] : [])],
+    });
+  },
+});
+
+SPAWN_RULES.push({
+  id: 'funder.withdraws',
+  weight: () => 0.14,
+  run: (w, rng) => {
+    const pool = livePeople(w).filter((p) => p.relationships.some((r) => r.type === 'funder' && w.people[r.target.id]?.alive));
+    if (!pool.length) return null;
+    const a = rng.pickWeighted(pool, (p) => 1 + Math.max(0, -p.reputation) / 20 + (p.affiliations.length ? 1 : 0));
+    const rel = a.relationships.find((r) => r.type === 'funder' && w.people[r.target.id]?.alive)!;
+    const funder = w.people[rel.target.id];
+    // Backers walk when reputation sours or the relationship has cooled.
+    if (a.reputation > 10 && rel.strength > 0.2 && rng.next() > 0.25) return null;
+    const co = a.affiliations.map((id) => w.companies[id]).find((x) => x && x.alive);
+    a.relationships = a.relationships.filter((r) => r !== rel);
+    relate(w, a, funder, 'rival', -0.5);
+    a.history.push({ day: w.day, text: `Lost the backing of ${funder.name}.` }); funder.history.push({ day: w.day, text: `Pulled funding from ${a.name}.` });
+    const c = w.countries[a.countryId];
+    return createEvent(w, {
+      category: co ? 'corporate' : 'personal', type: 'funder.withdraws', severity: co && co.value > 5000 ? 3 : 2,
+      title: co ? `${funder.name} pulls backing from ${co.name}` : `${funder.name} cuts off ${a.name}`,
+      description: `${funder.name}, long the money behind ${a.name}, ${rng.pick(['sold their stake', 'declined to join the next round', 'withdrew all support', 'ended the arrangement in a two-line letter'])}${a.reputation < 0 ? ' amid concerns about reputational damage' : ''}. ${co ? `${co.name} must now find new capital.` : `${a.name} is said to be furious.`}`,
+      location: { cityId: a.cityId }, actors: [ref('person', funder.id), ref('person', a.id), ...(co ? [ref('company', co.id)] : [])],
+      effects: [...(co ? [fx('company', co.id, 'value%', -10), fx('company', co.id, 'reputation', -6)] : []), fx('person', a.id, 'wealth%', -12), fx('person', a.id, 'influence', -4)],
+      tags: ['funding', 'personal', ...(c ? [c.code] : [])],
     });
   },
 });
