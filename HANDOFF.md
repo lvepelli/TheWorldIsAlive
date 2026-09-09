@@ -2,13 +2,13 @@
 
 Read this first. Everything needed to continue lives in this repository; nothing depends on the original chat session.
 
-## Status (v0.7.0)
+## Status (v0.8.0)
 
 **Playable, deployed, CI-verified on every push.** Builds, passes 36 unit tests (balance, robustness fuzz, LLM mocks, God parsing, save round-trips) and a browser smoke run; every push publishes to `gh-pages` and a live QA run on three phone viewports plus desktop commits its report to `docs/qa`. Since v0.5 (v0.6 and v0.7): seed-driven premises with opening arcs, a trade model and Trade/Climate overlays, weather fronts that steer disasters, movements that grow, fade, merge and win elections, religion tides and schisms, Laurel Prizes, summit agendas, anniversaries, delayed God commands, LLM-backed dialogue with persuasion (leaders make peace, call votes, reform or resign; CEOs pivot), inheritance feuds, mentors turning on protégés, harvests and the food-price chain (famine, bread riots, grain aid, export bans, famine migration, rains), water disputes, summit agendas, anniversaries, a Markdown chronicle export, featured worlds on the intro, keyboard map navigation and readability settings. Installs as a PWA, saves to IndexedDB, exports/imports JSON.
 
 ```bash
 npm install && npm run dev      # play
-npm test                        # engine tests (vitest, 34 tests, ~35 s incl. the 20-year balance run and the 6-year fuzz)
+npm test                        # engine tests (vitest, 36 tests, ~35 s incl. the 20-year balance run and the 6-year fuzz)
 npm run build && npm run e2e    # production build + headless desktop/mobile smoke run with screenshots in tests/e2e/output
 ```
 

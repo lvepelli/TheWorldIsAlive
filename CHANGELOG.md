@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 — festivals and fronts
+
+- Calendar: a film festival every spring (a host city, a winning artist and their film; political films can get banned by an unfree host, and a media company may buy the rights) and a trade fair every autumn (the biggest trading nation hosts its partners, relations warm, and the two headline companies form a joint venture or fall out) — `simulation/calendar.ts`, rules `festival.banned`, `festival.rights`, `fair.venture`. Sagas rooted in them are named ("The film X banned", "The venture born at the X fair"); posts carry #RedCarpet / #TradeFair tags.
+- God Mode: "Film Festival" and "Trade Fair" presets (42 presets) and matching freeform intents ("Hold a film festival in X", "X hosts a trade fair", delays work) — a commanded festival or fair is a player intervention with the same follow-ups; two new "Inspire me" examples.
+- Map: festivals, fairs, World Games, Laurel ceremonies and joint ventures glow gold on the map for three weeks with a slowly turning ring of lights (static under reduced motion), so good news is visible next to the red and blue wounds of wars and disasters.
+- Map: war fronts are traced along the smoothed border polygons instead of raw grid-cell edges, so they no longer look stair-stepped next to the borders at high zoom (a spatial hash of the neighbour's contour points marks the shared stretch; each run is drawn as one rounded polyline with the ember glow, marching hot line and sparks).
+- Rising seas: each year the most climate-stressed nations (risk above 65) can lose a coastal district — "X loses ground to the sea" displaces people, dents prosperity and, when large, sends climate migrants to a safer neighbour. About one such loss a year world-wide, most of them chaining into migration.
+- Policies: coastal defence programs (debt up, climate risk down, coastal prosperity up) enter the agenda of stressed coastal nations and jump to the top after a sea loss. Sea-rise sagas are named ("The sea takes X").
+- Accessibility: every severity dot (event cards, causal chains, sagas, the world ticker) carries its label as `aria-label` and hover title, and the Live severity filter chips are readable by screen readers.
+
 ## 0.7.0 — bread, water and consequences
 
 - Intro: "featured worlds" chips — one curated seed per premise (The Cold Peace, The Fractured Map, …) that fills the seed box; the premise tag under the preview updates as you pick.
@@ -34,13 +44,6 @@
 - Grain export bans: during a food crisis a breadbasket nation may seal its silos (grain +4%, importers' inflation and relations suffer, domestic relief); also a God preset and interpreter phrasing ("X bans grain exports").
 - Water disputes: a thirsty nation (water under 35) with a water-rich neighbour sees relations sour over dams, diversions and shared aquifers (about two flare-ups a year world-wide), feeding the existing border-clash and war logic.
 - History → Sagas: chains rooted in a tension rise are named ("The water war", "Rivers and grudges", "The road to war in X").
-- Rising seas: each year the most climate-stressed nations (risk above 65) can lose a coastal district — "X loses ground to the sea" displaces people, dents prosperity and, when large, sends climate migrants to a safer neighbour. About one such loss a year world-wide, most of them chaining into migration.
-- Policies: coastal defence programs (debt up, climate risk down, coastal prosperity up) enter the agenda of stressed coastal nations and jump to the top after a sea loss. Sea-rise sagas are named ("The sea takes X").
-- Map: festivals, fairs, World Games, Laurel ceremonies and joint ventures glow gold on the map for three weeks with a slowly turning ring of lights (static under reduced motion), so good news is visible next to the red and blue wounds of wars and disasters.
-- God Mode: "Film Festival" and "Trade Fair" presets (42 presets) and matching freeform intents ("Hold a film festival in X", "X hosts a trade fair", delays work) — a commanded festival or fair is a player intervention with the same follow-ups; two new "Inspire me" examples.
-- Accessibility: every severity dot (event cards, causal chains, sagas, the world ticker) carries its label as `aria-label` and hover title, and the Live severity filter chips are readable by screen readers.
-- Calendar: a film festival every spring (a host city, a winning artist and their film; political films can get banned by an unfree host, and a media company may buy the rights) and a trade fair every autumn (the biggest trading nation hosts its partners, relations warm, and the two headline companies form a joint venture or fall out) — `simulation/calendar.ts`, rules `festival.banned`, `festival.rights`, `fair.venture`. Sagas rooted in them are named ("The film X banned", "The venture born at the X fair"); posts carry #RedCarpet / #TradeFair tags.
-- Map: war fronts are traced along the smoothed border polygons instead of raw grid-cell edges, so they no longer look stair-stepped next to the borders at high zoom (a spatial hash of the neighbour's contour points marks the shared stretch; each run is drawn as one rounded polyline with the ember glow, marching hot line and sparks).
 - Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.6.0 — weather, premises and the long game
