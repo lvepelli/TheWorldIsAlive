@@ -67,14 +67,20 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     case 'scientist': {
       if (p.affiliations.length === 0 && rng.bool(p.profession === 'entrepreneur' ? 0.6 : 0.25)) {
         const sector: Sector = p.profession === 'scientist' ? rng.pick(['biotech', 'technology', 'energy', 'aerospace']) : rng.pick(SECTORS);
-        return A.foundCompany(world, rng, c, sector, 'simulation', false, p);
+        const ev = A.foundCompany(world, rng, c, sector, 'simulation', false, p);
+        p.objective = rng.pick(['take the company public', 'reach a billion in value', 'ship the product that changes everything']);
+        return ev;
       }
       const co = p.affiliations.map((id) => world.companies[id]).find((x) => x?.alive);
-      if (co && rng.bool(0.15)) return A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5);
+      if (co && co.value > 50 && p.objective !== 'dominate the industry' && rng.bool(0.5)) p.objective = 'dominate the industry';
+      if (co && rng.bool(0.15)) { const ev = A.techBreakthrough(world, rng, co, c, rng.pick(['battery', 'AI model', 'drug', 'chip', 'reactor', 'material']), 'simulation', false, rng.bool(0.15) ? 1 : 0.5); if (rng.bool(0.5)) p.objective = rng.pick(['turn the breakthrough into an empire', 'win the highest prize', 'keep the discovery out of military hands']); return ev; }
       return null;
     }
     case 'politician': {
       if (c.leaderId === p.id) {
+        // Leaders' goals shift with their standing
+        if (c.approval < 35 && p.objective !== 'survive the next election') p.objective = c.electionEvery ? 'survive the next election' : 'crush the opposition before it grows';
+        else if (c.approval > 65 && rng.bool(0.3)) p.objective = rng.pick(['secure a legacy', 'expand national influence', 'reshape the constitution']);
         // Leaders enact policies
         const policy = rng.pick(['tax cut', 'infrastructure program', 'security law', 'press regulation', 'green transition plan', 'military modernization', 'anti-corruption drive', 'welfare expansion']);
         const effects = {
