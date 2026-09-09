@@ -26,6 +26,7 @@ export function Inspector(): React.ReactElement {
   const version = useGame((s) => s.version);
   void version;
   const open = !!selection && !!world;
+  const announce = selection && world ? (() => { const r = selection; const e = r.kind === 'person' ? world.people[r.id] : r.kind === 'country' ? world.countries[r.id] : r.kind === 'city' ? world.cities[r.id] : r.kind === 'company' ? world.companies[r.id] : r.kind === 'organization' ? world.organizations[r.id] : r.kind === 'outlet' ? world.outlets[r.id] : world.events.find((x) => x.id === r.id); return e ? `${r.kind}: ${'title' in e && r.kind === 'event' ? (e as { title: string }).title : (e as { name: string }).name}` : ''; })() : '';
   const sheetRef = React.useRef<HTMLElement>(null);
   const drag = React.useRef<{ y0: number; dy: number } | null>(null);
   // Swipe-down on the header/grabber dismisses the sheet on phones.
@@ -34,6 +35,7 @@ export function Inspector(): React.ReactElement {
   const onUp = () => { const d = drag.current; const el = sheetRef.current; drag.current = null; if (!d || !el) return; el.style.transition = ''; el.style.transform = ''; if (d.dy > 90) select(null); };
   return (
     <aside ref={sheetRef} className={`inspector ${open ? 'open' : ''}`} aria-hidden={!open}>
+      <div aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{announce}</div>
       <div className="grabber" onClick={() => select(null)} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'none', width: 80, padding: '6px 0', background: 'none' }}><div style={{ width: 40, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.2)', margin: '0 auto' }} /></div>
       <div className="inspector-head" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} style={{ touchAction: 'pan-x' }}>
         {stack.length > 0 ? <button className="btn ghost sm" onClick={back} aria-label="Back">←</button> : null}
