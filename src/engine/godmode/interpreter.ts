@@ -6,7 +6,7 @@
  * structured `GodPlan`. An LLM-backed interpreter can produce the same
  * structure (see docs/AI_SYSTEM.md and prompts/god_command.md).
  */
-import type { World, Country, Company, Person, Sector, EntityRef } from '../types';
+import type { Region, World, Country, Company, Person, Sector, EntityRef } from '../types';
 import { SECTORS } from '../types';
 
 export interface GodPlan {
@@ -61,6 +61,7 @@ const INTENTS: Intent[] = [
   { action: 'revolution', test: /\b(revolution|uprising|overthrow|revolt|rebellion)\b/i },
   { action: 'coup', test: /\b(coup|junta|generals? seize)\b/i },
   { action: 'collapse-government', test: /\b(government|state|regime)\b.*\b(collapse|fall|fails?|crumble)s?\b|\b(collapse|fall)\b.*\b(government|regime|state)\b/i },
+  { action: 'autonomy', test: /\b(autonomy|self-rule|self rule|devolution|home rule|devolve)\b/i },
   { action: 'create-country', test: /\b(independen|seced|new (country|nation|state)|breaks? away|declares? (itself )?a (country|nation))/i },
   { action: 'change-government', test: /\b(becomes?|turns? into|transform|establish)\b.*\b(democracy|republic|monarchy|technocracy|autocracy|junta|theocracy|federation|oligarchy|council|dictatorship)\b/i, params: (m) => ({ gov: normalizeGov(m[2]) }) },
   { action: 'movement', test: /\b(movement|party|protest group|coalition|front)\b.*\b(form|found|creat|emerg|start|launch|born)|\b(form|found|creat|start|launch)s?\b.*\b(movement|party|coalition)\b/i },
@@ -101,6 +102,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     const t = text.trim();
     const lower = t.toLowerCase();
     const countries = findCountries(world, lower);
+    const regions = findRegions(world, lower);
     const companies = findCompanies(world, lower);
     const people = findPeople(world, lower);
     const sector = findSector(lower);
@@ -115,6 +117,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     // Country params
     if (countries[0]) { params.a = countries[0].id; targets.push({ kind: 'country', id: countries[0].id }); }
     if (countries[1]) { params.b = countries[1].id; targets.push({ kind: 'country', id: countries[1].id }); }
+    if (regions[0]) { params.region = regions[0].id; if (!params.a || params.a !== regions[0].countryId) { params.a = regions[0].countryId; targets.unshift({ kind: 'country', id: regions[0].countryId }); } notes.push(`${regions[0].name} is a region of ${world.countries[regions[0].countryId]?.name ?? '?'}.`); }
     if (companies[0]) { params.co = companies[0].id; targets.push({ kind: 'company', id: companies[0].id }); if (!params.a) params.a = companies[0].countryId; }
     if (people[0]) { params.p = people[0].id; targets.push({ kind: 'person', id: people[0].id }); if (!params.a) params.a = people[0].countryId; }
     if (people[1]) { params.p2 = people[1].id; targets.push({ kind: 'person', id: people[1].id }); }
@@ -190,6 +193,11 @@ export function findCountries(world: World, lower: string): Country[] {
     for (const n of names) { const idx = lower.indexOf(n); if (idx >= 0) { out.push({ c, idx }); break; } }
   }
   return out.sort((a, b) => a.idx - b.idx).map((o) => o.c).filter((c, i, arr) => arr.indexOf(c) === i);
+}
+export function findRegions(world: World, lower: string): Region[] {
+  const out: { r: Region; idx: number }[] = [];
+  for (const r of Object.values(world.regions ?? {})) { const idx = lower.indexOf(r.name.toLowerCase()); if (idx >= 0) out.push({ r, idx }); }
+  return out.sort((a, b) => a.idx - b.idx || b.r.name.length - a.r.name.length).map((o) => o.r);
 }
 export function findCompanies(world: World, lower: string): Company[] {
   const out: { c: Company; idx: number }[] = [];

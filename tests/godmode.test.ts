@@ -41,4 +41,19 @@ describe('god mode', () => {
     react(w, rng, ev);
     expect(!ev.data?.maker || w.pending.some((q) => q.sourceEventId === ev.id && q.ruleId.startsWith('festival.'))).toBe(true);
   });
+  it('targets regions by name: autonomy and secession', async () => {
+    const w = generateWorld({ seed: 'regions' }); const rng = new RNG('regions'); const interp = new LocalGodInterpreter();
+    const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const r = (c.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(c.capitalId))!;
+    const plan = await interp.interpret(w, `${r.name} declares independence`);
+    expect(plan.action).toBe('create-country'); expect(plan.params.region).toBe(r.id); expect(plan.params.a).toBe(c.id);
+    const auto = await interp.interpret(w, `Grant ${r.name} autonomy`);
+    expect(auto.action).toBe('autonomy'); expect(auto.params.region).toBe(r.id);
+    const ev = GOD_PRESETS.find((p) => p.id === 'autonomy')!.run(w, rng, { a: c.id, region: r.id })!;
+    expect(ev.type).toBe('region.concession'); expect(r.autonomy).toBeGreaterThanOrEqual(30);
+    const before = Object.keys(w.countries).length; const cities = r.cityIds.slice();
+    const born = GOD_PRESETS.find((p) => p.id === 'create-country')!.run(w, rng, { a: c.id, region: r.name })!;
+    expect(born.type).toBe('country.founded'); expect(Object.keys(w.countries).length).toBe(before + 1);
+    expect(w.countries[r.countryId].cityIds.slice().sort()).toEqual(cities.sort());
+  });
 });

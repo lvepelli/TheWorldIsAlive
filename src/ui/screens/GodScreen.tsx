@@ -13,6 +13,7 @@ function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['wor
   const people = Object.values(world.people).filter((p) => p.alive).sort((x, y) => y.fame - x.fame);
   const star = people[0]; const cos = Object.values(world.companies).filter((c) => c.alive).sort((x, y) => y.value - x.value);
   const co = cos[0]; const city = world.cities[a.capitalId];
+  const region = (weak.regionIds ?? []).map((id) => world.regions?.[id]).filter((r) => r && !r.cityIds.includes(weak.capitalId)).sort((x, y) => (y?.unrest ?? 0) - (x?.unrest ?? 0))[0];
   return [
     `A small ${a.adjective} battery company discovers a battery that stores twenty times more energy than current technology.`,
     `A meteor strikes ${city?.name ?? a.name}.`,
@@ -21,6 +22,7 @@ function examplesFor(world: NonNullable<ReturnType<typeof useGame.getState>['wor
     'A global pandemic begins.',
     `${b.name} hosts a film festival.`,
     `In 2 weeks, ${a.name} hosts a trade fair.`,
+    ...(region ? [`${region.name} declares independence.`] : []),
     `The economy of ${a.name} collapses into crisis.`,
     star ? `${star.name} is caught in a huge scandal.` : `A scandal engulfs the government of ${a.name}.`,
     people[1] && people[2] ? `${people[1].name} and ${people[2].name} become bitter rivals.` : `${weak.name} calls a snap election.`,
