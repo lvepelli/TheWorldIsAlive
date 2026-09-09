@@ -9,7 +9,7 @@ import { react, resolvePending, collectShocks } from '../events/consequences';
 import { tickMarkets } from './markets';
 import { weeklyTick, monthlyTick, yearlyTick } from './systems';
 import { monthlyCharacters } from './characters';
-import { generateNews, generateSocial, updateTrending } from './information';
+import { generateNews, generateSocial, generateEditorials, updateTrending } from './information';
 import { summarize } from './summary';
 import { toDate } from '../time';
 
@@ -26,7 +26,7 @@ export function tickDay(world: World, rng: RNG): TickResult {
   // 2. Spontaneous events
   produced.push(...spawnDailyEvents(world, rng));
   // 3. Slow systems
-  if (world.day - world.stats.lastWeeklyDay >= 7) { weeklyTick(world, rng); world.stats.lastWeeklyDay = world.day; }
+  if (world.day - world.stats.lastWeeklyDay >= 7) { weeklyTick(world, rng); generateEditorials(world, rng); world.stats.lastWeeklyDay = world.day; }
   if (world.day - world.stats.lastMonthlyDay >= 30) {
     produced.push(...monthlyTick(world, rng));
     produced.push(...monthlyCharacters(world, rng));

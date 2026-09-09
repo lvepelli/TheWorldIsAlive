@@ -231,6 +231,8 @@ export interface NewsArticle {
   body: string;
   tone: 'positive' | 'negative' | 'neutral' | 'alarmist';
   reach: number;
+  /** Weekly opinion piece rather than event coverage. */
+  editorial?: boolean;
 }
 
 export interface SocialPost {

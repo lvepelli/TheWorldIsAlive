@@ -47,6 +47,54 @@ export function generateNews(world: World, rng: RNG, todays: WorldEvent[]): News
   return out;
 }
 
+/**
+ * Weekly editorials: each week a few outlets publish an opinion piece about the
+ * story that dominated their audience's week, spun through the outlet's bias.
+ */
+export function generateEditorials(world: World, rng: RNG): NewsArticle[] {
+  const out: NewsArticle[] = [];
+  const week = world.events.filter((e) => world.day - e.day < 7 && e.severity >= 3);
+  if (!week.length) return out;
+  const outlets = Object.values(world.outlets).filter((o) => o.audience > 5);
+  const chosen = rng.sample(outlets, Math.min(outlets.length, rng.int(2, 4)));
+  const journalists = Object.values(world.people).filter((p) => p.alive && !p.retired && p.profession === 'journalist');
+  for (const o of chosen) {
+    const relevant = week.filter((e) => !o.countryId || e.location.countryId === o.countryId || e.actors.some((a) => a.kind === 'country' && a.id === o.countryId));
+    const pool = relevant.length ? relevant : week;
+    const ev = pool.reduce((best, e) => (e.severity > best.severity || (e.severity === best.severity && e.day > best.day) ? e : best), pool[0]);
+    const c = ev.location.countryId ? world.countries[ev.location.countryId] : undefined;
+    const home = !!o.countryId && c?.id === o.countryId;
+    const leader = c ? world.people[c.leaderId] : undefined;
+    const subject = c ? c.name : 'the world';
+    const negative = /collapse|crisis|crash|scandal|coup|bankrupt|protest|death|assassin|war\.declared|battle|crackdown|disaster|epidemic|pandemic|purge|cyber|attack|shock|sanction|feud/.test(ev.type);
+    const heads: Record<typeof o.bias, string[]> = {
+      establishment: [`Editorial: steady hands are what ${subject} needs now`, `Our view: after ${ev.title.toLowerCase().replace(/[.!]$/, '')}, keep calm and trust the process`, `Editorial: a week that tested ${subject}, and institutions that held`],
+      opposition: [`Editorial: ${leader?.name ?? 'the government'} owns this week`, `Our view: how many warnings did ${leader?.name ?? 'the leadership'} ignore?`, `Editorial: ${subject} deserves better than this`],
+      sensational: [`WEEK OF CHAOS: what they are not telling you about ${subject}`, `THE TRUTH about ${ev.title.split(' ').slice(0, 5).join(' ')}…`, `${subject.toUpperCase()} ON THE BRINK?`],
+      business: [`The bottom line: what ${ev.title.toLowerCase().replace(/[.!]$/, '')} means for your portfolio`, `Column: markets are ${negative ? 'underpricing' : 'overpricing'} ${subject}`, `Editorial: the price of a week like this one`],
+      international: [`Analysis: ${subject}'s week, seen from outside`, `The week in ${subject}: what the region is quietly preparing for`, `Editorial: the world cannot look away from ${subject}`],
+      independent: [`What we verified this week, and what we couldn't`, `Editorial: the ${negative ? 'questions nobody in power wants asked' : 'good news that deserves scrutiny too'}`, `A week in ${subject}, without the spin`],
+      state: [`Editorial: ${subject} stands united`, `The nation answers ${negative ? 'adversity' : 'the moment'} with resolve`, `Editorial: foreign voices will not decide ${subject}'s future`],
+    };
+    const bodies: Record<typeof o.bias, string> = {
+      establishment: `${ev.title}. It was the story of the week, and it will not be the last shock of the year. But ${subject} has weathered worse, and the institutions that got us here remain the ones most likely to get us through. ${home && leader ? `${leader.name} would do well to listen more and announce less.` : 'Patience is not the same as complacency.'}`,
+      opposition: `${ev.title}. ${home && leader ? `${leader.name} would like you to believe this came out of nowhere. It did not.` : 'Those in charge would like you to believe this came out of nowhere. It did not.'} The warnings were public, the choices were made, and the people now paying the price are not the ones who made them. ${c && c.approval < 45 ? 'The polls suggest voters have noticed.' : 'Accountability starts with admitting that.'}`,
+      sensational: `${ev.title}, and that is only what they admit to. Our sources describe a week of panic behind closed doors${c ? ` in ${world.cities[c.capitalId]?.name ?? c.name}` : ''}. ${negative ? 'Is the worst still to come? Nobody we spoke to would rule it out.' : 'Is it too good to be true? Some insiders think so.'}`,
+      business: `${ev.title}. Strip away the politics and the question for investors is simple: does this change earnings? ${negative ? 'In the short term, yes. Exposure is concentrated, and the smart money is already rotating.' : 'Probably less than the headlines suggest, which is exactly when opportunities appear.'} Watch ${c ? `the ${c.adjective} currency` : 'the commodity complex'} next week.`,
+      international: `${ev.title}. From the outside, the pattern is familiar: ${negative ? 'a shock, a scramble, and neighbours recalculating their positions' : 'a success that rivals will study and try to copy'}. ${c && c.alliances.length ? `${c.name}'s allies have so far said the right things.` : 'Diplomats are, as ever, cautious.'} The region is preparing for a different year than the one it expected.`,
+      independent: `${ev.title}. Here is what we can confirm, and here is what remains unverified: much of the official account. Readers on the ground describe ${negative ? 'a tense but orderly week' : 'cautious optimism'}. We will keep asking the questions; whether we get answers is up to ${home && leader ? leader.name : 'those in power'}.`,
+      state: `${ev.title}. ${negative ? 'Adversity reveals character, and this week revealed the character of ' : 'This week showed the world the strength of '}${subject}. ${leader && home ? `Under ${leader.name}'s leadership, the nation` : 'The nation'} moves forward together, undistracted by foreign commentary and domestic doubters alike.`,
+    };
+    const pool2 = journalists.filter((j) => (o.countryId ? j.countryId === o.countryId : j.fame > 40));
+    const j = pool2.length && rng.bool(0.8) ? rng.pickWeighted(pool2, (x) => x.fame + 10) : undefined;
+    if (j) j.fame = Math.min(100, j.fame + 0.5);
+    const tone: NewsArticle['tone'] = o.bias === 'sensational' ? 'alarmist' : o.bias === 'opposition' ? 'negative' : o.bias === 'state' || o.bias === 'establishment' ? 'positive' : negative ? 'negative' : 'neutral';
+    out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: j?.id, eventId: ev.id, headline: rng.pick(heads[o.bias]), body: bodies[o.bias], tone, reach: Math.round(o.audience * 0.5 * 10) / 10, editorial: true });
+  }
+  world.news.push(...out);
+  return out;
+}
+
 export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): SocialPost[] {
   const out: SocialPost[] = [];
   const people = Object.values(world.people).filter((p) => p.alive && p.socialActivity > 0.05);
