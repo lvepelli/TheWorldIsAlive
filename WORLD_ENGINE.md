@@ -42,6 +42,10 @@ Severity scale: 1 minor local · 2 notable · 3 national · 4 major internationa
 
 Implemented chains: war (markets, allies join, refugees, attrition→end, anti-war protest, reconstruction), coup crackdown, collapse (neighbors react, warlords), crisis (unrest, bankruptcies, central bank), boom markets, energy (markets, politics), tech (market reaction, government interest, competitor response, scientist fame, diffusion), disaster (aid, blame, markets), epidemic (spread/contain/pandemic, vaccine), scandal fallout (survive/resign/downfall), protest escalation (revolution/crackdown/concession), movement growth, bankruptcy layoffs, startup progress, alliance trade deal, arms race, assassination crisis, independence recognition/war, migration politics, resource investment.
 
+## Weather (`weather.ts`)
+
+Five storm cells drift eastward along a tropical and a mid-latitude band; `stormCells(world, subDay)` is a pure function of `world.day`, so the map and the engine agree. Strength = (0.3 + climateRisk of the land beneath × 0.7) × season (`seasonFactor`: hurricane season peaks around September in the tropics, winter storms around January elsewhere). The `disaster` spawn rule sends half of its rolls to `stormBound()` countries as hurricanes or floods scaled by front strength; the rest keep the old climate-risk weighting.
+
 ## Trade (`trade.ts`)
 
 Nothing is stored: `tradeVolume(a, b)` = (min(gdp) × 0.04 + √(gdpA·gdpB) × 0.01) × neighbor 1.5 × ally 1.3 × relations factor (0.6 at −60 … 1.6 at +100) × openness (freedom). War or relations below −60 suspend a link. `tradeShare` (total / GDP, capped 0.8) enters the weekly growth potential as `(min(0.5, share) − 0.25) × 2`, so sanctions, wars and broken alliances have a lasting economic cost. The map scales trade arcs by log volume, the Trade overlay colours countries by share, and the inspector Trade section lists top partners.

@@ -9,6 +9,7 @@ import { SECTORS } from '../types';
 import * as A from './actions';
 import { relate } from '../simulation/relations';
 import { makePerson, makeOrg } from '../generator/world';
+import { stormBound } from '../simulation/weather';
 import { createEvent, fx, ref } from './engine';
 
 export interface SpawnRule {
@@ -114,7 +115,11 @@ export const SPAWN_RULES: SpawnRule[] = [
     id: 'disaster',
     weight: (w) => 0.25 + countries(w).reduce((s, c) => s + c.climateRisk / 3000, 0),
     run: (w, rng) => {
-      const c = pickCountry(w, rng, (x) => x.climateRisk + 10);
+      // Storms strike where the weather is: countries under a front are far likelier to get hurricanes and floods.
+      const fronts = stormBound(w);
+      const stormy = rng.next() < 0.5 && fronts.size > 0;
+      const c = stormy ? pickCountry(w, rng, (x) => (fronts.get(x.id) ?? 0) * 40 + x.climateRisk * 0.2) : pickCountry(w, rng, (x) => x.climateRisk + 10);
+      if (stormy && fronts.has(c.id)) return A.disaster(w, rng, c, rng.pickWeighted(['hurricane', 'flood'] as const, (k) => (k === 'hurricane' ? 3 : 2)), 'simulation', false, rng.float(0.7, 1.4) * (0.7 + (fronts.get(c.id) ?? 0.5)));
       const kind = rng.pickWeighted(['earthquake', 'flood', 'hurricane', 'drought', 'wildfire', 'volcano', 'tsunami'] as const, (k) => ({ earthquake: 2, flood: 3, hurricane: 2.5, drought: 2, wildfire: 2, volcano: 0.5, tsunami: 0.6 })[k]);
       return A.disaster(w, rng, c, kind, 'simulation', false, rng.next() < 0.1 ? 1.6 : rng.float(0.6, 1.2));
     },

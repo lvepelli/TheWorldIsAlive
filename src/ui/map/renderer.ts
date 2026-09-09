@@ -5,6 +5,7 @@
  */
 import type { World, Country, City, WorldEvent, EntityRef, ID } from '@/engine/types';
 import { tradeVolume, tradeShare } from '@/engine/simulation/trade';
+import { stormCells } from '@/engine/simulation/weather';
 import { buildContours, type Shapes, polygonArea } from './contours';
 import type { MapOverlay } from '@/state/store';
 import { clamp } from '@/engine/rng';
@@ -349,34 +350,24 @@ export class MapRenderer {
     }
   }
 
-  /** Weather fronts: slow storm cells that darken and flicker over climate-stressed land. Cosmetic, cheap. */
+  /** Weather fronts: the engine's storm cells (simulation-time positions, wall-clock sub-day glide), darkening and flickering over stressed land. */
   private drawWeather(world: World, offsets: number[], t: number, reduced: boolean): void {
-    const g = this.ctx; const W = this.W, H = this.H; const cam = this.camera; const geo = world.geography;
-    const CELLS = 5;
-    for (let i = 0; i < CELLS; i++) {
-      const speed = 0.9 + (i % 2) * 0.5; // grid units per minute, eastward
-      const x = ((i * 71.3 + 20) + (reduced ? 0 : (t / 60) * speed * 60)) % W;
-      const band = i % 2 === 0 ? 0.32 : 0.62; // tropics / mid-latitudes of the southern half
-      const y = H * band + Math.sin(t * 0.03 + i * 2) * 6 + ((i * 13) % 9);
-      // Intensity follows the climate risk of whatever lies beneath the cell.
-      const cx = Math.floor(((x % W) + W) % W), cy = Math.max(0, Math.min(H - 1, Math.floor(y)));
-      const r = geo.cells[cy * W + cx]; const under = r >= 0 ? world.countries[geo.countryOrder[r]] : undefined;
-      const risk = under ? under.climateRisk / 100 : 0.25;
-      const strength = 0.35 + risk * 0.65;
-      const rx = (11 + (i % 3) * 5) * cam.scale, ry = (6 + (i % 2) * 3) * cam.scale;
+    const g = this.ctx; const cam = this.camera;
+    const sub = reduced ? 0 : (t / 20) % 1; // glides a day's worth of motion over ~20 s of wall-clock
+    for (const [i, cell] of stormCells(world, sub).entries()) {
+      const rx = cell.rx * cam.scale, ry = cell.ry * cam.scale; const strength = cell.strength;
       for (const ox of offsets) {
-        const [sx, sy] = this.worldToScreen(x + ox, y);
+        const [sx, sy] = this.worldToScreen(cell.x + ox, cell.y);
         if (sx + rx < 0 || sx - rx > this.width || sy + ry < 0 || sy - ry > this.height) continue;
         const grad = g.createRadialGradient(sx, sy, 0, sx, sy, 1);
-        grad.addColorStop(0, `rgba(20,26,48,${0.34 * strength})`); grad.addColorStop(0.6, `rgba(20,26,48,${0.18 * strength})`); grad.addColorStop(1, 'rgba(20,26,48,0)');
+        grad.addColorStop(0, `rgba(20,26,48,${0.4 * strength})`); grad.addColorStop(0.6, `rgba(20,26,48,${0.2 * strength})`); grad.addColorStop(1, 'rgba(20,26,48,0)');
         g.save(); g.translate(sx, sy); g.scale(rx, ry); g.translate(-sx, -sy); g.fillStyle = grad; g.beginPath(); g.arc(sx, sy, 1, 0, Math.PI * 2); g.fill(); g.restore();
-        // Lightning: brief flashes inside the cell, more often where risk is high.
-        if (!reduced && risk > 0.3) {
-          const ph = (t * (0.7 + risk) + i * 1.9) % 3;
+        if (!reduced && strength > 0.45) {
+          const ph = (t * (0.5 + strength) + i * 1.9) % 3;
           if (ph < 0.12) {
             const fx = sx + Math.sin(i * 7 + Math.floor(t)) * rx * 0.4, fy = sy + Math.cos(i * 5 + Math.floor(t)) * ry * 0.4;
             const fl = g.createRadialGradient(fx, fy, 0, fx, fy, rx * 0.5);
-            fl.addColorStop(0, `rgba(220,230,255,${0.55 * (1 - ph / 0.12)})`); fl.addColorStop(1, 'rgba(220,230,255,0)');
+            fl.addColorStop(0, `rgba(220,230,255,${0.6 * (1 - ph / 0.12)})`); fl.addColorStop(1, 'rgba(220,230,255,0)');
             g.fillStyle = fl; g.beginPath(); g.arc(fx, fy, rx * 0.5, 0, Math.PI * 2); g.fill();
           }
         }
