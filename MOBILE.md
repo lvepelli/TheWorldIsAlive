@@ -36,7 +36,8 @@ More → *larger text* scales the whole UI by 15% (CSS `zoom` on `<html>`, so th
 - Device pixel ratio capped at 2 for the map canvas.
 - Static map raster rebuilt only on overlay change; city glow sprites cached.
 - React re-render throttled during fast-forward; lists paginate ("Load more").
-- Simulation runs ≈ 700 days/s on a laptop; fast-forward budgets 14 ms/frame so the UI stays responsive.
+- Simulation costs ≈ 2.0 ms/day in year 1 and ≈ 2.5 ms/day in year 10 (Node, v0.6.0: trade, weather, movements and premise arcs included), i.e. ≈ 400–500 days/s; fast-forward budgets 14 ms/frame so the UI stays responsive. Saves stay ≈ 7 MB after ten years thanks to yearly compaction.
+- Headless software-rendered Chromium (no GPU) draws the world screen with all links, fronts and weather at ≈ 21 fps on a 1440×900 viewport and ≈ 28 fps on a 390×844 one; real phones with GPU compositing are faster. If a low-end device struggles, the cheapest levers are `drawClouds`/`drawWeather` (radial gradients) and the per-frame border pass in `renderer.ts`.
 
 ## PWA
 

@@ -48,9 +48,9 @@ export function MarketsScreen(): React.ReactElement {
             </div>
           </div>
           <div className="panel-solid" style={{ padding: 12 }}>
-            <div className="section-title">National indexes</div>
+            <div className="section-title">National indexes <span className="dim" style={{ fontWeight: 400 }}>· 30d</span></div>
             <div className="list">
-              {indexes.slice(0, 8).map((i) => { const ch = pctChange(i.history, 7); return <div key={i.id} className="row clickable" onClick={() => select({ kind: 'country', id: i.countryId! })}><span className="grow ellipsis">{i.name} <span className="dim">{world.countries[i.countryId!]?.name}</span></span><Sparkline data={i.history.slice(-40)} width={60} height={18} /><span className={`mono ${ch >= 0 ? 'up' : 'down'}`} style={{ width: 60, textAlign: 'right' }}>{fmtPct(ch)}</span></div>; })}
+              {indexes.slice(0, 8).map((i) => { const ch = pctChange(i.history, 30); return <div key={i.id} className="row clickable" onClick={() => select({ kind: 'country', id: i.countryId! })}><span className="grow ellipsis">{i.name} <span className="dim">{world.countries[i.countryId!]?.name}</span></span><Sparkline data={i.history.slice(-30)} width={60} height={18} /><span className={`mono ${ch >= 0 ? 'up' : 'down'}`} style={{ width: 60, textAlign: 'right' }} title="30-day change">{fmtPct(ch)}</span></div>; })}
             </div>
           </div>
         </div>
