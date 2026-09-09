@@ -84,9 +84,9 @@ src/
     types.ts                data model (World, Country, Person, Company, Event …)
     names.ts                procedural naming (language families)
     time.ts, ids.ts
-    generator/              geography.ts (continents, borders), world.ts (everything else)
-    simulation/             tick.ts (orchestrator), systems.ts, characters.ts, markets.ts,
-                            information.ts (news/social), summary.ts
+    generator/              geography.ts (continents, borders), world.ts (everything else), premise.ts (starting situations + featured seeds)
+    simulation/             tick.ts (orchestrator), systems.ts, characters.ts, objectives.ts (goals → actions), markets.ts,
+                            trade.ts, weather.ts, anniversaries.ts, information.ts (news/social/editorials), summary.ts, relations.ts
     events/                 engine.ts (createEvent/effects), actions.ts (world mutations),
                             spawn.ts (spontaneous events), consequences.ts (reaction rules)
     godmode/                presets.ts, interpreter.ts (freeform → plan), execute.ts

@@ -34,12 +34,16 @@ Design principles:
 - `WorldEvent` — `category`, `type` (rule id such as `war.declared`), `severity 1–5`, `location {countryId, cityId, x, y}`, `actors`, `causedBy` (`'simulation' | 'player' | eventId`), `consequences[]`, `relatedEvents[]`, `affectedEntities[]`, `effects[]` (`EffectDelta`), `tags`, `historic`, `playerIntervention`, `data` (rule-specific payload, e.g. market `shocks`).
 - `EffectDelta` — `{ target: EntityRef, field, delta }`; a field ending in `%` is multiplicative. Bounds are enforced in `applyEffect()`.
 
+## Generation (`src/engine/generator`)
+
+`generateWorld({ seed })` is deterministic: `geography.ts` grows continents and borders on a 240×120 grid; `world.ts` names countries, founds cities, raises leaders, citizens, companies, organizations and media outlets, then wires relationships between people (rivals, allies, mentors, family, partners, funders) and seeds markets. Last, `premise.ts` picks one of eight starting situations from the seed (The Cold Peace, The Long Boom, The Age of Unrest, After the Plague, The Machine Dawn, The Fractured Map, The Gilded Age, The Quiet Century), nudges the initial state, records a historic `premise.opening` event on day 0 and schedules that premise's opening arc into `world.pending`. `premiseFor(seed)` is cheap enough for the intro to show the premise before generation; `FEATURED_SEEDS` holds one curated seed per premise (tested to stay in sync).
+
 ## Event flow
 
 1. `tickDay(world, rng)` increments `day`.
 2. `resolvePending` runs consequence rules whose `dueDay` has arrived (`events/consequences.ts` → `CONSEQUENCE_RULES`).
-3. `spawnDailyEvents` samples spontaneous events from weighted `SPAWN_RULES` (`events/spawn.ts`). Weights depend on world state (unrest → protests, hostility → clashes, tech → breakthroughs…).
-4. Weekly / monthly / yearly systems run (`simulation/systems.ts`, `simulation/characters.ts`).
+3. `spawnDailyEvents` samples spontaneous events from weighted `SPAWN_RULES` (`events/spawn.ts`). Weights depend on world state (unrest → protests, hostility → clashes, tech → breakthroughs…); the disaster rule consults `simulation/weather.ts` (storm cells shared with the map) so hurricanes and floods strike under fronts. `anniversaries()` then commemorates major events on their 1st/10th/25th/50th anniversaries.
+4. Weekly / monthly / yearly systems run: `simulation/systems.ts` (economy with `simulation/trade.ts` volumes, polarization and movement support drifting to sustainable levels, elections with movement challengers, upheaval with a two-year cooldown, World Games and Laurel Prizes), `simulation/characters.ts` (mortality, succession, personal life, objectives via `simulation/objectives.ts`: leaders make peace/call votes/reform/resign, CEOs pivot), and weekly editorials from `simulation/information.ts`.
 5. `react()` walks every event created today against `TRIGGERS` and schedules follow-ups into `world.pending`.
 6. `tickMarkets()` applies fundamentals + `collectShocks(events)`.
 7. `generateNews()` and `generateSocial()` derive coverage and reactions from today's events; `updateTrending()` aggregates hashtags.
