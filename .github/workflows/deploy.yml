@@ -52,15 +52,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Resolve the live URL (GitHub Pages if enabled, otherwise the jsDelivr mirror of gh-pages)
+      - name: Resolve the live URL (GitHub Pages if enabled, otherwise the githack mirror of gh-pages)
         id: live
         run: |
           PAGES="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
           SHA_GH=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
-          MIRROR="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${SHA_GH}/index.html"
-          LATEST="https://cdn.jsdelivr.net/gh/${{ github.repository }}@gh-pages/index.html"
-          # purge the branch-ref mirror so the "latest" link refreshes quickly
-          for f in index.html sw.js manifest.webmanifest build-id.txt; do curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@gh-pages/$f" >/dev/null || true; done
+          MIRROR="https://rawcdn.githack.com/${{ github.repository }}/${SHA_GH}/index.html"
+          LATEST="https://raw.githack.com/${{ github.repository }}/gh-pages/index.html"
           URL=""
           for i in $(seq 1 18); do
             got=$(curl -fsSL "${PAGES}build-id.txt" 2>/dev/null || true)
@@ -68,10 +66,10 @@ jobs:
             echo "Pages not serving this build yet ($i): '$got'"; sleep 10
           done
           if [ -z "$URL" ]; then
-            echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using the jsDelivr mirror for QA."
+            echo "::warning::GitHub Pages is not enabled or not serving build ${GITHUB_SHA}. Enable it once: Settings → Pages → Build and deployment → Source: Deploy from a branch → gh-pages / (root). Using the githack mirror for QA."
             for i in $(seq 1 12); do
-              got=$(curl -fsSL "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${SHA_GH}/build-id.txt" 2>/dev/null || true)
-              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; break; fi
+              got=$(curl -fsSL "https://rawcdn.githack.com/${{ github.repository }}/${SHA_GH}/build-id.txt" 2>/dev/null || true)
+              if [ "$got" = "${GITHUB_SHA}" ]; then URL="$MIRROR"; echo "Mirror is live"; curl -sSI "$MIRROR" | grep -i "content-type" || true; break; fi
               echo "mirror not ready ($i): '$got'"; sleep 10
             done
           fi

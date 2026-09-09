@@ -92,7 +92,7 @@ async function run(name, viewport, mobile) {
     const sw = await page.evaluate(async () => { const r = await fetch(new URL('sw.js', location.href).href); return r.ok && (await r.text()).includes('CACHE'); });
     check(sw, 'service worker file served');
     const reg = await page.evaluate(async () => { if (!('serviceWorker' in navigator)) return 'unsupported'; await new Promise((r) => setTimeout(r, 1500)); const rg = await navigator.serviceWorker.getRegistration(); return rg ? 'registered' : 'none'; });
-    if (SITE.startsWith('https') && !SITE.includes('jsdelivr')) check(reg === 'registered', `service worker ${reg}`); else lines.push(`- ℹ️ service worker ${reg} (only asserted on first-party https hosts)`);
+    if (SITE.startsWith('https') && !/jsdelivr|githack|statically/.test(SITE)) check(reg === 'registered', `service worker ${reg}`); else lines.push(`- ℹ️ service worker ${reg} (only asserted on first-party https hosts)`);
     check(errors.length === 0, `no runtime errors${errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''}`);
   } catch (e) {
     check(false, `exception: ${e.message.split('\n')[0]}`);
