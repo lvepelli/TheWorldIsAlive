@@ -567,6 +567,34 @@ SPAWN_RULES.push({
   },
 });
 
+SPAWN_RULES.push({
+  id: 'mentor.turns',
+  weight: () => 0.1,
+  run: (w, rng) => {
+    // A mentor whose protégé has outgrown them, and who is ambitious enough to mind, turns on them.
+    const pool = livePeople(w).filter((p) => p.relationships.some((r) => r.type === 'mentor' && r.strength > 0 && w.people[r.target.id]?.alive));
+    const pairs = pool.flatMap((protege) => protege.relationships.filter((r) => r.type === 'mentor' && r.strength > 0 && w.people[r.target.id]?.alive).map((r) => ({ protege, mentor: w.people[r.target.id], rel: r })));
+    const ripe = pairs.filter(({ protege, mentor }) => (protege.fame > mentor.fame + 15 || protege.influence > mentor.influence + 15) && mentor.personality.ambition > 0.55);
+    if (!ripe.length) return null;
+    const { protege, mentor } = rng.pickWeighted(ripe, ({ protege: a, mentor: m }) => a.fame + m.personality.ambition * 40);
+    protege.relationships = protege.relationships.filter((r) => r.target.id !== mentor.id);
+    mentor.relationships = mentor.relationships.filter((r) => r.target.id !== protege.id);
+    relate(w, mentor, protege, 'rival', -0.6);
+    mentor.history.push({ day: w.day, text: `Publicly disowned former protégé ${protege.name}.` });
+    protege.history.push({ day: w.day, text: `Was disowned by mentor ${mentor.name}.` });
+    protege.memories.push({ day: w.day, text: `${mentor.name}, who taught me everything, turned on me in public.`, weight: 0.7 });
+    const c = w.countries[protege.countryId];
+    return createEvent(w, {
+      category: 'personal', type: 'mentor.turns', severity: protege.fame > 60 ? 3 : 2,
+      title: `${mentor.name} turns on protégé ${protege.name}`,
+      description: `${mentor.name}, long credited with ${protege.name}'s rise, ${rng.pick(['called them "a creation that forgot its creator"', 'published a memoir settling every score', 'endorsed their rival', 'told an interviewer the student "learned nothing that mattered"'])}. ${rng.pick(['The rupture stunned their circle.', 'Friends had seen it coming for years.', `${protege.firstName} has not responded.`])}`,
+      location: { cityId: mentor.cityId }, actors: [ref('person', mentor.id), ref('person', protege.id)],
+      effects: [fx('person', mentor.id, 'fame', 5), fx('person', protege.id, 'reputation', -4), fx('person', protege.id, 'fame', 3)],
+      tags: ['mentor', 'feud', 'people', ...(c ? [c.code] : [])],
+    });
+  },
+});
+
 function leaderAgg(w: World, c: Country): number { return w.people[c.leaderId]?.personality.aggression ?? 0.5; }
 
 /** Roll for spontaneous events for this day. */

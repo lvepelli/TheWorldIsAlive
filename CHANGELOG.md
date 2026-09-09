@@ -43,6 +43,8 @@
 - Summaries: the premise line appears in the first week of daily summaries, the first monthly summary and the first yearly review only (it used to repeat monthly for a year).
 - Anniversaries: on the 1st, 10th, 25th and 50th anniversary of a major event (severity 5, or severity 4 with a long chain, in the military, environmental, health, scientific or leadership categories) a commemoration is recorded and chained to the original, so sagas stretch across decades and the History tab shows the world remembering.
 - Summits have agendas: each summit records its topic and, weeks later, either delivers an accord (a climate fund, debt relief for the poorest guest, a trade agreement, machine-safety rules, an arms-control protocol, a refugee framework or a security council, each with fitting effects) or collapses with damaged relations; success depends on relations, freedom and whether any guests are at war.
+- Relationships: a mentor whose protégé has outgrown them (and who is ambitious enough to mind) publicly disowns them — the tie flips to rivalry, the protégé remembers it, and the feud rules take over. Sagas rooted in a summit are named ("The Laraland accord", "The talks that failed in Micaunia").
+- Fix: a persuaded leader's new goal was being overwritten by the standing-based rewrite and could be starved of attempts because event memories evicted the urgency marker; urgency now keys off the durable life-story entry, persists for eight months, and objective-driven actions run for any sitting leader (generals and activists included), with a persuaded leader following through 80% of the time.
 
 ## 0.5.0 — rivals, fronts and editorials
 

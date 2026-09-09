@@ -154,7 +154,7 @@ describe('simulation', () => {
     const w = generateWorld({ seed: 'pivot' });
     const rng = RNG.fromState(w.rngState);
     const co = Object.values(w.companies).filter((x) => x.alive && x.sector !== 'biotech' && w.people[x.ceoId]?.alive).sort((a, b) => b.value - a.value)[0];
-    const ceo = w.people[co.ceoId]; ceo.objective = 'cure cancer within a decade'; ceo.memories.push({ day: 0, text: 'Decided to cure cancer within a decade after an unusual conversation.', weight: 0.5 });
+    const ceo = w.people[co.ceoId]; ceo.objective = 'cure cancer within a decade'; ceo.history.push({ day: 0, text: 'Persuaded by an interviewer to cure cancer within a decade.' });
     let pivoted = false;
     for (let i = 0; i < 730 && !pivoted; i++) { tickDay(w, rng); pivoted = co.sector === 'biotech'; }
     expect(pivoted).toBe(true);
@@ -181,7 +181,7 @@ describe('simulation', () => {
     expect(w.events.filter((e) => e.type === 'election.called').length).toBe(0);
     const w2 = generateWorld({ seed: 'no-snap' });
     const rng2 = RNG.fromState(w2.rngState);
-    const auto = Object.values(w2.countries).find((c) => !c.electionEvery)!; w2.people[auto.leaderId].objective = 'hold free elections'; w2.people[auto.leaderId].memories.push({ day: 0, text: 'Decided to hold free elections after an unusual conversation.', weight: 0.5 });
+    const auto = Object.values(w2.countries).find((c) => !c.electionEvery)!; w2.people[auto.leaderId].objective = 'hold free elections'; w2.people[auto.leaderId].history.push({ day: 0, text: 'Persuaded by an interviewer to hold free elections.' });
     for (let i = 0; i < 365; i++) tickDay(w2, rng2);
     expect(w2.events.some((e) => e.type === 'election.called' && e.location.countryId === auto.id)).toBe(true);
   }, 30000);

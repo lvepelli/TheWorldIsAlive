@@ -3,7 +3,7 @@
  * lose influence, found companies, run for office, die and retire.
  */
 import { RNG, clamp } from '../rng';
-import type { World, Person, WorldEvent, Sector, Company } from '../types';
+import type { World, Person, WorldEvent, Sector, Company, Country } from '../types';
 import { DAYS_PER_YEAR, SECTORS } from '../types';
 import * as A from '../events/actions';
 import { createEvent, fx, ref } from '../events/engine';
@@ -73,8 +73,8 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
     }
     // Tier-1 characters pursue objectives; tier-2 do so rarely
     // A freshly adopted objective (e.g. after a persuasive interview) is pursued with urgency for a while.
-    const urgent = p.memories.some((m) => m.text.startsWith('Decided to') && world.day - m.day < 240);
-    const drive = urgent ? Math.max(0.5, (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition) * 4) : (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition);
+    const urgent = p.history.some((h) => h.text.startsWith('Persuaded by an interviewer') && world.day - h.day < 240);
+    const drive = urgent ? Math.max(0.75, (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition) * 4) : (p.tier === 1 ? 0.06 : 0.02) * (0.5 + p.personality.ambition);
     if (rng.next() > drive) continue;
     const ev = pursueObjective(world, rng, p);
     if (ev) out.push(ev);
@@ -84,6 +84,7 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
 
 function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
   const c = world.countries[p.countryId];
+  if (c && c.leaderId === p.id) { const acted = leaderActsOnObjective(world, rng, p, c); if (acted) return acted; }
   switch (p.profession) {
     case 'entrepreneur':
     case 'engineer':
@@ -116,30 +117,10 @@ function pursueObjective(world: World, rng: RNG, p: Person): WorldEvent | null {
     }
     case 'politician': {
       if (c.leaderId === p.id) {
-        // Leaders' goals shift with their standing
-        if (c.approval < 35 && p.objective !== 'survive the next election') p.objective = c.electionEvery ? 'survive the next election' : 'crush the opposition before it grows';
-        else if (c.approval > 65 && rng.bool(0.3)) p.objective = rng.pick(['secure a legacy', 'expand national influence', 'reshape the constitution']);
-        // Objectives drive actions: a leader talked (or pushed) into peace, elections, reform or resignation acts on it.
-        const goal = p.objective.toLowerCase();
-        if (/\b(peace|ceasefire|end the war|stop the war|truce)\b/.test(goal) && c.atWarWith.length && rng.bool(0.5)) {
-          const enemy = world.countries[c.atWarWith[0]];
-          if (enemy) { const ev = A.endWar(world, rng, c, enemy, 'simulation', false, 'stalemate'); if (ev) { ev.description += ` ${p.name} had made peace a personal objective.`; p.history.push({ day: world.day, text: `Ended the war with ${enemy.name}.` }); p.objective = 'secure a legacy'; return ev; } }
-        }
-        if (/\b(peace|reconcil|detente|détente|talks)\b/.test(goal) && !c.atWarWith.length && rng.bool(0.4)) {
-          const worst = Object.entries(c.relations).sort((a, b) => a[1] - b[1])[0]; const other = worst && worst[1] < -20 ? world.countries[worst[0]] : undefined;
-          if (other) { const ev = A.shiftTension(world, rng, c, other, -25, 'simulation', false, `an olive branch from ${p.name}`); p.objective = 'secure a legacy'; return ev; }
-        }
-        if (/\b(call|hold|allow|free|first|early|snap|let the people|give the people)\b[^.]*\b(election|elections|vote|polls)\b|\bgo to the polls\b|\bdemand new elections\b/.test(goal) && !/\b(win|survive)\b/.test(goal) && rng.bool(0.5)) {
-          if (!c.electionEvery) c.electionEvery = 5;
-          c.nextElectionYear = yearOf(world.day, world.meta.startYear);
-          p.objective = 'survive the next election';
-          return createEvent(world, { category: 'political', type: 'election.called', severity: 3, title: `${p.name} calls an election in ${c.name}`, description: `${p.name} announced a national vote, ${rng.pick(['to the surprise of the cabinet', 'after weeks of private persuasion', 'saying the people deserve a say'])}. Campaigning begins immediately.`, location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('country', c.id, 'polarization', 4), fx('country', c.id, 'freedom', c.freedom < 40 ? 8 : 0)], tags: ['election', 'politics', c.code] });
-        }
-        if (/\b(resign|step down|retire|hand over)\b/.test(goal) && rng.bool(0.5)) { const ev = A.changeLeader(world, rng, c, 'resignation'); ev.description += ` ${p.name} had spoken openly of stepping down.`; return ev; }
-        if (/\b(reform|free the press|democra|liberal|rights|open up)\b/.test(goal) && c.freedom < 75 && rng.bool(0.5)) {
-          p.objective = 'secure a legacy';
-          return createEvent(world, { category: 'political', type: 'policy', severity: 3, title: `${c.name} loosens the state's grip: reform package passes`, description: `${p.name} pushed through ${rng.pick(['a press-freedom law', 'an amnesty for political prisoners', 'independent courts', 'a bill of rights'])}, calling it "${rng.pick(['overdue', 'the beginning', 'what I promised'])}". Hardliners are furious.`, location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('country', c.id, 'freedom', 10), fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', -2), fx('country', c.id, 'polarization', 3)], tags: ['reform', 'politics', c.code] });
-        }
+        // Leaders' goals shift with their standing — unless they have just adopted a goal (e.g. after a persuasive interview), which they see through first.
+        const fresh = p.history.some((h) => h.text.startsWith('Persuaded by an interviewer') && world.day - h.day < 240);
+        if (!fresh && c.approval < 35 && p.objective !== 'survive the next election') p.objective = c.electionEvery ? 'survive the next election' : 'crush the opposition before it grows';
+        else if (!fresh && c.approval > 65 && rng.bool(0.3)) p.objective = rng.pick(['secure a legacy', 'expand national influence', 'reshape the constitution']);
         // Leaders enact policies
         const policy = rng.pick(['tax cut', 'infrastructure program', 'security law', 'press regulation', 'green transition plan', 'military modernization', 'anti-corruption drive', 'welfare expansion']);
         const effects = {
@@ -264,7 +245,7 @@ function pivotForObjective(world: World, rng: RNG, p: Person, co: Company): Worl
   const pivot = PIVOTS.find(([re]) => re.test(goal));
   if (!pivot || co.sector === pivot[1]) return null;
   // A persuaded chief pivots readily; a generated ambition only sometimes, and never against the company's own name.
-  const persuaded = p.memories.some((m) => m.text.startsWith('Decided to') && world.day - m.day < 240);
+  const persuaded = p.history.some((h) => h.text.startsWith('Persuaded by an interviewer') && world.day - h.day < 240);
   if (co.name.toLowerCase().includes(co.sector) || /\b(bio|pharma|bank|motors|mining|energy|foods|media|steel)\b/i.test(co.name) && !persuaded) return null;
   if (!rng.bool(persuaded ? 0.8 : 0.25)) return null;
   const from = co.sector; co.sector = pivot[1];
@@ -279,4 +260,32 @@ export function fieldFromObjective(objective: string): string | undefined {
   const g = objective.toLowerCase();
   const table: [RegExp, string][] = [[/\b(cure|vaccine|disease|medicine|cancer|aging|health)\b/, 'drug'], [/\b(space|rocket|mars|orbit|satellite)\b/, 'rocket'], [/\b(solar|clean|climate|renewable|fusion|battery|batteries|energy)\b/, 'battery'], [/\b(ai|robot|automation|software|quantum|computer)\b/, 'AI model'], [/\b(chip|semiconductor|processor)\b/, 'chip'], [/\b(material|alloy|graphene)\b/, 'material'], [/\b(reactor|nuclear)\b/, 'reactor'], [/\b(drone|weapon|missile)\b/, 'drone']];
   return table.find(([re]) => re.test(g))?.[1];
+}
+
+/** Objective-driven actions for any sitting leader (politician, general or activist alike). */
+function leaderActsOnObjective(world: World, rng: RNG, p: Person, c: Country): WorldEvent | null {
+    // Objectives drive actions: a leader talked (or pushed) into peace, elections, reform or resignation acts on it.
+    const goal = p.objective.toLowerCase();
+    const fresh = p.history.some((h) => h.text.startsWith('Persuaded by an interviewer') && world.day - h.day < 240);
+    const act = fresh ? 0.8 : 0.5; // a freshly persuaded leader follows through more reliably
+    if (/\b(peace|ceasefire|end the war|stop the war|truce)\b/.test(goal) && c.atWarWith.length && rng.bool(act)) {
+      const enemy = world.countries[c.atWarWith[0]];
+      if (enemy) { const ev = A.endWar(world, rng, c, enemy, 'simulation', false, 'stalemate'); if (ev) { ev.description += ` ${p.name} had made peace a personal objective.`; p.history.push({ day: world.day, text: `Ended the war with ${enemy.name}.` }); p.objective = 'secure a legacy'; return ev; } }
+    }
+    if (/\b(peace|reconcil|detente|détente|talks)\b/.test(goal) && !c.atWarWith.length && rng.bool(act * 0.8)) {
+      const worst = Object.entries(c.relations).sort((a, b) => a[1] - b[1])[0]; const other = worst && worst[1] < -20 ? world.countries[worst[0]] : undefined;
+      if (other) { const ev = A.shiftTension(world, rng, c, other, -25, 'simulation', false, `an olive branch from ${p.name}`); p.objective = 'secure a legacy'; return ev; }
+    }
+    if (/\b(call|hold|allow|free|first|early|snap|let the people|give the people)\b[^.]*\b(election|elections|vote|polls)\b|\bgo to the polls\b|\bdemand new elections\b/.test(goal) && !/\b(win|survive)\b/.test(goal) && rng.bool(act)) {
+      if (!c.electionEvery) c.electionEvery = 5;
+      c.nextElectionYear = yearOf(world.day, world.meta.startYear);
+      p.objective = 'survive the next election';
+      return createEvent(world, { category: 'political', type: 'election.called', severity: 3, title: `${p.name} calls an election in ${c.name}`, description: `${p.name} announced a national vote, ${rng.pick(['to the surprise of the cabinet', 'after weeks of private persuasion', 'saying the people deserve a say'])}. Campaigning begins immediately.`, location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('country', c.id, 'polarization', 4), fx('country', c.id, 'freedom', c.freedom < 40 ? 8 : 0)], tags: ['election', 'politics', c.code] });
+    }
+    if (/\b(resign|step down|retire|hand over)\b/.test(goal) && rng.bool(act)) { const ev = A.changeLeader(world, rng, c, 'resignation'); ev.description += ` ${p.name} had spoken openly of stepping down.`; return ev; }
+    if (/\b(reform|free the press|democra|liberal|rights|open up)\b/.test(goal) && c.freedom < 75 && rng.bool(act)) {
+      p.objective = 'secure a legacy';
+      return createEvent(world, { category: 'political', type: 'policy', severity: 3, title: `${c.name} loosens the state's grip: reform package passes`, description: `${p.name} pushed through ${rng.pick(['a press-freedom law', 'an amnesty for political prisoners', 'independent courts', 'a bill of rights'])}, calling it "${rng.pick(['overdue', 'the beginning', 'what I promised'])}". Hardliners are furious.`, location: { countryId: c.id }, actors: [ref('person', p.id), ref('country', c.id)], effects: [fx('country', c.id, 'freedom', 10), fx('country', c.id, 'approval', 4), fx('country', c.id, 'stability', -2), fx('country', c.id, 'polarization', 3)], tags: ['reform', 'politics', c.code] });
+    }
+    return null;
 }
