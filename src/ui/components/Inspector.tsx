@@ -10,6 +10,7 @@ import { Sparkline, LineChart } from './Sparkline';
 import { RelationGraph } from './RelationGraph';
 import { Post } from '../screens/SocialScreen';
 import { fmtMoneyB, fmtPop, fmtPct, catVar, sevLabel, titleCase } from '../format';
+import { tradeLinks, tradeShare } from '@/engine/simulation/trade';
 import { ageOf, formatDate, daysAgo } from '@/engine/time';
 import { pctChange } from '@/engine/simulation/markets';
 import { sentimentFor } from '@/engine/simulation/information';
@@ -133,6 +134,7 @@ function CountryView({ c }: { c: Country }): React.ReactElement {
           </div>
           {idx && <Section title={`${idx.name} · ${idx.value.toFixed(0)}`} right={<span className={pctChange(idx.history, 30) >= 0 ? 'up' : 'down'}>{fmtPct(pctChange(idx.history, 30))} 30d</span>}><Sparkline data={idx.history.slice(-90)} width={360} height={40} /></Section>}
           <Section title="Leadership">{leader && <EntityRow refx={{ kind: 'person', id: leader.id }} name={leader.name} sub={`${leader.title} · ${leader.ideology} · approval ${c.approval.toFixed(0)}%`} />}<div className="dim" style={{ fontSize: 12, padding: '0 10px' }}>{c.electionEvery ? `Elections every ${c.electionEvery} years · next ${c.nextElectionYear}` : 'No elections'} · motto “{motto(c.culture.values)}” · language {c.culture.language}</div></Section>
+          {(() => { const links = tradeLinks(world, c).slice(0, 5); const share = tradeShare(world, c); return <Section title="Trade" right={<span className="dim mono">{(share * 100).toFixed(0)}% of GDP</span>}>{links.length ? <div className="list">{links.map(({ partner, volume }) => <EntityRow key={partner.id} refx={{ kind: 'country', id: partner.id }} name={partner.name} sub={`${fmtMoneyB(volume)} / year${c.atWarWith.includes(partner.id) ? ' · suspended' : c.alliances.includes(partner.id) ? ' · ally' : ''}`} />)}</div> : <div className="dim">No active trade{c.tradePartners.length ? ' — partners cut off by war or hostility' : ''}.</div>}</Section>; })()}
           <Section title="Resources"><div className="chips">{Object.entries(c.resources).map(([k, v]) => <span key={k} className="chip">{titleCase(k)} <b style={{ color: barColor(v) }}>{v.toFixed(0)}</b></span>)}</div></Section>
           <Section title={`Cities (${cities.length})`}><div className="list">{cities.slice(0, 6).map((ct) => <EntityRow key={ct.id} refx={{ kind: 'city', id: ct.id }} name={`${ct.name}${ct.capital ? ' ★' : ''}`} sub={`${fmtPop(ct.population)} · prosperity ${ct.prosperity.toFixed(0)} · unrest ${ct.unrest.toFixed(0)}`} />)}</div></Section>
           {people.length > 0 && <Section title="Notable people"><div className="list">{people.map((p) => <EntityRow key={p.id} refx={{ kind: 'person', id: p.id }} name={p.name} sub={`${p.title ?? titleCase(p.profession)} · influence ${p.influence.toFixed(0)}`} />)}</div></Section>}

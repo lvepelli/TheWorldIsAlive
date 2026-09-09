@@ -4,6 +4,7 @@
  * dynamic layers (borders, cities, routes, events, labels) are drawn per frame.
  */
 import type { World, Country, City, WorldEvent, EntityRef, ID } from '@/engine/types';
+import { tradeVolume } from '@/engine/simulation/trade';
 import { buildContours, type Shapes, polygonArea } from './contours';
 import type { MapOverlay } from '@/state/store';
 import { clamp } from '@/engine/rng';
@@ -318,7 +319,7 @@ export class MapRenderer {
       const drawn = new Set<string>();
       for (const c of countries) {
         for (const a of c.alliances) { const key = c.id < a ? c.id + a : a + c.id; if (drawn.has(key)) continue; drawn.add(key); const o = world.countries[a]; if (!o) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); const hot = sel === c.id || sel === a; g.strokeStyle = hot ? 'rgba(255,210,122,0.85)' : 'rgba(240,179,90,0.16)'; g.lineWidth = hot ? 1.6 : 0.9; g.stroke(); }
-        if (sel === c.id || all) for (const tp of c.tradePartners) { if (all && c.id > tp) continue; const o = world.countries[tp]; if (!o || c.alliances.includes(tp)) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); g.strokeStyle = sel === c.id ? 'rgba(143,211,255,0.45)' : 'rgba(143,211,255,0.14)'; g.lineWidth = 1; g.setLineDash([4, 6]); g.lineDashOffset = reduced ? 0 : -t * 20; g.stroke(); g.setLineDash([]); }
+        if (sel === c.id || all) for (const tp of c.tradePartners) { if (all && c.id > tp) continue; const o = world.countries[tp]; if (!o || c.alliances.includes(tp)) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); const vol = tradeVolume(world, c, o); if (vol <= 0) continue; const wgt = Math.min(1, Math.log10(1 + vol) / 4); this.arc(g, ax, ay, bx, by); g.strokeStyle = sel === c.id ? `rgba(143,211,255,${0.3 + wgt * 0.5})` : `rgba(143,211,255,${0.08 + wgt * 0.18})`; g.lineWidth = 0.6 + wgt * 2.4; g.setLineDash([4, 6]); g.lineDashOffset = reduced ? 0 : -t * (12 + wgt * 24); g.stroke(); g.setLineDash([]); }
         for (const w of c.atWarWith) { if (c.id > w) continue; const o = world.countries[w]; if (!o) continue; const [ax, ay] = shift(c); const [bx, by] = this.capitalPos(world, o); this.arc(g, ax, ay, bx, by); g.strokeStyle = `rgba(255,77,77,${0.5 + 0.3 * Math.sin(t * 4)})`; g.lineWidth = 2; g.setLineDash([6, 5]); g.lineDashOffset = reduced ? 0 : -t * 30; g.stroke(); g.setLineDash([]); }
       }
     }

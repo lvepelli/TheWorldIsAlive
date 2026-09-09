@@ -42,6 +42,10 @@ Severity scale: 1 minor local · 2 notable · 3 national · 4 major internationa
 
 Implemented chains: war (markets, allies join, refugees, attrition→end, anti-war protest, reconstruction), coup crackdown, collapse (neighbors react, warlords), crisis (unrest, bankruptcies, central bank), boom markets, energy (markets, politics), tech (market reaction, government interest, competitor response, scientist fame, diffusion), disaster (aid, blame, markets), epidemic (spread/contain/pandemic, vaccine), scandal fallout (survive/resign/downfall), protest escalation (revolution/crackdown/concession), movement growth, bankruptcy layoffs, startup progress, alliance trade deal, arms race, assassination crisis, independence recognition/war, migration politics, resource investment.
 
+## Trade (`trade.ts`)
+
+Nothing is stored: `tradeVolume(a, b)` = (min(gdp) × 0.08 + √(gdpA·gdpB) × 0.02) × neighbor 1.5 × ally 1.3 × relations factor (0.6 at −60 … 1.6 at +100) × openness (freedom). War or relations below −60 suspend a link. `tradeShare` (total / GDP, capped 0.8) enters the weekly growth potential as `(min(0.5, share) − 0.15) × 2`, so sanctions, wars and broken alliances have a lasting economic cost. The map scales trade arcs by log volume; the inspector's Trade section lists top partners.
+
 ## Markets (`markets.ts`)
 
 Daily: commodities random-walk with mean reversion; companies move by fundamentals (growth, national GDP growth, inflation), global mood, sector-commodity betas, country unrest/war, and event `shocks` (`{sector|countryId|companyId|commodityId, pct}`) collected from today's events; national indexes are value-weighted company returns; the World Composite is GDP-weighted. Histories keep 120 days.

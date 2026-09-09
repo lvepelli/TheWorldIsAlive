@@ -2,6 +2,7 @@
  * Slow-moving simulation systems. These run weekly / monthly / yearly and
  * shape the numbers that the event engine reacts to.
  */
+import { tradeShare } from './trade';
 import { RNG, clamp } from '../rng';
 import type { World, Country, WorldEvent } from '../types';
 import { DAYS_PER_YEAR } from '../types';
@@ -22,7 +23,8 @@ export function weeklyTick(world: World, rng: RNG): void {
     // GDP compounding
     c.gdp = Math.max(1, c.gdp * (1 + (c.gdpGrowth / 100) * wk));
     // Growth mean-reverts toward a potential determined by tech, stability and freedom
-    const potential = 1 + (c.technology - 50) / 40 + (c.stability - 50) / 60 + (c.freedom - 50) / 100 - (c.corruption - 40) / 80 - (c.atWarWith.length ? 3 : 0) - Math.max(0, c.debt - 100) / 80;
+    const trade = tradeShare(world, c); // open, well-connected economies grow faster; losing partners hurts
+    const potential = 1 + (c.technology - 50) / 40 + (c.stability - 50) / 60 + (c.freedom - 50) / 100 - (c.corruption - 40) / 80 - (c.atWarWith.length ? 3 : 0) - Math.max(0, c.debt - 100) / 80 + (Math.min(0.5, trade) - 0.15) * 2;
     c.gdpGrowth += (potential - c.gdpGrowth) * 0.04 + rng.gauss(0, 0.12);
     c.gdpGrowth = clamp(c.gdpGrowth, -25, 25);
     // Inflation follows growth and debt; unemployment follows growth inversely
