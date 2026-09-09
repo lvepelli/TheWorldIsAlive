@@ -28,6 +28,7 @@ The player is an observer with divine powers. The world has no win condition; th
 
 | Section | Purpose |
 | --- | --- |
+| Regions & borders | Every nation is 2–4 regions with a governor, identity, autonomy and unrest. Grievance → autonomy demand → concession (devolution) or crackdown → liberation movement / secession along the region's own cells; decisive wars can annex the loser's nearest region; the ousted governor comes back as a regionalist. Regions overlay + seams, Borders tab in History, God targets regions by name. |
 | World | Living map; overlays (political, stability, wealth, tension, mood, tech, trade, climate, harvest, regions); war fronts, region seams, trade arcs, day/night; tap to inspect; keyboard navigation; ticker |
 | Live | Daily and period summaries, developing-story cards (active causal chains), chronological event stream with category/severity filters |
 | News | Outlets with bias, style, credibility, audience; multiple outlets spin the same event differently |

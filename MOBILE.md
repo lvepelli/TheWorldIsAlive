@@ -59,3 +59,5 @@ Notes for native builds:
 - Audio starts only after a user gesture (already the case: toggling the audio button).
 - Consider `@capacitor/status-bar` for the dark status bar and `@capacitor/haptics` for God Mode.
 - Keep `viewport-fit=cover`; Capacitor's WebView honors safe-area insets.
+
+Live QA coverage (`tests/e2e/deployed.mjs`, per viewport): load, intro, generation, painted map, 1× progression, tap-to-inspect, drag, pinch (touch viewports), all screens without horizontal overflow, editorials, developing stories, chronicle export, dialogue answers, delayed God commands, causal chains, the Regions overlay painting the map, God understanding annexation, governors among the people, save/reload and PWA assets. Run it locally with `QA_OUT=/tmp/qa DEPLOY_URL=http://localhost:4173/ node tests/e2e/deployed.mjs` after `npm run build && npm run preview`.
