@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Referendums: a free state (freedom above 60) answers an autonomy demand with a referendum about a third of the time (once per region per three years). Turnout and the yes-share follow identity, unrest and existing autonomy; a yes brings sweeping devolution (or, when the region is furious and the state fragile, an honoured vote for independence), a no calms the region and costs the governor who campaigned for it. Sagas: "The X referendum".
 - Summaries: monthly and yearly reviews name the most restless regions (unrest above 55) and their countries.
 - People: a "Governors" filter chip lists every sitting governor (search already matched titles).
 - CI: the live QA also checks that a tap on the Regions overlay opens a region inspector.

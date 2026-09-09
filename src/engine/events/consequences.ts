@@ -447,6 +447,16 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
     const anchor = w.cities[r.cityIds[0]];
     const concede = c.freedom > 55 ? rng.bool(0.7) : c.stability < 40 ? rng.bool(0.45) : rng.bool(0.2);
     const gov = r.governorId ? w.people[r.governorId] : undefined;
+    // Free states sometimes put the question to the region itself.
+    if (c.freedom > 60 && rng.bool(0.35) && !r.history.some((h) => /Referendum/.test(h.text) && w.day - h.day < 3 * 365)) {
+      r.history.push({ day: w.day, text: 'Referendum called.' });
+      return createEvent(w, {
+        category: 'political', type: 'region.referendum', severity: 3, causedBy: src.id, title: `${c.name} calls a referendum in ${r.name}`,
+        description: `Rather than concede or crack down, ${c.name} will let ${r.name} vote on its own status ${rng.pick(['next month', 'within weeks', 'before the harvest'])}. ${gov && src.data?.governorLed ? `Governor ${gov.name} is campaigning for ${/independence|free|liberate/i.test(gov.objective) ? 'independence' : 'self-rule'}.` : 'Both camps are already printing posters.'} ${rng.pick(['The capital is confident. The capital is often confident.', 'Turnout will decide it.', 'Neighbours with restless regions of their own are watching nervously.'])}`,
+        location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(gov ? [ref('person', gov.id)] : [])],
+        effects: [fx('country', c.id, 'polarization', 3)], tags: ['region', 'referendum', c.code], data: { regionId: r.id, region: r.name, governorLed: !!src.data?.governorLed },
+      });
+    }
     if (concede) {
       r.autonomy = clamp(r.autonomy + 25, 0, 100); r.unrest = clamp(r.unrest - 25, 0, 100); r.history.push({ day: w.day, text: `Granted autonomy by ${c.name}.` });
       if (gov && src.data?.governorLed) { gov.fame = clamp(gov.fame + 8, 0, 100); gov.reputation = clamp(gov.reputation + 10, -100, 100); gov.history.push({ day: w.day, text: `Won self-rule for ${r.name}.` }); }
@@ -465,6 +475,38 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       description: `${c.name} answered the autonomy demand with ${rng.pick(['a curfew and mass arrests', 'soldiers on every square', 'the dissolution of the regional council', 'a ban on the regional language in schools'])}. ${dismissed ? `Governor ${dismissed} was dismissed and marched out of the regional palace. ` : ''}${rng.pick(['The region went quiet, and angrier.', 'Videos from ' + (anchor?.name ?? r.name) + ' spread faster than the censors.', 'Neighbours called for restraint.'])}`,
       location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(dismissed && gov ? [ref('person', gov.id)] : [])],
       effects: [fx('country', c.id, 'freedom', -3), fx('country', c.id, 'unrest', 5), fx('country', c.id, 'approval', -3)], tags: ['region', 'crackdown', c.code], data: { regionId: r.id, region: r.name },
+    });
+  },
+  'region.referendum.result': (w, rng, src) => {
+    const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
+    if (!c || !r || r.countryId !== c.id) return null;
+    const anchor = w.cities[r.cityIds[0]]; const gov = r.governorId ? w.people[r.governorId] : undefined;
+    const turnout = clamp(45 + r.unrest * 0.35 + r.identity * 20 + rng.gauss(0, 6), 30, 95);
+    const yes = clamp(30 + r.identity * 35 + (r.unrest - 50) * 0.5 - r.autonomy * 0.2 + rng.gauss(0, 9), 10, 92); // a real contest: a typical demanding region lands near 50–60 % yes
+    const independence = yes > 65 && r.unrest > 70 && c.stability < 60 && !recentFounding(w, 730);
+    const pct = `${yes.toFixed(0)}% on a ${turnout.toFixed(0)}% turnout`;
+    if (yes > 50) {
+      r.history.push({ day: w.day, text: `Voted for ${independence ? 'independence' : 'self-rule'} (${yes.toFixed(0)}%).` });
+      if (independence) {
+        const ev = A.createCountry(w, rng, c, src.id, false, undefined, r.id);
+        if (ev) { c.history.push({ day: w.day, text: `${r.name} broke away.`, eventId: ev.id }); ev.title = `${r.name} votes for independence from ${c.name}`; ev.description = `${pct}: the referendum went for independence and ${c.name} honoured it. ${ev.description}`; return ev; }
+      }
+      r.autonomy = clamp(r.autonomy + 40, 0, 100); r.unrest = clamp(r.unrest - 30, 0, 100);
+      if (gov) { gov.fame = clamp(gov.fame + 8, 0, 100); gov.reputation = clamp(gov.reputation + 8, -100, 100); }
+      return createEvent(w, {
+        category: 'political', type: 'region.referendum.yes', severity: 3, causedBy: src.id, title: `${r.name} votes for self-rule`,
+        description: `${pct}: ${r.name} chose self-rule, and ${c.name} will devolve ${rng.pick(['taxes and schools', 'policing and courts', 'its budget'])} within the year. ${rng.pick(['The count took all night.', `In ${anchor?.name ?? r.name} the streets filled before the result was official.`, 'The capital called it a mandate for dialogue, which is what capitals say.'])}`,
+        location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(gov ? [ref('person', gov.id)] : [])],
+        effects: [fx('country', c.id, 'stability', 2), fx('country', c.id, 'freedom', 2), fx('country', c.id, 'unrest', -3)], tags: ['region', 'referendum', 'autonomy', c.code], data: { regionId: r.id, region: r.name, yes, turnout },
+      });
+    }
+    r.history.push({ day: w.day, text: `Voted to stay (${(100 - yes).toFixed(0)}% no).` }); r.unrest = clamp(r.unrest - 15, 0, 100);
+    if (gov && src.data?.governorLed) { gov.reputation = clamp(gov.reputation - 6, -100, 100); gov.history.push({ day: w.day, text: `Lost the ${r.name} referendum.` }); }
+    return createEvent(w, {
+      category: 'political', type: 'region.referendum.no', severity: 2, causedBy: src.id, title: `${r.name} votes to stay in ${c.name}`,
+      description: `${(100 - yes).toFixed(0)}% no on a ${turnout.toFixed(0)}% turnout: ${r.name} stays. ${rng.pick(['The separatists blamed the weather.', 'Both sides claimed the silent majority.', `${c.name} promised the region it had heard the other ${yes.toFixed(0)}%.`])}`,
+      location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id), ...(gov ? [ref('person', gov.id)] : [])],
+      effects: [fx('country', c.id, 'stability', 3), fx('country', c.id, 'polarization', -2)], tags: ['region', 'referendum', c.code], data: { regionId: r.id, region: r.name, yes, turnout },
     });
   },
   'region.movement': (w, rng, src) => {
@@ -989,6 +1031,7 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'region.annexed', rule: 'annex.insurgency', delay: [30, 200], p: 0.6 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.response', delay: [15, 90], p: 0.9 },
   { match: (e) => e.type === 'region.autonomy', rule: 'region.movement', delay: [5, 40], p: 0.5 },
+  { match: (e) => e.type === 'region.referendum', rule: 'region.referendum.result', delay: [20, 60], p: 1 },
   { match: (e) => e.type === 'region.crackdown', rule: 'region.secession', delay: [60, 240], p: 0.4 },
   { match: (e) => e.type === 'festival.film' && !!e.data?.maker, rule: 'festival.rights', delay: [10, 45], p: 0.55 },
   { match: (e) => e.type === 'trade.fair' && (e.data?.deal as unknown[] | undefined)?.length === 2, rule: 'fair.venture', delay: [10, 45], p: 0.8 },
