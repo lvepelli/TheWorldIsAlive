@@ -56,6 +56,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 - Very small countries may have overlapping labels at low zoom (labels hide below ~6.5 px).
 - When many severity-3 events occur in a single `advance()` jump, only the top 2–3 are toasted (by design) — the rest are in LIVE.
 - The e2e test taps a grid of map points to find land; on unusual seeds it may need more attempts (it retries 12 times).
+- Regions: every country gets a governor for its capital region too ("X Metropolitan"), which reads oddly next to the national leader; region labels at high zoom can overlap city labels in dense areas; region cells are a Voronoi of the country's cities, so a region's territory can look blocky at the country's own border when the country is small.
 
 ## Architectural decisions you should not casually undo
 
@@ -71,6 +72,7 @@ npm run build && npm run e2e    # production build + headless desktop/mobile smo
 - Objectives are behaviour: `simulation/objectives.ts` matches `person.objective` text against regexes (peace/election/reform/resign for leaders, "free X from Y" / "win autonomy for X" for regionalists who found or rally independence movements, field words for CEOs via `pivotForObjective`, research fields via `fieldFromObjective`). Any code that sets an objective string is therefore steering the simulation; keep the phrases human-readable and check those regexes when adding new ones.
 - Anything that mutates the world outside a tick (dialogue persuasion, presets executed from the UI) must call `useGame.getState().bump()` afterwards or screens keep showing stale memoized data until the next day.
 - Fronts: `renderer.ts` `frontsFor` derives fronts from the shared stretches of the Chaikin-smoothed contour polygons (points within 0.6 units of the other country's polygon, grouped into runs, cached per war pair in `frontCache`); if the contour smoothing changes, fronts follow automatically.
+- Regions: `generator/regions.ts` (k-means must stay seam-aware — see the `unwrap` in the mean update), `actions.ts` `createCountry`/`transferRegion` (both must bump `geography.version`, keep `regionIds`/`regionId` consistent and recompute neighbours), `simulation/regions.ts` (governor replacement runs before the two-region guard so single-region states are covered). The 20-year balance test asserts region/country consistency and ≤ 45 nations.
 - Delicate: `geography.ts` (region growth + island cleanup; noise is blended with a one-world-width-shifted sample so terrain wraps seamlessly — keep that if you change the noise), `contours.ts` (edge tracing assumes 4-connectivity and the seam rule), `renderer.ts` (camera wrap math), `loop.ts` (render throttling and cinematic gating), `storage.ts` (validation).
 
 ## Technical debt
