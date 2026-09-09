@@ -12,6 +12,12 @@ const all = (w: World): Country[] => Object.values(w.countries);
 const byGdp = (w: World): Country[] => all(w).slice().sort((a, b) => b.gdp - a.gdp);
 
 export const PREMISES: Premise[] = [
+  { id: 'patchwork-empire', title: 'The Patchwork Empire', blurb: 'One sprawling nation holds a dozen peoples together by habit and garrison. Its regions have started counting what they pay and what they get back.', apply: (w, rng) => {
+    const empire = all(w).sort((a, b) => b.area - a.area)[0]; if (!empire) return;
+    empire.government = rng.pick(['monarchy', 'federation', 'autocracy']); empire.polarization = clamp(empire.polarization + 15, 0, 100); empire.freedom = clamp(empire.freedom - 10, 0, 100); empire.military = clamp(empire.military + 10, 0, 100);
+    for (const id of empire.regionIds ?? []) { const r = w.regions?.[id]; if (!r || r.cityIds.includes(empire.capitalId)) continue; r.identity = clamp(r.identity + 0.3, 0, 1); r.unrest = clamp(r.unrest + 25, 0, 100); r.autonomy = clamp(r.autonomy - 10, 0, 100); const gov = r.governorId ? w.people[r.governorId] : undefined; if (gov && rng.bool(0.6)) { gov.objective = `win autonomy for ${r.name}`; gov.ideology = 'nationalist'; } }
+    for (const n of empire.neighbors) { const c = w.countries[n]; if (!c) continue; c.relations[empire.id] = Math.min(c.relations[empire.id] ?? 0, -20); empire.relations[c.id] = Math.min(empire.relations[c.id] ?? 0, -10); }
+  } },
   { id: 'cold-peace', title: 'The Cold Peace', blurb: 'Two blocs face each other across a frozen border. Nobody has fired a shot. Yet.', apply: (w, rng) => {
     const [a, b] = byGdp(w); if (!a || !b) return;
     for (const c of all(w)) c.military = clamp(c.military + 8, 0, 100);
@@ -58,12 +64,14 @@ export const PREMISES: Premise[] = [
 
 /** Deterministic premise for a seed (cheap: no world needed). */
 export function premiseFor(seed: string): Premise {
+  if (/empire|patchwork/i.test(seed)) return PREMISES.find((p) => p.id === 'patchwork-empire')!; // opt-in by seed name so existing seeds keep their premises
   const r = new RNG(seed).fork('premise');
-  return r.pick(PREMISES);
+  return r.pick(PREMISES.filter((p) => p.id !== 'patchwork-empire'));
 }
 
 /** Opening arcs: each premise seeds one or two scheduled follow-ups (rules live in events/consequences.ts). */
 const ARCS: Record<string, { rule: string; delay: [number, number] }[]> = {
+  'patchwork-empire': [{ rule: 'premise.patchwork.demands', delay: [10, 40] }, { rule: 'premise.patchwork.demands', delay: [90, 200] }],
   'cold-peace': [{ rule: 'premise.cold-peace.incident', delay: [20, 70] }],
   'long-boom': [{ rule: 'premise.long-boom.bubble', delay: [30, 120] }],
   'age-of-unrest': [{ rule: 'premise.age-of-unrest.protests', delay: [5, 25] }],
@@ -92,6 +100,7 @@ export function applyPremise(world: World, seed: string): Premise {
 
 /** Curated seeds, one per premise, shown on the intro as "featured worlds". Keep in sync with PREMISES order (see tests). */
 export const FEATURED_SEEDS: { seed: string; premise: string }[] = [
+  { seed: 'amber-empire-1', premise: 'patchwork-empire' },
   { seed: 'amber-tide-6', premise: 'cold-peace' },
   { seed: 'amber-harbor-16', premise: 'long-boom' },
   { seed: 'amber-summit-7', premise: 'age-of-unrest' },

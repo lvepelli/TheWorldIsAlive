@@ -566,6 +566,20 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       data: { shocks: [{ sector: 'technology', pct: 0.1 }, { sector: 'manufacturing', pct: -0.06 }] as MarketShock[] },
     });
   },
+  'premise.patchwork.demands': (w, rng, src) => {
+    const empire = Object.values(w.countries).sort((a, b) => b.area - a.area)[0]; if (!empire) return null;
+    const regions = (empire.regionIds ?? []).map((id) => w.regions?.[id]).filter((r): r is NonNullable<typeof r> => !!r && !r.cityIds.includes(empire.capitalId) && !r.history.some((h) => /Demanded autonomy/.test(h.text) && w.day - h.day < 300));
+    const r = regions.sort((a, b) => b.unrest - a.unrest)[0]; if (!r) return null;
+    r.unrest = clamp(Math.max(r.unrest, 60) + 5, 0, 100); r.history.push({ day: w.day, text: 'Demanded autonomy.' });
+    const gov = r.governorId ? w.people[r.governorId] : undefined; const anchor = w.cities[r.cityIds[0]];
+    if (gov) { gov.fame = clamp(gov.fame + 10, 0, 100); gov.history.push({ day: w.day, text: `Led ${r.name}'s demand for autonomy.` }); }
+    return createEvent(w, {
+      category: 'political', type: 'region.autonomy', severity: 3, causedBy: src.id, title: `${r.name} demands autonomy from ${empire.name}`,
+      description: `${gov ? `Governor ${gov.name} and the regional council` : 'The regional council'} of ${r.name} sent the empire's capital a list: ${rng.pick(['schools in their own language', 'a share of the mines', 'an end to conscription', 'a court of their own'])}, and a date. ${rng.pick([`In ${anchor?.name ?? r.name} the old flag came out of the attics.`, 'Other regions are watching the answer.', 'The garrison was doubled overnight.'])}`,
+      location: { countryId: empire.id, cityId: anchor?.id, x: anchor?.x ?? empire.centroid.x, y: anchor?.y ?? empire.centroid.y }, actors: [ref('country', empire.id), ...(gov ? [ref('person', gov.id)] : [])],
+      effects: [fx('country', empire.id, 'unrest', 4), fx('country', empire.id, 'stability', -3)], tags: ['region', 'autonomy', 'premise', empire.code], data: { regionId: r.id, region: r.name, governorLed: !!gov },
+    });
+  },
   'premise.fractured-map.talks': (w, rng, src) => {
     const a = Object.values(w.countries).find((x) => x.atWarWith.length);
     const b = a ? w.countries[a.atWarWith[0]] : undefined;

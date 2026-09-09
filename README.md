@@ -16,7 +16,7 @@ what you caused.
 
 ## Screenshots
 
-Current build (v0.8): a Fractured Map world with wars, smooth burning fronts and trade arcs; the newsroom's weekly editorials; markets; a conversation with a leader; the intro with featured worlds. Regenerate with `npm run build && node tests/e2e/showcase.mjs`.
+Current build (v0.9): a Fractured Map world with regions inside every nation, wars, smooth burning fronts and trade arcs; the newsroom's weekly editorials; markets; a conversation with a leader; the intro with featured worlds. Regenerate with `npm run build && node tests/e2e/showcase.mjs`.
 
 | | |
 | --- | --- |
@@ -33,7 +33,7 @@ Share a world: append `?seed=your-seed` to the URL (the 🔗 button copies it).
 
 **GitHub Pages URL:** https://lvepelli.github.io/TheWorldIsAlive/ — becomes active after a one-time click by the repository owner: *Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `gh-pages` / (root) → Save*. (The Actions token cannot enable Pages by itself.) Every later push updates it automatically.
 
-**Featured worlds (deep links, one per starting premise):** [The Cold Peace](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-tide-6) · [The Long Boom](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-harbor-16) · [The Age of Unrest](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-summit-7) · [After the Plague](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-meridian-2) · [The Machine Dawn](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-orchard-13) · [The Fractured Map](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-citadel-1) · [The Gilded Age](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-lantern-2) · [The Quiet Century](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-canyon-2). Any `?seed=` works; the intro shows the same eight as chips.
+**Featured worlds (deep links, one per starting premise):** [The Cold Peace](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-tide-6) · [The Long Boom](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-harbor-16) · [The Age of Unrest](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-summit-7) · [After the Plague](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-meridian-2) · [The Machine Dawn](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-orchard-13) · [The Fractured Map](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-citadel-1) · [The Gilded Age](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-lantern-2) · [The Quiet Century](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-canyon-2) · [The Patchwork Empire](https://raw.githack.com/lvepelli/TheWorldIsAlive/gh-pages/index.html?seed=amber-empire-1). Any `?seed=` works; the intro shows the same eight as chips.
 
 Open either URL in Safari (iPhone) or Chrome (Android). It is a static site over HTTPS, works offline after the first load, and can be installed to the home screen (Share → *Add to Home Screen* on iOS; the install banner or menu → *Add to Home screen* on Android). Deep links work: append `?seed=amber-tide-1234` to either URL.
 

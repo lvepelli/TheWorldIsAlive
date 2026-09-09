@@ -51,5 +51,11 @@ export function assignRegionsFor(world: World, rng: RNG, c: Country): void {
   }
 }
 
+/** Population and average prosperity of a region's cities. */
+export function regionStats(world: World, r: Region): { population: number; prosperity: number } {
+  const cities = r.cityIds.map((id) => world.cities[id]).filter(Boolean);
+  return { population: cities.reduce((s, ct) => s + ct.population, 0), prosperity: cities.length ? cities.reduce((s, ct) => s + ct.prosperity, 0) / cities.length : 50 };
+}
+
 export function regionOf(world: World, cityId: ID): Region | undefined { const r = world.cities[cityId]?.regionId; return r ? world.regions?.[r] : undefined; }
 export function regionsOf(world: World, c: Country): Region[] { return (c.regionIds ?? []).map((id) => world.regions?.[id]).filter((r): r is Region => !!r); }
