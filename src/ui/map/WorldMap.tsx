@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import React, { useEffect, useRef, useState } from 'react';
 import { MapRenderer } from './renderer';
 import { useGame } from '@/state/store';
@@ -150,11 +151,11 @@ export function WorldMap(): React.ReactElement {
     return () => { canvas.removeEventListener('keydown', onKey); canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerup', onUp); canvas.removeEventListener('pointercancel', onUp); canvas.removeEventListener('wheel', onWheel); canvas.removeEventListener('pointerleave', onLeave); };
   }, [select]);
 
-  const mapSummary = world ? (() => { const cs = Object.values(world.countries); const wars = cs.filter((x) => x.atWarWith.length).length; const restless = Object.values(world.regions ?? {}).filter((r) => r.unrest > 55).length; const sel = selection ? (selection.kind === 'country' ? world.countries[selection.id]?.name : selection.kind === 'city' ? world.cities[selection.id]?.name : selection.kind === 'region' ? world.regions?.[selection.id]?.name : undefined) : undefined; return `${cs.length} nations, ${wars} at war, ${restless} restless regions, ${world.events.length} events on record.${sel ? ` Selected: ${sel}.` : ''}`; })() : '';
+  const mapSummary = world ? (() => { const cs = Object.values(world.countries); const wars = cs.filter((x) => x.atWarWith.length).length; const restless = Object.values(world.regions ?? {}).filter((r) => r.unrest > 55).length; const sel = selection ? (selection.kind === 'country' ? world.countries[selection.id]?.name : selection.kind === 'city' ? world.cities[selection.id]?.name : selection.kind === 'region' ? world.regions?.[selection.id]?.name : undefined) : undefined; return `${t('map.summary', { nations: cs.length, wars, restless, events: world.events.length })}${sel ? ` ${t('map.selected')}: ${sel}.` : ''}`; })() : '';
   const hoverName = hover && world ? (hover.kind === 'city' ? world.cities[hover.id]?.name : hover.kind === 'region' ? world.regions?.[hover.id]?.name : world.countries[hover.id]?.name) : null;
   return (
     <>
-      <canvas ref={canvasRef} className="map-canvas" tabIndex={0} role="application" aria-label="World map. Arrow keys pan, plus and minus zoom, Enter selects the nation or city at the center, Home resets the view." aria-describedby="map-summary" />
+      <canvas ref={canvasRef} className="map-canvas" tabIndex={0} role="application" aria-label={t('map.aria')} aria-describedby="map-summary" />
       <div id="map-summary" className="sr-only" aria-live="polite">{mapSummary}</div>
       <div className="map-crosshair" aria-hidden />
       {hoverName && <div className="hide-mobile" style={{ position: 'absolute', left: 12, bottom: 96, pointerEvents: 'none', fontSize: 12, color: 'var(--text-2)', background: 'rgba(6,8,15,0.7)', padding: '3px 8px', borderRadius: 4, zIndex: 6 }}>{hoverName}</div>}

@@ -266,8 +266,12 @@ export class MapRenderer {
 
   private fillFor(c: Country, overlay: MapOverlay): string {
     switch (overlay) {
-      case 'political': return `hsl(${c.hue.toFixed(0)} 28% 17%)`;
+      case 'political': return `hsl(${c.hue.toFixed(0)} 36% 21%)`;
+      case 'diplomacy': return `hsl(${c.hue.toFixed(0)} 22% 16%)`;
       case 'regions': return `hsl(${c.hue.toFixed(0)} 18% 14%)`;
+      case 'population': { const cs = Object.values(this.world!.countries); const max = Math.max(...cs.map((x) => x.population)); return ramp(clamp(Math.sqrt(c.population / max), 0, 1), [230, 200, 60]); }
+      case 'religion': return ramp(clamp(c.culture.religionShare, 0, 1), [220, 280, 45]);
+      case 'companies': { const w = this.world!; const cs = Object.values(w.countries); const val = (x: typeof c) => Object.values(w.companies).reduce((s, co) => s + (co.alive && co.countryId === x.id ? co.value : 0), 0); const max = Math.max(1, ...cs.map(val)); return ramp(clamp(Math.sqrt(val(c) / max), 0, 1), [215, 190, 175]); }
       case 'stability': return ramp(c.stability / 100, [340, 40, 150]);
       case 'economy': { const pc = (c.gdp * 1e9) / Math.max(1, c.population); return ramp(clamp(Math.log10(pc + 1) / 5.2, 0, 1), [220, 200, 170]); }
       case 'tension': { const worst = Math.max(0, ...Object.values(c.relations).map((r) => -r)) / 100; const war = c.atWarWith.length ? 1 : 0; return ramp(1 - Math.max(worst, war), [0, 30, 150]); }
@@ -335,7 +339,7 @@ export class MapRenderer {
           if (atWar) { const pulse = opts.reducedMotion ? 0.5 : 0.45 + 0.35 * Math.sin(t * 3 + r); g.strokeStyle = `rgba(255,77,77,${pulse})`; g.lineWidth = 2.2 / cam.scale; g.stroke(); g.fillStyle = `rgba(255,60,60,${0.06 + 0.05 * Math.sin(t * 3 + r)})`; g.fill(); }
           if (isSel) { g.fillStyle = 'rgba(240,179,90,0.16)'; g.fill(); g.strokeStyle = 'rgba(255,210,122,0.95)'; g.lineWidth = 2 / cam.scale; g.stroke(); }
           else if (isHover) { g.fillStyle = 'rgba(143,211,255,0.08)'; g.fill(); g.strokeStyle = 'rgba(143,211,255,0.8)'; g.lineWidth = 1.5 / cam.scale; g.stroke(); }
-          else { g.strokeStyle = c.stability < 30 ? 'rgba(255,140,60,0.55)' : 'rgba(143,211,255,0.32)'; g.lineWidth = 0.9 / cam.scale; g.stroke(); }
+          else { g.strokeStyle = c.stability < 30 ? 'rgba(255,140,60,0.6)' : 'rgba(170,205,240,0.5)'; g.lineWidth = 1.15 / cam.scale; g.stroke(); }
         }
       }
     }
@@ -639,8 +643,11 @@ export class MapRenderer {
   private drawLabels(world: World, offsets: number[], sel: ID | null | undefined): void {
     const g = this.ctx; const cam = this.camera; const fit = this.fitScale(); const z = cam.scale / fit;
     g.textAlign = 'center'; g.textBaseline = 'middle';
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    const overlaps = (x: number, y: number, w: number, h: number) => placed.some((b) => Math.abs(b.x - x) < (b.w + w) / 2 && Math.abs(b.y - y) < (b.h + h) / 2);
+    const byArea = Object.values(world.countries).sort((a, b) => b.area - a.area);
     for (const ox of offsets) {
-      for (const c of Object.values(world.countries)) {
+      for (const c of byArea) {
         let lab = this.labelCache.get(c.id);
         if (!lab) { const r = this.countryIndex.get(c.id); const polys = r !== undefined ? this.shapes!.byCountry.get(r) : undefined; const big = polys?.[0]; const area = big ? polygonArea(big) : c.area; lab = { x: c.centroid.x, y: c.centroid.y, size: clamp(Math.sqrt(area) * 0.9, 7, 22) }; if (big) { let sx = 0, sy = 0; const n = big.length / 2; for (let i = 0; i < big.length; i += 2) { sx += big[i]; sy += big[i + 1]; } lab.x = sx / n; lab.y = sy / n; } this.labelCache.set(c.id, lab); }
         const px = lab.size * Math.sqrt(z);
@@ -650,6 +657,7 @@ export class MapRenderer {
         const font = clamp(px, 9, 20);
         g.font = `700 ${font}px Inter, system-ui, sans-serif`;
         const text = c.name.toUpperCase();
+        { const tw = g.measureText(text).width * 1.14; if (sel !== c.id && overlaps(sx, sy, tw, font * 1.3)) continue; placed.push({ x: sx, y: sy, w: tw, h: font * 1.3 }); }
         g.lineWidth = 3; g.strokeStyle = 'rgba(4,6,12,0.8)'; g.lineJoin = 'round';
         g.letterSpacing = '0.14em';
         g.strokeText(text, sx, sy);

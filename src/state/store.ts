@@ -4,7 +4,7 @@
  * is bumped whenever it changes so subscribed components re-render.
  */
 import { create } from 'zustand';
-import type { World, EntityRef, WorldEvent } from '@/engine/types';
+import type { World, EntityRef, WorldEvent, ID } from '@/engine/types';
 import { RNG } from '@/engine/rng';
 import { generateWorld } from '@/engine/generator/world';
 import { tickDay } from '@/engine/simulation/tick';
@@ -13,15 +13,17 @@ import { executePlan, scheduleIntervention } from '@/engine/godmode/execute';
 import type { GodPlan } from '@/engine/godmode/interpreter';
 import { godInterpreter, narrativeEnhancer } from '@/engine/ai';
 import { audio } from '@/ui/audio';
+import { setLang, type Lang } from '@/engine/i18n/lang';
 
-export type Screen = 'world' | 'live' | 'news' | 'social' | 'markets' | 'people' | 'orgs' | 'history' | 'god';
+export type Screen = 'world' | 'countries' | 'regions' | 'people' | 'companies' | 'economy' | 'politics' | 'diplomacy' | 'technology' | 'society' | 'religions' | 'news' | 'social' | 'history' | 'god' | 'calendar' | 'events' | 'alerts';
 export type Speed = 0 | 1 | 5 | 20 | 100;
-export type MapOverlay = 'political' | 'stability' | 'economy' | 'tension' | 'happiness' | 'tech' | 'trade' | 'climate' | 'harvest' | 'regions';
+export type MapOverlay = 'political' | 'stability' | 'economy' | 'tension' | 'happiness' | 'tech' | 'trade' | 'climate' | 'harvest' | 'regions' | 'population' | 'religion' | 'companies' | 'diplomacy';
 export type LinkMode = 'auto' | 'all' | 'none';
 export type Phase = 'intro' | 'generating' | 'playing';
 
 export interface Toast { id: string; event: WorldEvent; at: number; }
-export interface Settings { audio: boolean; debug: boolean; cinematics: boolean; largeText: boolean; highContrast: boolean; }
+export interface Alert { id: string; eventId: ID; day: number; severity: number; category: string; read: boolean; }
+export interface Settings { audio: boolean; debug: boolean; cinematics: boolean; largeText: boolean; highContrast: boolean; lang: Lang; }
 
 interface GameState {
   phase: Phase;
@@ -36,6 +38,7 @@ interface GameState {
   cinematicQueue: WorldEvent[];
   lastCinematicAt: number;
   toasts: Toast[];
+  alerts: Alert[];
   overlay: MapOverlay;
   links: LinkMode;
   onboarded: boolean;
@@ -63,6 +66,9 @@ interface GameState {
   focusOn: (x: number, y: number, zoom?: number) => void;
   dismissCinematic: () => void;
   dismissToast: (id: string) => void;
+  pushAlerts: (events: WorldEvent[]) => void;
+  markAlertRead: (id: string | 'all') => void;
+  dismissAlert: (id: string | 'all') => void;
   setSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
   refreshSaves: () => Promise<void>;
   saveWorld: (slot?: string) => Promise<void>;
@@ -82,19 +88,23 @@ const AUTOSAVE_SLOT = 'autosave';
 const SETTINGS_KEY = 'twia:settings';
 
 function loadSettings(): Settings {
-  try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return { audio: false, debug: false, cinematics: true, largeText: false, highContrast: false, ...JSON.parse(raw) }; } catch { /* ignore */ }
-  return { audio: false, debug: false, cinematics: true, largeText: false, highContrast: false };
+  const base: Settings = { audio: false, debug: false, cinematics: true, largeText: false, highContrast: false, lang: 'es' };
+  let out = base;
+  try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) out = { ...base, ...JSON.parse(raw) }; } catch { /* ignore */ }
+  if (out.lang !== 'es' && out.lang !== 'en') out.lang = 'es';
+  setLang(out.lang);
+  return out;
 }
 
 let toastSeq = 0;
 
 export const useGame = create<GameState>((set, get) => ({
   phase: 'intro', world: null, rng: null, version: 0, speed: 0, screen: 'world', selection: null, selectionStack: [], cinematic: null, cinematicQueue: [], lastCinematicAt: 0,
-  toasts: [], overlay: 'political', links: 'auto', onboarded: (() => { try { return localStorage.getItem('twia:onboarded') === '1'; } catch { return false; } })(), focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null, godPick: null,
+  toasts: [], alerts: [], overlay: 'political', links: 'auto', onboarded: (() => { try { return localStorage.getItem('twia:onboarded') === '1'; } catch { return false; } })(), focus: null, settings: loadSettings(), saves: [], busy: null, genSteps: [], perf: { tps: 0, fps: 0 }, lastDayEvents: [], godPrefill: null, godPick: null,
 
   async newWorld(seed, name) {
     const s = seed?.trim() || randomSeed();
-    set({ phase: 'generating', genSteps: [], busy: 'Generating world', speed: 0, selection: null, selectionStack: [], cinematic: null, cinematicQueue: [], toasts: [] });
+    set({ phase: 'generating', genSteps: [], busy: 'Generating world', speed: 0, selection: null, selectionStack: [], cinematic: null, cinematicQueue: [], toasts: [], alerts: [] });
     const steps = ['Shaping continents', 'Drawing borders', 'Founding cities', 'Raising leaders and citizens', 'Incorporating companies', 'Printing newspapers', 'Opening markets', 'Setting history in motion'];
     for (let i = 0; i < 4; i++) { set({ genSteps: steps.slice(0, i + 1) }); await sleep(120); }
     let world: World;
@@ -138,7 +148,10 @@ export const useGame = create<GameState>((set, get) => ({
     else set({ cinematic: null });
   },
   dismissToast(id) { set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })); },
-  setSetting(k, v) { const settings = { ...get().settings, [k]: v }; set({ settings }); try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* ignore */ } if (k === 'audio') audio.setEnabled(v as boolean); },
+  pushAlerts(events) { if (!events.length) return; set((s) => ({ alerts: [...events.map((e) => ({ id: `a_${e.id}`, eventId: e.id, day: e.day, severity: e.severity, category: e.category, read: false })), ...s.alerts].slice(0, 80) })); },
+  markAlertRead(id) { set((s) => ({ alerts: s.alerts.map((a) => (id === 'all' || a.id === id ? { ...a, read: true } : a)) })); },
+  dismissAlert(id) { set((s) => ({ alerts: id === 'all' ? [] : s.alerts.filter((a) => a.id !== id) })); },
+  setSetting(k, v) { const settings = { ...get().settings, [k]: v }; set({ settings }); try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* ignore */ } if (k === 'lang') { setLang(v as Lang); set({ version: get().version + 1 }); } if (k === 'audio') audio.setEnabled(v as boolean); },
 
   async refreshSaves() { set({ saves: await store.list() }); },
   async saveWorld(slot) {
@@ -200,7 +213,8 @@ function afterTicks(get: () => GameState, set: (p: Partial<GameState>) => void, 
   const { settings, world } = get();
   if (!world) return;
   // When jumping many days at once only surface the most important developments.
-  const important = produced.filter((e) => e.severity >= 3).sort((a, b) => b.severity - a.severity).slice(0, produced.length > 20 ? 2 : 3);
+  get().pushAlerts(produced.filter((e) => e.severity >= 3).slice(-30));
+  const important = produced.filter((e) => e.severity >= 4).sort((a, b) => b.severity - a.severity).slice(0, produced.length > 20 ? 2 : 3);
   for (const ev of important) {
     if (ev.severity >= 5 && settings.cinematics) pushCinematic(get, set, ev, false);
     else pushToast(get, set, ev);

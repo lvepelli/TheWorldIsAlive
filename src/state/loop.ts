@@ -40,7 +40,9 @@ function frame(now: number): void {
     lastRender = now;
     const important = pending.filter((e) => e.severity >= 3);
     const set = useGame.setState;
+    useGame.getState().pushAlerts(important);
     for (const ev of important) {
+      if (ev.severity < 4) continue; // normal events live in the alerts drawer and feeds; only critical ones interrupt
       const s = useGame.getState();
       if (ev.severity >= 5 && s.settings.cinematics) {
         if (!s.cinematic && now - s.lastCinematicAt > 12000) { set({ cinematic: ev, lastCinematicAt: now, focus: { x: ev.location.x, y: ev.location.y, zoom: 2.4, nonce: now } }); audio.play('cinematic'); }
