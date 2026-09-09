@@ -1,6 +1,7 @@
 /**
  * Deterministic world summaries (daily / monthly / yearly).
  */
+import { tidy } from '../text';
 import { stormCells } from './weather';
 import type { World, WorldSummary } from '../types';
 import { formatDate, MONTHS, toDate } from '../time';

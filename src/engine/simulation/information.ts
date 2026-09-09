@@ -2,6 +2,7 @@
  * Information layer: news coverage, social media reactions and trending topics.
  * Everything here reads the events created today and produces derived content.
  */
+import { tidy } from '../text';
 import { RNG, clamp } from '../rng';
 import type { World, WorldEvent, NewsArticle, SocialPost, MediaOutlet, Person } from '../types';
 import { nextId } from '../ids';
@@ -39,7 +40,7 @@ export function generateNews(world: World, rng: RNG, todays: WorldEvent[]): News
     const chosen = covering.length > 5 ? rng.sample(covering, 5) : covering;
     for (const o of chosen) {
       const h = provider.headline(world, ev, o, rng);
-      out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: byline(o, ev), eventId: ev.id, headline: h.headline, body: h.body, tone: h.tone, reach: Math.round(o.audience * (0.3 + ev.severity / 5) * 10) / 10 });
+      out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: byline(o, ev), eventId: ev.id, headline: tidy(h.headline), body: tidy(h.body), tone: h.tone, reach: Math.round(o.audience * (0.3 + ev.severity / 5) * 10) / 10 });
     }
   }
   world.news.push(...out);
@@ -89,7 +90,7 @@ export function generateEditorials(world: World, rng: RNG): NewsArticle[] {
     const j = pool2.length && rng.bool(0.8) ? rng.pickWeighted(pool2, (x) => x.fame + 10) : undefined;
     if (j) j.fame = Math.min(100, j.fame + 0.5);
     const tone: NewsArticle['tone'] = o.bias === 'sensational' ? 'alarmist' : o.bias === 'opposition' ? 'negative' : o.bias === 'state' || o.bias === 'establishment' ? 'positive' : negative ? 'negative' : 'neutral';
-    out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: j?.id, eventId: ev.id, headline: rng.pick(heads[o.bias]), body: bodies[o.bias], tone, reach: Math.round(o.audience * 0.5 * 10) / 10, editorial: true });
+    out.push({ id: nextId(world, 'n'), day: world.day, outletId: o.id, authorId: j?.id, eventId: ev.id, headline: tidy(rng.pick(heads[o.bias])), body: tidy(bodies[o.bias]), tone, reach: Math.round(o.audience * 0.5 * 10) / 10, editorial: true });
   }
   world.news.push(...out);
   return out;
@@ -110,7 +111,7 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
       `Strange interview yesterday. "${q}". ${a ? `My answer stands: ${a}` : 'I answered, for once.'}`,
       `For the record, since it is being quoted: when asked "${q}", ${a ? `I said ${a}` : 'I told the truth'}.`,
     ]);
-    out.push({ id: nextId(world, 's'), day: world.day, authorId: p.id, text: text.length > 260 ? text.slice(0, 257) + '…' : text, hashtags: ['Interview'], likes: Math.round(p.fame * rng.float(2, 20)), reposts: Math.round(p.fame * rng.float(0.1, 2)), replies: 0, sentiment: 0, viral: false });
+    out.push({ id: nextId(world, 's'), day: world.day, authorId: p.id, text: tidy(text.length > 260 ? text.slice(0, 257) + '…' : text), hashtags: ['Interview'], likes: Math.round(p.fame * rng.float(2, 20)), reposts: Math.round(p.fame * rng.float(0.1, 2)), replies: 0, sentiment: 0, viral: false });
     p.memories = p.memories.filter((x) => x !== m); // said once
   }
   // Event reactions
@@ -134,7 +135,7 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
           const agree = rng.next() < 0.5 + (q.ideology === a.ideology ? 0.2 : -0.2);
           const lead = agree ? rng.pick(['This.', 'Exactly right.', 'Worth reading twice.', 'Signal-boosting.']) : rng.pick(['Wrong on every count.', 'This is how misinformation spreads.', 'Respectfully: no.', 'Read this and then read the actual facts.']);
           const excerpt = post.text.length > 90 ? post.text.slice(0, 87) + '…' : post.text;
-          out.push({ id: nextId(world, 's'), day: world.day, authorId: q.id, text: `${lead} ↻ @${a.socialHandle}: “${excerpt}”`, hashtags: post.hashtags.slice(0, 1), likes: Math.round(post.likes * rng.float(0.1, 0.6)), reposts: Math.round(post.reposts * rng.float(0.1, 0.4)), replies: 0, eventId: ev.id, sentiment: agree ? post.sentiment : -post.sentiment, viral: false });
+          out.push({ id: nextId(world, 's'), day: world.day, authorId: q.id, text: tidy(`${lead} ↻ @${a.socialHandle}: “${excerpt}”`), hashtags: post.hashtags.slice(0, 1), likes: Math.round(post.likes * rng.float(0.1, 0.6)), reposts: Math.round(post.reposts * rng.float(0.1, 0.4)), replies: 0, eventId: ev.id, sentiment: agree ? post.sentiment : -post.sentiment, viral: false });
         }
       }
       // Replies
@@ -143,7 +144,7 @@ export function generateSocial(world: World, rng: RNG, todays: WorldEvent[]): So
         const r = rng.pick(people);
         if (r.id === a.id) continue;
         const rep = provider.reply(world, post, r, rng);
-        out.push({ id: nextId(world, 's'), day: world.day, authorId: r.id, text: rep.text, hashtags: [], likes: Math.round(post.likes * rng.float(0.01, 0.2)), reposts: 0, replies: 0, eventId: ev.id, sentiment: rep.sentiment, viral: false, replyTo: post.id });
+        out.push({ id: nextId(world, 's'), day: world.day, authorId: r.id, text: tidy(rep.text), hashtags: [], likes: Math.round(post.likes * rng.float(0.01, 0.2)), reposts: 0, replies: 0, eventId: ev.id, sentiment: rep.sentiment, viral: false, replyTo: post.id });
         post.replies++;
       }
     }
@@ -165,7 +166,7 @@ function makePost(world: World, rng: RNG, a: Person, ev: WorldEvent | null): Soc
   const engagement = rng.float(0.01, 0.2) * (1 + Math.abs(r.sentiment)) * (ev ? 1 + ev.severity / 3 : 0.5);
   const likes = Math.round(audience * engagement);
   const viral = likes > 25_000 || (ev !== null && ev.severity >= 4 && rng.bool(0.3));
-  return { id: nextId(world, 's'), day: world.day, authorId: a.id, text: r.text, hashtags: r.hashtags, likes: viral ? likes * rng.int(3, 12) : likes, reposts: Math.round(likes * rng.float(0.05, 0.4)), replies: 0, eventId: ev?.id, sentiment: r.sentiment, viral };
+  return { id: nextId(world, 's'), day: world.day, authorId: a.id, text: tidy(r.text), hashtags: r.hashtags, likes: viral ? likes * rng.int(3, 12) : likes, reposts: Math.round(likes * rng.float(0.05, 0.4)), replies: 0, eventId: ev?.id, sentiment: r.sentiment, viral };
 }
 
 export function updateTrending(world: World): void {

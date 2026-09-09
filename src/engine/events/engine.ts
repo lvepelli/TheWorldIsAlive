@@ -2,6 +2,7 @@
  * Event engine: creates events, applies structured effects to entities,
  * records causality and schedules consequences.
  */
+import { tidy } from '../text';
 import { clamp } from '../rng';
 import type { World, WorldEvent, EntityRef, EffectDelta, Severity, EventCategory, ID, Country, City, Person, Company, Organization } from '../types';
 import { nextId } from '../ids';
@@ -40,7 +41,7 @@ export function resolveLocation(world: World, loc?: EventDraft['location']): Wor
 
 export function createEvent(world: World, draft: EventDraft): WorldEvent {
   const ev: WorldEvent = {
-    id: nextId(world, 'ev'), kind: 'event', day: world.day, category: draft.category, type: draft.type, title: draft.title, description: draft.description,
+    id: nextId(world, 'ev'), kind: 'event', day: world.day, category: draft.category, type: draft.type, title: tidy(draft.title), description: tidy(draft.description),
     severity: draft.severity, location: resolveLocation(world, draft.location), actors: draft.actors ?? [], causedBy: draft.causedBy ?? 'simulation',
     consequences: [], relatedEvents: draft.relatedEvents ?? [], affectedEntities: [], effects: draft.effects ?? [], tags: draft.tags ?? [],
     mediaRelevance: draft.mediaRelevance ?? Math.min(1, draft.severity / 5 + 0.1), socialRelevance: draft.socialRelevance ?? Math.min(1, draft.severity / 5),

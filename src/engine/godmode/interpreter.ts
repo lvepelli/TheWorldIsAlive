@@ -6,6 +6,7 @@
  * structured `GodPlan`. An LLM-backed interpreter can produce the same
  * structure (see docs/AI_SYSTEM.md and prompts/god_command.md).
  */
+import { looksSpanish, spanishToEnglish } from './es';
 import type { Region, World, Country, Company, Person, Sector, EntityRef } from '../types';
 import { SECTORS } from '../types';
 
@@ -60,6 +61,7 @@ const INTENTS: Intent[] = [
   { action: 'reduce-tension', test: /\b(reconcil|détente|detente|thaw|normali[sz]e relations|make peace)/i },
   { action: 'revolution', test: /\b(revolution|uprising|overthrow|revolt|rebellion)\b/i },
   { action: 'coup', test: /\b(coup|junta|generals? seize)\b/i },
+  { action: 'crisis', test: /\beconom(y|ic|ies)\b[^.]*\b(collapse|crash|crisis|recession|tank)/i },
   { action: 'collapse-government', test: /\b(government|state|regime)\b.*\b(collapse|fall|fails?|crumble)s?\b|\b(collapse|fall)\b.*\b(government|regime|state)\b/i },
   { action: 'annex', test: /\b(annex(es|ed|ation)?|cedes?|seiz(e|es|ed) (the )?(region|province|coast|valley|highlands))\b/i },
   { action: 'autonomy', test: /\b(autonomy|self-rule|self rule|devolution|home rule|devolve)\b/i },
@@ -102,7 +104,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
 
   interpret(world: World, text: string): GodPlan {
     const t = text.trim();
-    const lower = t.toLowerCase();
+    const lower = looksSpanish(t) ? spanishToEnglish(t, entityNames(world)) : t.toLowerCase();
     const countries = findCountries(world, lower);
     const regions = findRegions(world, lower);
     const companies = findCompanies(world, lower);
@@ -111,7 +113,8 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     const magnitude = findMagnitude(lower);
     const delayDays = findDelay(lower);
     let intent: Intent | undefined; let match: RegExpMatchArray | null = null;
-    for (const i of INTENTS) { const m = t.match(i.test); if (m) { intent = i; match = m; break; } }
+    const intentText = lower === t.toLowerCase() ? t : lower; // Spanish input is matched on its keyword translation
+    for (const i of INTENTS) { const m = intentText.match(i.test); if (m) { intent = i; match = m; break; } }
     const params: Record<string, string> = intent?.params && match ? intent.params(match) : {};
     const notes: string[] = [];
     const targets: EntityRef[] = [];
@@ -134,7 +137,7 @@ export class LocalGodInterpreter implements GodCommandInterpreter {
     if (countries.length) confidence += 0.1; if (companies.length || people.length) confidence += 0.1;
 
     // Composite: "a small X company discovers/invents Y" → create company + breakthrough on it
-    const wantsNewCompany = /\b(a|an|small|tiny|unknown|new|little|obscure)\b[^.]{0,40}\b(company|startup|firm|lab|laboratory)\b/i.test(t) && !companies.length;
+    const wantsNewCompany = /\b(a|an|small|tiny|unknown|new|little|obscure)\b[^.]{0,40}\b(company|startup|firm|lab|laboratory)\b/i.test(intentText) && !companies.length;
     if (wantsNewCompany && (action === 'breakthrough' || action === 'create-company' || action === 'discovery')) {
       action = 'company-breakthrough';
       params.sector = sector ?? 'technology';
@@ -189,6 +192,15 @@ function labelFor(action: string): string {
 }
 function capitalize(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+/** Every name the interpreter can match, longest first, so Spanish translation leaves them intact. */
+function entityNames(world: World): string[] {
+  const out: string[] = [];
+  for (const c of Object.values(world.countries)) out.push(c.name, c.adjective);
+  for (const r of Object.values(world.regions ?? {})) out.push(r.name);
+  for (const c of Object.values(world.companies)) if (c.alive) out.push(c.name);
+  for (const p of Object.values(world.people)) if (p.alive && p.fame > 20) out.push(p.name);
+  return out.sort((a, b) => b.length - a.length);
+}
 export function findCountries(world: World, lower: string): Country[] {
   const out: { c: Country; idx: number }[] = [];
   for (const c of Object.values(world.countries)) {

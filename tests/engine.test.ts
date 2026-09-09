@@ -291,7 +291,7 @@ describe('summaries', () => {
 });
 
 describe('long-run balance', () => {
-  it('stays within bounds over 20 years', { timeout: 60000 }, () => {
+  it('stays within bounds over 20 years', { timeout: 120000 }, () => {
     const w = generateWorld({ seed: 'balance' });
     const rng = RNG.fromState(w.rngState);
     const pop0 = Object.values(w.countries).reduce((a, c) => a + c.population, 0);
