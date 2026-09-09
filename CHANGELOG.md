@@ -12,6 +12,12 @@
 - Living characters: social reactions depend on family, partner, ally and enemy ties to the people involved.
 - History → Sagas: causal chains grouped into named emergent stories ("The Yukouri war", "From garage to giant").
 - News: consequence coverage references its cause ("weeks after…"); independent and international outlets mark stories as developing.
+- Social: quote-reposts of viral posts by other public figures.
+- God Mode: pick a country parameter by tapping it on the map (◎ next to country dropdowns).
+- Characters: objectives evolve with success and standing (founders aim for IPOs, unpopular leaders fight to survive).
+- PWA: in-app Install button (Android/desktop) and iOS Add-to-Home-Screen hint; compact landscape layout for phones.
+- Saves: yearly compaction keeps files under ~8 MB after a decade; event cap 3000.
+- Fix: secession could push a parent country's population below zero.
 
 ## 0.3.0 — living details
 
