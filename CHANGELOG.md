@@ -35,6 +35,7 @@
 - Journalists quote your interviews: a famous character you questioned may get a profile piece ("…: X speaks") built on what they told you, with fame and reputation effects; researchers persuaded toward a field chase breakthroughs in it.
 - Mobile: toasts stay at the top while the inspector sheet is open on a list screen, so they never cover the sheet.
 - People: a "Changed course" panel lists characters you persuaded and what they did about it; the inspector marks an objective that came from an interview.
+- Dialogue: a "You should make peace." starter chip makes persuasion discoverable.
 
 ## 0.5.0 — rivals, fronts and editorials
 

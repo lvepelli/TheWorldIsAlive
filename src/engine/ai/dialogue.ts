@@ -13,7 +13,7 @@ export interface DialogueProvider {
   answer(world: World, person: Person, question: string): Promise<string> | string;
 }
 
-export const SUGGESTED_QUESTIONS = ['What do you want?', 'How do you feel about your country?', 'What happened recently?', 'Who do you trust?', 'What are you afraid of?', 'Tell me about yourself.'];
+export const SUGGESTED_QUESTIONS = ['What do you want?', 'How do you feel about your country?', 'What happened recently?', 'Who do you trust?', 'What are you afraid of?', 'Tell me about yourself.', 'You should make peace.'];
 
 export class LocalDialogueProvider implements DialogueProvider {
   readonly id = 'local';
