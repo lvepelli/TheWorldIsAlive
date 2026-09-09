@@ -14,6 +14,7 @@ One tick = one simulated day (`simulation/tick.ts`). Cadences:
 | Weekly | population growth, GDP compounding, growth/inflation/unemployment/debt drift, happiness, unrest, stability, approval, polarization, city drift, company fundamentals | systems.ts `weeklyTick` |
 | Monthly | technology, military, corruption, climate risk, relation drift, elections, coup/collapse/revolution risk, organizations, character objectives, monthly summary | systems.ts `monthlyTick`, characters.ts |
 | Yearly | climate report, harvest report, rising seas, World Games (every 4 years), Laurel Prizes, yearly summary | systems.ts `yearlyTick` |
+| Monthly (regions) | regional unrest drift, autonomy demands | simulation/regions.ts `regionsTick` |
 | Calendar | film festival (May), trade fair (October) — once per year each, guarded by the event log | simulation/calendar.ts `calendarTick` (from the monthly tick) |
 
 Years are 365 days (no leap years) for determinism; `time.ts` converts day indexes to calendar dates.
@@ -50,6 +51,10 @@ Five storm cells drift eastward along a tropical and a mid-latitude band; `storm
 ## Trade (`trade.ts`)
 
 Nothing is stored: `tradeVolume(a, b)` = (min(gdp) × 0.04 + √(gdpA·gdpB) × 0.01) × neighbor 1.5 × ally 1.3 × relations factor (0.6 at −60 … 1.6 at +100) × openness (freedom). War or relations below −60 suspend a link. `tradeShare` (total / GDP, capped 0.8) enters the weekly growth potential as `(min(0.5, share) − 0.25) × 2`, so sanctions, wars and broken alliances have a lasting economic cost. The map scales trade arcs by log volume, the Trade overlay colours countries by share, and the inspector Trade section lists top partners.
+
+## Regions (`generator/regions.ts`, `simulation/regions.ts`)
+
+Every country with three or more cities is split into 2–4 regions by k-means over its cities (seeded from the capital and the farthest cities, seam-aware). A region has an identity (0..1, higher far from the capital or across a coast/inland divide; ~0.1 for the capital's region), an autonomy level and its own unrest. Monthly, `unrest → 0.7·country unrest + 50·identity + 0.8·prosperity gap + 0.25·max(0, polarization−50) − 0.3·autonomy (+5 at war)` at 8 % a month, plus an occasional slight (+8..18, 2.5 %/month when identity > 0.45); cities drift 3 % toward their region's unrest. A non-capital region with unrest > 55 and identity > 0.4 demands autonomy (30 %/month, at most yearly) → `region.response` (concession 70 % if freedom > 55, 45 % if stability < 40, else 20 %; otherwise crackdown) and maybe a `<Region> League` independence movement; a crackdown schedules `region.secession` (needs unrest ≥ 70 and stability ≤ 55, else retried), which calls `createCountry(..., regionId)`: the new state takes the region's cities and every cell whose nearest city belongs to the region. Old saves without regions get them in `validateWorld`.
 
 ## Markets (`markets.ts`)
 

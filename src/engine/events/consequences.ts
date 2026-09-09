@@ -414,6 +414,45 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       effects: [fx('company', a.id, 'value', 5), fx('company', b.id, 'value', 5), fx('country', ca.id, 'gdpGrowth', 0.1), fx('country', cb.id, 'gdpGrowth', 0.1)], tags: ['business', 'trade', ca.code, cb.code], data: { shocks: [{ sector: a.sector, pct: 0.015 }] },
     });
   },
+  // Regions: an autonomy demand is answered with a concession or a crackdown; crackdowns can end in secession along regional lines.
+  'region.response': (w, rng, src) => {
+    const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
+    if (!c || !r || r.countryId !== c.id) return null;
+    const anchor = w.cities[r.cityIds[0]];
+    const concede = c.freedom > 55 ? rng.bool(0.7) : c.stability < 40 ? rng.bool(0.45) : rng.bool(0.2);
+    if (concede) {
+      r.autonomy = clamp(r.autonomy + 25, 0, 100); r.unrest = clamp(r.unrest - 25, 0, 100); r.history.push({ day: w.day, text: `Granted autonomy by ${c.name}.` });
+      return createEvent(w, {
+        category: 'political', type: 'region.concession', severity: 2, causedBy: src.id, title: `${c.name} grants ${r.name} self-rule`,
+        description: `A devolution law gives ${r.name} its own assembly, control of ${rng.pick(['schools and language', 'its tax revenue', 'policing', 'its ports and roads'])}. ${rng.pick(['Hardliners in the capital called it the beginning of the end.', 'The regional council met the same week.', 'Nationalists in the region said it was not enough — but they said it quietly.'])}`,
+        location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id)],
+        effects: [fx('country', c.id, 'stability', 3), fx('country', c.id, 'freedom', 1), fx('country', c.id, 'unrest', -2)], tags: ['region', 'autonomy', c.code], data: { regionId: r.id, region: r.name },
+      });
+    }
+    r.unrest = clamp(r.unrest + 12, 0, 100); r.autonomy = clamp(r.autonomy - 10, 0, 100); r.history.push({ day: w.day, text: `Crackdown ordered by ${c.name}.` });
+    return createEvent(w, {
+      category: 'political', type: 'region.crackdown', severity: 3, causedBy: src.id, title: `${c.name} sends troops into ${r.name}`,
+      description: `${c.name} answered the autonomy demand with ${rng.pick(['a curfew and mass arrests', 'soldiers on every square', 'the dissolution of the regional council', 'a ban on the regional language in schools'])}. ${rng.pick(['The region went quiet, and angrier.', 'Videos from ' + (anchor?.name ?? r.name) + ' spread faster than the censors.', 'Neighbours called for restraint.'])}`,
+      location: { countryId: c.id, cityId: anchor?.id, x: anchor?.x ?? c.centroid.x, y: anchor?.y ?? c.centroid.y }, actors: [ref('country', c.id)],
+      effects: [fx('country', c.id, 'freedom', -3), fx('country', c.id, 'unrest', 5), fx('country', c.id, 'approval', -3)], tags: ['region', 'crackdown', c.code], data: { regionId: r.id, region: r.name },
+    });
+  },
+  'region.movement': (w, rng, src) => {
+    const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
+    if (!c || !r || r.countryId !== c.id) return null;
+    if (c.movements.some((m) => w.organizations[m]?.alive && w.organizations[m]?.agenda === 'independence')) return null;
+    const ev = A.createMovement(w, rng, c, src.id, false, 'nationalist', `${r.name} League`, 'independence');
+    if (ev) { ev.title = `${r.name} League forms to fight for independence`; ev.data = { ...(ev.data ?? {}), regionId: r.id, cityId: r.cityIds[0] }; }
+    return ev;
+  },
+  'region.secession': (w, rng, src) => {
+    const c = c$(w, src.location.countryId); const r = src.data?.regionId ? w.regions?.[src.data.regionId as ID] : undefined;
+    if (!c || !r || r.countryId !== c.id) return null;
+    if (r.unrest < 70 || c.stability > 55) { if (r.unrest > 50 && rng.bool(0.5)) schedule(w, 'region.secession', src.id, rng.int(120, 300)); return null; }
+    const ev = A.createCountry(w, rng, c, src.id, false, undefined, r.id);
+    if (ev) { ev.title = `${r.name} breaks away from ${c.name}`; ev.description = `After ${rng.pick(['months of strikes', 'a referendum the capital refused to recognise', 'the regional assembly voted for independence and'])}, ${r.name} declared itself a sovereign state. ${ev.description}`; }
+    return ev;
+  },
   'summit.outcome': (w, rng, src) => {
     const topic = src.data?.topic as string | undefined; const host = c$(w, src.data?.host as ID);
     const guests = ((src.data?.guests as ID[] | undefined) ?? []).map((id) => w.countries[id]).filter(Boolean);
@@ -897,6 +936,9 @@ const TRIGGERS: Trigger[] = [
   { match: (e) => e.type === 'health.pandemic', rule: 'pandemic.lockdown-protests', delay: [40, 120], p: 0.9 },
   { match: (e) => e.type === 'summit' && !!e.data?.topic, rule: 'summit.outcome', delay: [20, 90], p: 0.9 },
   { match: (e) => e.type === 'festival.film' && !!e.data?.political, rule: 'festival.banned', delay: [1, 12], p: 0.7 },
+  { match: (e) => e.type === 'region.autonomy', rule: 'region.response', delay: [15, 90], p: 0.9 },
+  { match: (e) => e.type === 'region.autonomy', rule: 'region.movement', delay: [5, 40], p: 0.5 },
+  { match: (e) => e.type === 'region.crackdown', rule: 'region.secession', delay: [60, 240], p: 0.5 },
   { match: (e) => e.type === 'festival.film' && !!e.data?.maker, rule: 'festival.rights', delay: [10, 45], p: 0.55 },
   { match: (e) => e.type === 'trade.fair' && (e.data?.deal as unknown[] | undefined)?.length === 2, rule: 'fair.venture', delay: [10, 45], p: 0.8 },
   { match: (e) => e.type === 'food.crisis', rule: 'food.riots', delay: [5, 30], p: 0.8 },

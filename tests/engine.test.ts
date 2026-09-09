@@ -3,7 +3,9 @@ import { generateWorld } from '../src/engine/generator/world';
 import { tickDay } from '../src/engine/simulation/tick';
 import { declareWar } from '../src/engine/events/actions';
 import { RNG } from '../src/engine/rng';
-import { serialize, deserialize } from '../src/engine/persistence/storage';
+import { serialize, deserialize, validateWorld } from '../src/engine/persistence/storage';
+import { CONSEQUENCE_RULES } from '../src/engine/events/consequences';
+import { createEvent } from '../src/engine/events/engine';
 import { localGodInterpreter } from '../src/engine/godmode/interpreter';
 import { executePlan } from '../src/engine/godmode/execute';
 import { GOD_PRESETS } from '../src/engine/godmode/presets';
@@ -325,5 +327,45 @@ describe('calendar', () => {
     const years = new Set(festivals.map((e) => Math.floor(e.day / 365))); expect(years.size).toBe(2);
     const follow = w.events.filter((e) => ['festival.banned', 'festival.rights', 'fair.venture', 'fair.collapse'].includes(e.type));
     expect(follow.length).toBeGreaterThan(0);
+  });
+});
+
+describe('regions', () => {
+  it('partitions every country\'s cities into regions', () => {
+    const w = generateWorld({ seed: 'regions' });
+    expect(Object.keys(w.regions).length).toBeGreaterThan(30);
+    for (const c of Object.values(w.countries)) {
+      const regions = (c.regionIds ?? []).map((id) => w.regions[id]);
+      expect(regions.every(Boolean)).toBe(true);
+      const covered = regions.flatMap((r) => r.cityIds).sort();
+      expect(covered).toEqual(c.cityIds.slice().sort());
+      if (c.cityIds.length >= 3) expect(regions.length).toBeGreaterThanOrEqual(2);
+      for (const r of regions) { expect(r.countryId).toBe(c.id); for (const id of r.cityIds) expect(w.cities[id].regionId).toBe(r.id); }
+      expect(regions.filter((r) => r.cityIds.includes(c.capitalId)).length).toBe(1);
+    }
+  });
+  it('lets an aggrieved region secede along its own borders', () => {
+    const w = generateWorld({ seed: 'regions' }); const rng = new RNG('regions');
+    const c = Object.values(w.countries).filter((x) => (x.regionIds ?? []).length >= 3).sort((a, b) => b.area - a.area)[0];
+    const r = (c.regionIds ?? []).map((id) => w.regions[id]).find((x) => !x.cityIds.includes(c.capitalId))!;
+    r.unrest = 90; c.stability = 30;
+    const before = Object.keys(w.countries).length; const cities = r.cityIds.slice();
+    const demand = createEvent(w, { category: 'political', type: 'region.crackdown', severity: 3, title: 'x', description: 'x', location: { countryId: c.id }, data: { regionId: r.id, region: r.name } });
+    const ev = CONSEQUENCE_RULES['region.secession'](w, rng, demand, {});
+    expect(ev?.type).toBe('country.founded');
+    expect(Object.keys(w.countries).length).toBe(before + 1);
+    const nc = w.countries[r.countryId]; expect(nc.id).not.toBe(c.id);
+    expect(nc.cityIds.slice().sort()).toEqual(cities.sort()); expect(nc.regionIds).toEqual([r.id]);
+    for (const id of cities) expect(w.cities[id].countryId).toBe(nc.id);
+    expect(c.cityIds.some((id) => cities.includes(id))).toBe(false);
+    expect((c.regionIds ?? []).includes(r.id)).toBe(false);
+    for (let i = 0; i < 60; i++) tickDay(w, rng); // the world keeps running after the split
+  });
+  it('gives old saves without regions a region map', () => {
+    const w = generateWorld({ seed: 'oldsave' });
+    const raw = JSON.parse(serialize(w)); delete raw.regions; for (const ct of Object.values(raw.cities) as { regionId?: string }[]) delete ct.regionId; for (const c of Object.values(raw.countries) as { regionIds?: string[] }[]) delete c.regionIds;
+    const back = validateWorld(raw);
+    expect(Object.keys(back.regions).length).toBeGreaterThan(30);
+    for (const c of Object.values(back.countries)) expect((c.regionIds ?? []).flatMap((id) => back.regions[id].cityIds).sort()).toEqual(c.cityIds.slice().sort());
   });
 });

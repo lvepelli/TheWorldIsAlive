@@ -121,13 +121,14 @@ export function collectChain(world: { events: WorldEvent[] }, rootId: string): W
   return out.sort((a, b) => a.day - b.day);
 }
 
-export function sagaTitle(world: { countries: Record<string, { name: string }> }, root: { type: string; title: string; location: { countryId?: string }; actors: { kind: string; id: string }[] }, chain: { type: string }[]): string {
+export function sagaTitle(world: { countries: Record<string, { name: string }> }, root: { type: string; title: string; location: { countryId?: string }; actors: { kind: string; id: string }[]; data?: Record<string, unknown> }, chain: { type: string }[]): string {
   const c = root.location.countryId ? world.countries[root.location.countryId]?.name : undefined;
   const types = new Set(chain.map((e) => e.type));
   if (root.type === 'war.declared') return `The ${c ?? ''} war`.replace('  ', ' ');
   if (root.type === 'tech.breakthrough') return `The breakthrough that reshaped ${c ?? 'the world'}`;
   if (root.type === 'scandal') { const people = root.actors.filter((a) => a.kind === 'person'); const who = people[0] ? (world as { people?: Record<string, { lastName: string }> }).people?.[people[0].id]?.lastName : undefined; if (types.has('rival.ascends')) return `The fall of ${who ?? 'a name'}, the rise of a rival`; if (types.has('downfall') || types.has('leader.resignation')) return who ? `The ${who} affair` : 'A scandal and a fall'; if (types.has('rival.attack') && types.has('ally.rally')) return who ? `${who} against the world` : 'A scandal, rivals and allies'; return who ? `${who} survives the storm` : 'A scandal survived'; }
   if (root.type === 'premise.opening') return root.title;
+  if (root.type === 'region.autonomy') { const rn = root.data?.region as string | undefined; return types.has('country.created') || Array.from(types).some((t) => t.startsWith('country.')) ? `The birth of ${rn ?? 'a new nation'}` : types.has('region.crackdown') ? `The ${rn ?? 'regional'} crackdown` : `The ${rn ?? 'regional'} question`; }
   if (root.type === 'festival.film') return types.has('festival.banned') ? `The film ${c ?? 'a state'} banned` : `The ${c ?? ''} film festival`.replace('  ', ' ');
   if (root.type === 'trade.fair') return types.has('fair.venture') ? `The venture born at the ${c ?? ''} fair`.replace('  ', ' ') : `The ${c ?? ''} trade fair`.replace('  ', ' ');
   if (root.type === 'summit') return types.has('summit.accord') ? `The ${c ?? ''} accord`.replace('  ', ' ') : types.has('summit.collapse') ? `The talks that failed in ${c ?? '?'}` : `The ${c ?? ''} summit`.replace('  ', ' ');

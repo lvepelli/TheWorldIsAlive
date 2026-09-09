@@ -12,6 +12,7 @@ import { DAYS_PER_YEAR } from '../types';
 import * as N from '../names';
 import { fillMarkets } from '../simulation/markets';
 import { applyPremise } from './premise';
+import { assignRegions } from './regions';
 
 const GOVS: GovernmentType[] = ['democracy', 'republic', 'monarchy', 'technocracy', 'autocracy', 'military-junta', 'theocracy', 'federation', 'oligarchy', 'council'];
 const IDEOS: Ideology[] = ['liberal', 'conservative', 'socialist', 'nationalist', 'technocratic', 'green', 'libertarian', 'populist', 'traditionalist', 'progressive'];
@@ -34,7 +35,7 @@ export function generateWorld(opts: GenerateOptions): World {
   const world: World = {
     meta: { seed, name: opts.name ?? worldName(rng.fork('wname')), createdAt: Date.now(), version: SAVE_VERSION, startYear },
     day: 0,
-    countries: {}, cities: {}, people: {}, companies: {}, organizations: {}, outlets: {},
+    countries: {}, cities: {}, regions: {}, people: {}, companies: {}, organizations: {}, outlets: {},
     events: [], news: [], social: [], pending: [], indexes: {}, commodities: {}, interventions: [], summaries: [], trending: [],
     geography: { width: geo.width, height: geo.height, cells: Array.from(geo.region), elevation: Array.from(geo.elevation, (v) => Math.round(v * 1000) / 1000), moisture: Array.from(geo.moisture, (v) => Math.round(v * 100) / 100), countryOrder: [] },
     stats: { eventsGenerated: 0, ticks: 0, lastYearlyDay: 0, lastMonthlyDay: 0, lastWeeklyDay: 0 },
@@ -136,6 +137,9 @@ export function generateWorld(opts: GenerateOptions): World {
       if (idx === 0) country.capitalId = id;
     });
   }
+
+  // ---- Regions inside countries ------------------------------------------
+  assignRegions(world, new RNG(`${opts.seed}:regions`));
 
   // ---- International relations ---------------------------------------------
   const relRng = rng.fork('relations');

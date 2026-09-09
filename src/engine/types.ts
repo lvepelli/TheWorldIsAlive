@@ -104,12 +104,19 @@ export interface City {
   prosperity: number;     // 0..100
   unrest: number;         // 0..100
   specialties: Sector[];
+  regionId?: ID;          // region inside the country (assigned by generator/regions.ts)
 }
 
 export interface Region {
   id: ID;
+  kind: 'region';
   name: string;
-  cityIds: ID[];
+  countryId: ID;
+  cityIds: ID[];          // cities inside (each city belongs to exactly one region)
+  identity: number;       // 0..1 how distinct the region feels from the capital (language, distance, history)
+  unrest: number;         // 0..100 regional grievance, drifts toward what the country and prosperity gap sustain
+  autonomy: number;       // 0..100 devolved powers (concessions raise it, crackdowns lower it)
+  history: { day: number; text: string; eventId?: ID }[];
 }
 
 export interface Country {
@@ -153,6 +160,7 @@ export interface Country {
   atWarWith: ID[];
   tradePartners: ID[];
   movements: ID[];        // organization ids of political movements based here
+  regionIds?: ID[];       // regions inside the country (generator/regions.ts)
   founded: number;        // day index (negative = before start)
   culture: { language: string; values: string[]; religionShare: number };
   history: { day: number; text: string; eventId?: ID }[];
@@ -348,6 +356,7 @@ export interface World {
   day: number;            // days since start
   countries: Record<ID, Country>;
   cities: Record<ID, City>;
+  regions: Record<ID, Region>;
   people: Record<ID, Person>;
   companies: Record<ID, Company>;
   organizations: Record<ID, Organization>;

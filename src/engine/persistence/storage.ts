@@ -7,6 +7,8 @@ import { get, set, del, keys } from 'idb-keyval';
 import type { World } from '../types';
 import { SAVE_VERSION } from '../types';
 import { formatDate } from '../time';
+import { RNG } from '../rng';
+import { assignRegions } from '../generator/regions';
 
 export interface SaveMeta { slot: string; name: string; seed: string; day: number; date: string; savedAt: number; events: number; countries: number; }
 
@@ -74,12 +76,13 @@ export function validateWorld(obj: unknown): World {
   // Fill defaults for optional collections so older saves keep working
   const out: World = {
     meta: { ...w.meta, version: SAVE_VERSION, startYear: w.meta.startYear ?? 2040, name: w.meta.name ?? 'Unnamed World', createdAt: w.meta.createdAt ?? Date.now() },
-    day: w.day, countries: w.countries, cities: w.cities, people: w.people ?? {}, companies: w.companies ?? {}, organizations: w.organizations ?? {}, outlets: w.outlets ?? {},
+    day: w.day, countries: w.countries, cities: w.cities, regions: w.regions ?? {}, people: w.people ?? {}, companies: w.companies ?? {}, organizations: w.organizations ?? {}, outlets: w.outlets ?? {},
     events: Array.isArray(w.events) ? w.events : [], news: Array.isArray(w.news) ? w.news : [], social: Array.isArray(w.social) ? w.social : [], pending: Array.isArray(w.pending) ? w.pending : [],
     indexes: w.indexes ?? {}, commodities: w.commodities ?? {}, interventions: w.interventions ?? [], summaries: w.summaries ?? [], trending: w.trending ?? [],
     geography: w.geography, stats: w.stats ?? { eventsGenerated: 0, ticks: 0, lastYearlyDay: 0, lastMonthlyDay: 0, lastWeeklyDay: 0 },
     rngState: Array.isArray(w.rngState) && w.rngState.length === 4 ? (w.rngState as World['rngState']) : [1, 2, 3, 4], counters: w.counters ?? {},
   };
+  if (!Object.keys(out.regions).length) assignRegions(out, new RNG(`${out.meta.seed}:regions`)); // saves from before regions existed
   if (!Array.isArray(out.geography.cells) || out.geography.cells.length !== out.geography.width * out.geography.height) throw new Error('Geography data is corrupted.');
   for (const c of Object.values(out.countries)) { if (!out.countries[c.id]) throw new Error('Country index mismatch.'); c.relations ??= {}; c.alliances ??= []; c.atWarWith ??= []; c.neighbors ??= []; c.history ??= []; c.movements ??= []; c.tradePartners ??= []; }
   return out;

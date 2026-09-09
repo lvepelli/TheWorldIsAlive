@@ -4,7 +4,7 @@
  * recorded as an event with causality.
  */
 import { RNG, clamp } from '../rng';
-import type { World, Country, Person, Company, Organization, ID, Sector, Ideology, GovernmentType, Profession, WorldEvent, EntityRef } from '../types';
+import type { World, Country, Region, Person, Company, Organization, ID, Sector, Ideology, GovernmentType, Profession, WorldEvent, EntityRef } from '../types';
 import { DAYS_PER_YEAR } from '../types';
 import { createEvent, fx, ref, type EventDraft } from './engine';
 import { makePerson, makeCompany, makeOrg, leaderTitle } from '../generator/world';
@@ -260,16 +260,23 @@ export function createMovement(world: World, rng: RNG, c: Country, cause: Cause 
   });
 }
 
-export function createCountry(world: World, rng: RNG, parent: Country, cause: Cause = 'simulation', player = false, name?: string): WorldEvent | null {
-  // Split roughly half the cells (those farther from the capital) into a new country
+export function createCountry(world: World, rng: RNG, parent: Country, cause: Cause = 'simulation', player = false, name?: string, regionId?: ID): WorldEvent | null {
+  // Split a region (the cells closest to its cities) or, without one, roughly half the cells farther from the capital into a new country
   const geo = world.geography;
   const pIdx = geo.countryOrder.indexOf(parent.id);
   const cells: number[] = [];
   for (let i = 0; i < geo.cells.length; i++) if (geo.cells[i] === pIdx) cells.push(i);
   if (cells.length < 24 || parent.cityIds.length < 2) return null;
   const cap = capitalOf(world, parent);
-  const far = cells.map((i) => { const x = i % geo.width, y = Math.floor(i / geo.width); let dx = Math.abs(x - cap.x); dx = Math.min(dx, geo.width - dx); return { i, d: Math.hypot(dx, y - cap.y) }; }).sort((a, b) => b.d - a.d);
-  const take = new Set(far.slice(0, Math.floor(cells.length * rng.float(0.3, 0.45))).map((f) => f.i));
+  const region = regionId ? world.regions?.[regionId] : undefined;
+  if (region && (region.countryId !== parent.id || region.cityIds.some((id) => id === parent.capitalId) || region.cityIds.length >= parent.cityIds.length)) return null;
+  const wrapDx = (a: number, b: number) => { const d = Math.abs(a - b); return Math.min(d, geo.width - d); };
+  const nearestCityRegion = (x: number, y: number): ID | undefined => { let best: ID | undefined, bd = Infinity; for (const id of parent.cityIds) { const ct = world.cities[id]; const d = wrapDx(x + 0.5, ct.x) ** 2 + (y + 0.5 - ct.y) ** 2; if (d < bd) { bd = d; best = ct.regionId; } } return best; };
+  const far = region
+    ? cells.filter((i) => nearestCityRegion(i % geo.width, Math.floor(i / geo.width)) === region.id).map((i) => ({ i, d: 0 }))
+    : cells.map((i) => { const x = i % geo.width, y = Math.floor(i / geo.width); let dx = Math.abs(x - cap.x); dx = Math.min(dx, geo.width - dx); return { i, d: Math.hypot(dx, y - cap.y) }; }).sort((a, b) => b.d - a.d);
+  const take = new Set((region ? far : far.slice(0, Math.floor(cells.length * rng.float(0.3, 0.45)))).map((f) => f.i));
+  if (region && take.size < 6) return null;
   // Ensure at least one city is inside
   const movedCities = parent.cityIds.filter((id) => { const c = world.cities[id]; return take.has(Math.floor(c.y) * geo.width + Math.floor(c.x)); });
   if (!movedCities.length) return null;
@@ -287,6 +294,15 @@ export function createCountry(world: World, rng: RNG, parent: Country, cause: Ca
   geo.countryOrder.push(nc.id);
   for (const i of take) geo.cells[i] = idx;
   for (const id of movedCities) { world.cities[id].countryId = nc.id; world.cities[id].capital = id === nc.capitalId; }
+  // Regions: the seceding region becomes the new country's only region; other regions lose any city that moved with it.
+  if (world.regions) {
+    const moved = new Set(movedCities);
+    for (const rid of parent.regionIds ?? []) { const r = world.regions[rid]; if (!r) continue; r.cityIds = r.cityIds.filter((id) => !moved.has(id)); if (!r.cityIds.length) { delete world.regions[rid]; } }
+    parent.regionIds = (parent.regionIds ?? []).filter((rid) => world.regions[rid]);
+    if (region) { region.countryId = nc.id; region.cityIds = movedCities.slice(); region.unrest = 25; region.autonomy = 100; region.history.push({ day: world.day, text: `Became the nation of ${nm.name}.` }); world.regions[region.id] = region; nc.regionIds = [region.id]; }
+    else { const r: Region = { id: `region_${nc.id}`, kind: 'region', name: `${world.cities[nc.capitalId].name} Heartland`, countryId: nc.id, cityIds: movedCities.slice(), identity: 0.1, unrest: 30, autonomy: 0, history: [] }; world.regions[r.id] = r; nc.regionIds = [r.id]; }
+    for (const id of movedCities) world.cities[id].regionId = nc.regionIds[0];
+  }
   parent.cityIds = parent.cityIds.filter((id) => !take.has(Math.floor(world.cities[id].y) * geo.width + Math.floor(world.cities[id].x)));
   if (!parent.cityIds.includes(parent.capitalId)) { parent.capitalId = parent.cityIds[0]; world.cities[parent.capitalId].capital = true; }
   const popShare = movedCities.reduce((s, id) => s + world.cities[id].population, 0) / Math.max(1, parent.population);

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Regions: every country with three or more cities is split into 2–4 regions (seeded, seam-aware k-means over its cities; `generator/regions.ts`), each with an identity, an autonomy level and its own unrest that drifts with the country's mood, the prosperity gap to the rest of the country and the odd slight from the capital (`simulation/regions.ts`). Distinct, aggrieved regions demand autonomy; the capital concedes (devolution, autonomy up) or cracks down (freedom down, unrest up), and a crackdown can end in secession along the region's own borders — the new state takes exactly the region's cities and the cells nearest to them, so borders stop looking arbitrary. Ten years on the `diag` seed: ~45 autonomy demands, 20 concessions, 16 crackdowns, 3 new states. Country inspector lists regions (unrest, identity, autonomy, last chapter); city inspector names the region; sagas are named ("The X question", "The X crackdown", "The birth of X"). Old saves get regions on load.
+
 ## 0.8.0 — festivals and fronts
 
 - Calendar: a film festival every spring (a host city, a winning artist and their film; political films can get banned by an unfree host, and a media company may buy the rights) and a trade fair every autumn (the biggest trading nation hosts its partners, relations warm, and the two headline companies form a joint venture or fall out) — `simulation/calendar.ts`, rules `festival.banned`, `festival.rights`, `fair.venture`. Sagas rooted in them are named ("The film X banned", "The venture born at the X fair"); posts carry #RedCarpet / #TradeFair tags.
