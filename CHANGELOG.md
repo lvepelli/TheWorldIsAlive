@@ -40,6 +40,7 @@
 - Chronicle export gains a "Conversations that mattered" section: who you persuaded and what they did.
 - Fix: the leader "call an election" behaviour only fires for objectives that actually ask for one ("hold free elections", "call a snap election", "demand new elections"), never for the common generated goal "win the next election".
 - Balance: company pivots driven by generated ambitions ("reach orbit") are rarer (25% per attempt) and never contradict the company's own name; persuaded chiefs still pivot readily. Ten years on the `diag` seed without player input: ~4 objective-driven reforms, ~25 pivots (before this change), no objective-driven elections or resignations.
+- Summaries: the premise line appears in the first week of daily summaries, the first monthly summary and the first yearly review only (it used to repeat monthly for a year).
 
 ## 0.5.0 — rivals, fronts and editorials
 
