@@ -20,12 +20,16 @@ export function monthlyCharacters(world: World, rng: RNG): WorldEvent[] {
     const c = world.countries[co.countryId]; if (!c) continue;
     const cands = Object.values(world.people).filter((p) => p.alive && !p.retired && p.countryId === c.id && p.profession === 'executive' && !p.affiliations.some((id) => world.companies[id]?.alive && world.companies[id].ceoId === p.id));
     const next = cands.length ? rng.pickWeighted(cands, (p) => p.influence + 10) : A.peopleOf(world, c.id, 'executive')[0] ?? null;
+    // The runner-up remembers being passed over: a rivalry that can surface later (feuds, scandal pile-ons, funders).
+    const passedOver = next ? cands.filter((p) => p.id !== next.id).sort((a, b) => b.influence - a.influence)[0] : undefined;
+    if (passedOver && next && rng.bool(0.6)) { relate(world, passedOver, next, 'rival', -0.5); passedOver.history.push({ day: world.day, text: `Passed over for the top job at ${co.name} in favour of ${next.name}.` }); passedOver.objective = `prove the board of ${co.name} wrong`; }
     const fam = A.familyOf(world, c);
     const newCeo = next ?? makePerson(world, rng, fam, c, world.cities[co.cityId] ?? A.capitalOf(world, c), 'executive', 2);
     co.ceoId = newCeo.id; if (!newCeo.affiliations.includes(co.id)) newCeo.affiliations.push(co.id); newCeo.title = 'CEO'; newCeo.tier = Math.min(newCeo.tier, 2) as 1 | 2 | 3;
     newCeo.history.push({ day: world.day, text: `Became CEO of ${co.name}.` });
     const why = ceo ? (!ceo.alive ? `the death of ${ceo.name}` : ceo.retired ? `the retirement of ${ceo.name}` : `${ceo.name}'s departure`) : 'a leadership vacuum';
-    out.push(createEvent(world, { category: 'corporate', type: 'ceo.change', severity: co.value > 100 ? 3 : 2, title: `${newCeo.name} takes the helm at ${co.name}`, description: `Following ${why}, the board of ${co.name} named ${newCeo.name} chief executive. ${rng.pick(['Investors reacted cautiously.', 'The share price jumped on the news.', 'Insiders describe a bruising succession fight.'])}`, location: { cityId: co.cityId }, actors: [ref('company', co.id), ref('person', newCeo.id), ...(ceo ? [ref('person', ceo.id)] : [])], effects: [fx('person', newCeo.id, 'influence', 8), fx('person', newCeo.id, 'fame', 6), fx('company', co.id, 'value%', rng.float(-5, 5))], tags: ['corporate', co.sector, c.code] }));
+    const snub = passedOver && passedOver.relationships.some((r) => r.target.id === newCeo.id && r.strength < 0) ? ` ${passedOver.name}, widely seen as the heir apparent, ${rng.pick(['left the building without comment', 'is said to be furious', 'was not in the room when the vote was taken'])}.` : '';
+    out.push(createEvent(world, { category: 'corporate', type: 'ceo.change', severity: co.value > 100 ? 3 : 2, title: `${newCeo.name} takes the helm at ${co.name}`, description: `Following ${why}, the board of ${co.name} named ${newCeo.name} chief executive. ${rng.pick(['Investors reacted cautiously.', 'The share price jumped on the news.', 'Insiders describe a bruising succession fight.'])}` + snub, location: { cityId: co.cityId }, actors: [ref('company', co.id), ref('person', newCeo.id), ...(ceo ? [ref('person', ceo.id)] : [])], effects: [fx('person', newCeo.id, 'influence', 8), fx('person', newCeo.id, 'fame', 6), fx('company', co.id, 'value%', rng.float(-5, 5))], tags: ['corporate', co.sector, c.code] }));
   }
   const people = Object.values(world.people).filter((p) => p.alive);
   for (const p of people) {
