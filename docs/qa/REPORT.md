@@ -1,7 +1,7 @@
 # Deployed QA report
 
-URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/065016e6aa24d7ef53f3c2486c85dbdcee38d43e/index.html
-Date: 2026-09-09T05:12:23.621Z
+URL: https://rawcdn.githack.com/lvepelli/TheWorldIsAlive/da58ad7390479dc51bbf0126ce5d1ae0742757a4/index.html
+Date: 2026-09-09T05:19:45.525Z
 
 ## android-360 (360×800)
 
@@ -10,8 +10,8 @@ Date: 2026-09-09T05:12:23.621Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (9692 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (9688 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -43,7 +43,7 @@ Date: 2026-09-09T05:12:23.621Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8089 bright samples)
+- ✅ map is painted (8066 bright samples)
 - ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
@@ -76,8 +76,8 @@ Date: 2026-09-09T05:12:23.621Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8379 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8385 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
@@ -109,8 +109,8 @@ Date: 2026-09-09T05:12:23.621Z
 - ✅ intro renders
 - ✅ no horizontal overflow on intro
 - ✅ world generated, map canvas present
-- ✅ map is painted (8142 bright samples)
-- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 9, 2040)
+- ✅ map is painted (8138 bright samples)
+- ✅ simulation progresses at 1× (Jan 6, 2040 → Jan 8, 2040)
 - ✅ no visible controls under 28px (0)
 - ✅ tap on map opens inspector
 - ✅ inspector has no horizontal overflow
