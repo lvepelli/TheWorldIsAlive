@@ -14,4 +14,4 @@ fallback in `src/engine/ai/narrative.ts` and `src/engine/godmode/interpreter.ts`
 | `social_post.md` | `LLMNarrativeEnhancer.enhancePost` | JSON `{ "text": string }` (≤ 240 chars) |
 | `god_command.md` | `LLMGodInterpreter.interpret` | JSON `GodPlan` (see `src/engine/godmode/interpreter.ts`) |
 | `world_summary.md` | future: narrative period summaries | plain prose |
-| `character_dialogue.md` | future: talk to a character | plain prose in character voice |
+| `character_dialogue.md` | talk to a character (`LLMDialogueProvider`; local fallback) | plain prose in character voice, 1–3 sentences |
