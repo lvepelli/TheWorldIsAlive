@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateWorld } from '../src/engine/generator/world';
 import { tickDay } from '../src/engine/simulation/tick';
+import { declareWar } from '../src/engine/events/actions';
 import { RNG } from '../src/engine/rng';
 import { serialize, deserialize } from '../src/engine/persistence/storage';
 import { localGodInterpreter } from '../src/engine/godmode/interpreter';
@@ -138,6 +139,17 @@ describe('simulation', () => {
     const a = localDialogue.answer(w, open, 'You should make peace with your rivals');
     expect(a.length).toBeGreaterThan(10);
   });
+  it('a leader persuaded to make peace ends the war', () => {
+    const w = generateWorld({ seed: 'peacemaker' });
+    const rng = RNG.fromState(w.rngState);
+    const cs = Object.values(w.countries);
+    let a = cs.find((c) => c.atWarWith.length);
+    if (!a) { a = cs.find((c) => c.neighbors.length)!; declareWar(w, rng, a, w.countries[a.neighbors[0]], 'simulation', false); }
+    const leader = w.people[a.leaderId]; leader.objective = 'make peace with our neighbours'; leader.personality.openness = 0.9;
+    let ended = false;
+    for (let i = 0; i < 365 && !ended; i++) { tickDay(w, rng); ended = !a!.atWarWith.length || w.events.some((e) => e.type === 'war.ended' && /personal objective/.test(e.description)); }
+    expect(ended).toBe(true);
+  }, 30000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);

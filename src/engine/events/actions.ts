@@ -296,7 +296,7 @@ export function createCountry(world: World, rng: RNG, parent: Country, cause: Ca
   recomputeNeighbors(world);
   for (const other of Object.values(world.countries)) { if (other.id === nc.id) continue; nc.relations[other.id] = other.id === parent.id ? -30 : (parent.relations[other.id] ?? 0) * 0.5; other.relations[nc.id] = nc.relations[other.id]; }
   // people in moved cities
-  for (const p of Object.values(world.people)) if (movedCities.includes(p.cityId)) p.countryId = nc.id;
+  for (const p of Object.values(world.people)) if (movedCities.includes(p.cityId)) { if (p.id === parent.leaderId) { p.cityId = parent.capitalId; continue; } p.countryId = nc.id; } // the sitting leader stays with the old capital
   for (const co of Object.values(world.companies)) if (movedCities.includes(co.cityId)) co.countryId = nc.id;
   const leader = makePerson(world, rng, fam, nc, world.cities[nc.capitalId], 'politician', 1);
   leader.title = leaderTitle(nc.government); leader.influence = 60; leader.fame = 70; nc.leaderId = leader.id;
@@ -463,8 +463,10 @@ export function scandal(world: World, rng: RNG, p: Person, cause: Cause = 'simul
 
 export function killPerson(world: World, rng: RNG, p: Person, how: 'assassination' | 'accident' | 'natural' | 'disappearance', cause: Cause = 'simulation', player = false): WorldEvent {
   p.alive = false;
-  const c = world.countries[p.countryId];
-  const isLeader = c?.leaderId === p.id;
+  // A leader can lead a country other than the one on their record (e.g. their city seceded); find every throne they hold.
+  const led = Object.values(world.countries).filter((x) => x.leaderId === p.id);
+  const c = led[0] ?? world.countries[p.countryId];
+  const isLeader = led.length > 0;
   p.history.push({ day: world.day, text: how === 'natural' ? 'Died.' : how === 'assassination' ? 'Assassinated.' : how === 'accident' ? 'Died in an accident.' : 'Disappeared.' });
   const sev = isLeader ? 5 : p.fame > 70 ? 4 : p.fame > 40 ? 3 : 2;
   const titles = { assassination: `${p.name} assassinated`, accident: `${p.name} killed in ${rng.pick(['a plane crash', 'a car accident', 'a helicopter crash', 'a fire'])}`, natural: `${p.name} dies at ${Math.floor((world.day - p.birthDay) / DAYS_PER_YEAR)}`, disappearance: `${p.name} vanishes without a trace` };
@@ -478,7 +480,7 @@ export function killPerson(world: World, rng: RNG, p: Person, how: 'assassinatio
     effects: isLeader ? [fx('country', c.id, 'stability', how === 'assassination' ? -18 : -8), fx('country', c.id, 'unrest', how === 'assassination' ? 12 : 3)] : [],
     tags: ['death', how, ...(c ? [c.code] : [])], historic: sev >= 4,
   });
-  if (isLeader && c) changeLeader(world, rng, c, 'succession', ev.id);
+  for (const x of led) changeLeader(world, rng, x, 'succession', ev.id);
   return ev;
 }
 

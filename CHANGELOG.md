@@ -29,6 +29,8 @@
 - Social: characters you interviewed talk about it on the feed the next day (hashtag Interview), quoting the question and their answer.
 - Organizations: movements, parties and religions show public support instead of influence in the list.
 - Dialogue: advice sticks — telling a character "you should …" can persuade an open-minded one (openness vs caution) to adopt it as a new objective, recorded in their life story and shown as "✦ took it to heart" in the conversation; cautious characters refuse in character.
+- Leaders act on their objectives: one talked into peace seeks a ceasefire or sends an olive branch, one set on elections calls a vote, one set on reform loosens the state's grip, one set on stepping down resigns — so persuading a leader in conversation changes the world.
+- Fix: a leader whose home city seceded could be assassinated without any succession (the throne stayed with a dead person); succession now covers every country a person led, and a sitting leader stays with the old capital when their city breaks away.
 
 ## 0.5.0 — rivals, fronts and editorials
 
