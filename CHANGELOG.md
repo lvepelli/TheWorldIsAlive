@@ -2,6 +2,7 @@
 
 ## 0.9.1 — regions you can touch
 
+- Calendar: a yearly climate conference every December, hosted where the seas bite hardest (recent coastal losses weigh in), attended by the biggest economies; it is a summit on climate finance, so the existing accord / collapse machinery decides whether a climate fund follows.
 - Fix: a schism of a schism no longer produces "New New …" names; the splinter takes a prefix the parent does not already carry.
 - Calendar: every living faith with real support has a holy season — once a year its country's capital fills with pilgrims (happiness up, unrest down, a small retail bump); in polarised countries the last night can turn into clashes.
 - Elections have campaigns: from September of the year before a vote, a campaign story opens with an early poll for the incumbent, a named challenger (a surging movement's leader, or the most influential politician) and a promise; the challenger gains fame and a résumé line.

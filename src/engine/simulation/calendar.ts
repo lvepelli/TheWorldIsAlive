@@ -12,8 +12,8 @@ import { tradeLinks, tradeVolume } from './trade';
 const FILMS = ['a film about the border', 'a three-hour silent epic', 'a comedy about the ministry', 'a documentary shot inside a mine', 'a love story set during the blackout', 'a thriller about a missing minister', 'an animated history of the republic', 'a film made entirely from drone footage'];
 const FAIR_STARS = ['a self-charging freight drone', 'a desalination plant that fits in a container', 'a grain that grows on salt marsh', 'a modular reactor the size of a bus', 'an implant that translates in real time', 'a house printed in a day', 'a battery that ships as powder'];
 
-function firedThisYear(world: World, type: string, year: number): boolean {
-  for (let i = world.events.length - 1; i >= 0; i--) { const e = world.events[i]; if (world.day - e.day > 400) break; if (e.type === type && yearOf(e.day, world.meta.startYear) === year) return true; }
+function firedThisYear(world: World, type: string, year: number, extra?: (e: WorldEvent) => boolean): boolean {
+  for (let i = world.events.length - 1; i >= 0; i--) { const e = world.events[i]; if (world.day - e.day > 400) break; if (e.type === type && yearOf(e.day, world.meta.startYear) === year && (!extra || extra(e))) return true; }
   return false;
 }
 
@@ -26,7 +26,27 @@ export function calendarTick(world: World, rng: RNG): WorldEvent[] {
   if (date.month >= 4 && date.month <= 5 && !firedThisYear(world, 'festival.film', year)) out.push(holdFestival(world, rng));
   if (date.month >= 9 && date.month <= 10 && !firedThisYear(world, 'trade.fair', year)) out.push(holdFair(world, rng));
   out.push(...holyDays(world, rng, date.month, year));
+  if (date.month >= 11 && !firedThisYear(world, 'summit', year, (e) => e.data?.conference === 'climate')) { const ev = climateConference(world, rng, year); if (ev) out.push(ev); }
   return out;
+}
+
+/** December: the yearly climate conference. A summit (so `summit.outcome` decides accord or collapse) hosted where the seas bite hardest. */
+function climateConference(world: World, rng: RNG, year: number): WorldEvent | null {
+  const cs = Object.values(world.countries); if (cs.length < 4) return null;
+  const recentSea = world.events.filter((e) => e.type === 'sea.rise' && world.day - e.day < 400);
+  const host = rng.pickWeighted(cs, (c) => c.climateRisk + (recentSea.some((e) => e.location.countryId === c.id) ? 40 : 0) + Math.log10(c.gdp + 1) * 5);
+  const guests = cs.filter((c) => c.id !== host.id && !host.atWarWith.includes(c.id)).sort((a, b) => b.gdp - a.gdp).slice(0, 4);
+  if (guests.length < 2) return null;
+  const capital = world.cities[host.capitalId];
+  const worst = cs.slice().sort((a, b) => b.climateRisk - a.climateRisk)[0];
+  return createEvent(world, {
+    category: 'diplomatic', type: 'summit', severity: recentSea.length ? 3 : 2,
+    title: `${year} Climate Conference opens in ${capital?.name ?? host.name}`,
+    description: `Delegations from ${guests.map((g) => g.name).join(', ')} and ${cs.length - guests.length - 1} other nations arrived in ${capital?.name ?? host.name} for the yearly climate conference. ${recentSea.length ? `${recentSea.length} coastal district${recentSea.length > 1 ? 's were' : ' was'} lost to the sea this year; ` : ''}${worst.name} (climate risk ${worst.climateRisk.toFixed(0)}) ${rng.pick(['asked for money', 'asked for time', 'asked who would take its people'])}. ${rng.pick(['The draft text has 400 brackets.', 'Protesters outnumber delegates.', 'The host promised a fund; the guests promised to think about it.'])}`,
+    location: { countryId: host.id, cityId: capital?.id, x: capital?.x ?? host.centroid.x, y: capital?.y ?? host.centroid.y },
+    actors: [ref('country', host.id), ...guests.map((g) => ref('country', g.id))], effects: [fx('country', host.id, 'approval', 2)],
+    tags: ['diplomacy', 'summit', 'climate', host.code], data: { topic: 'climate finance', host: host.id, guests: guests.map((g) => g.id), conference: 'climate', seaLosses: recentSea.length },
+  });
 }
 
 /** Each living faith with real support has a holy season (a month fixed by its id); once a year its country fills with pilgrims. */
