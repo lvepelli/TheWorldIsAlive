@@ -4,6 +4,7 @@
  */
 import { RNG, clamp } from '../rng';
 import type { World, Country } from '../types';
+import { createEvent, ref } from '../events/engine';
 
 export interface Premise { id: string; title: string; blurb: string; apply: (world: World, rng: RNG) => void; }
 
@@ -61,9 +62,30 @@ export function premiseFor(seed: string): Premise {
   return r.pick(PREMISES);
 }
 
+/** Opening arcs: each premise seeds one or two scheduled follow-ups (rules live in events/consequences.ts). */
+const ARCS: Record<string, { rule: string; delay: [number, number] }[]> = {
+  'cold-peace': [{ rule: 'premise.cold-peace.incident', delay: [20, 70] }],
+  'long-boom': [{ rule: 'premise.long-boom.bubble', delay: [30, 120] }],
+  'age-of-unrest': [{ rule: 'premise.age-of-unrest.protests', delay: [5, 25] }],
+  'after-the-plague': [{ rule: 'premise.after-the-plague.scare', delay: [40, 160] }],
+  'machine-dawn': [{ rule: 'premise.machine-dawn.shock', delay: [15, 60] }],
+  'fractured-map': [{ rule: 'premise.fractured-map.talks', delay: [30, 120] }],
+  'gilded-age': [{ rule: 'premise.gilded-age.scandal', delay: [20, 90] }],
+  'quiet-century': [{ rule: 'premise.quiet-century.omen', delay: [60, 200] }],
+};
+
 export function applyPremise(world: World, seed: string): Premise {
   const p = premiseFor(seed);
-  p.apply(world, new RNG(seed).fork('premise-apply'));
+  const rng = new RNG(seed).fork('premise-apply');
+  p.apply(world, rng);
   world.meta.premise = { id: p.id, title: p.title, blurb: p.blurb };
+  const [a, b] = byGdp(world);
+  const opening = createEvent(world, {
+    category: 'political', type: 'premise.opening', severity: 3, historic: true,
+    title: p.title, description: `${p.blurb} The year is ${world.meta.startYear}; the world is ${world.meta.name}.`,
+    location: a ? { countryId: a.id } : {}, actors: [a, b].filter(Boolean).map((c) => ref('country', c.id)), effects: [],
+    tags: ['premise', p.id], data: { premise: p.id, a: a?.id, b: b?.id },
+  });
+  for (const arc of ARCS[p.id] ?? []) world.pending.push({ dueDay: rng.int(arc.delay[0], arc.delay[1]), ruleId: arc.rule, sourceEventId: opening.id });
   return p;
 }

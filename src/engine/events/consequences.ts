@@ -304,6 +304,81 @@ export const CONSEQUENCE_RULES: Record<string, ConsequenceRule> = {
       location: { cityId: person.cityId }, actors: [ref('person', person.id)], effects: [fx('person', person.id, 'wealth%', -30), fx('person', person.id, 'fame', 5)], tags: ['scandal', 'downfall'],
     });
   },
+  // ---- Premise opening arcs (scheduled by generator/premise.ts) ----
+  'premise.cold-peace.incident': (w, rng, src) => {
+    const a = c$(w, src.data?.a as ID), b = c$(w, src.data?.b as ID);
+    if (!a || !b || a.atWarWith.includes(b.id)) return null;
+    return A.shiftTension(w, rng, a, b, 25, src.id, false, rng.pick(['a downed reconnaissance drone', 'a spy ring uncovered in the capital', 'a naval stand-off in contested waters', 'a defector with a briefcase']));
+  },
+  'premise.long-boom.bubble': (w, rng, src) => {
+    const g = w.indexes['global'];
+    schedule(w, 'premise.long-boom.pop', src.id, rng.int(150, 500));
+    return createEvent(w, {
+      category: 'economic', type: 'market.warning', severity: 3, causedBy: src.id,
+      title: rng.pick(['Central banks warn of "irrational exuberance"', 'Bubble talk grows as valuations hit records', 'Regulators sound the alarm on runaway credit']),
+      description: `After years of the boom, ${rng.pick(['household debt', 'corporate leverage', 'property prices', 'margin lending'])} has reached levels not seen in living memory. ${g ? `The global index stands at ${g.value.toFixed(0)}.` : ''} Most investors shrugged.`,
+      location: {}, actors: [], effects: [], tags: ['markets', 'bubble'],
+      data: { shocks: [{ pct: 0.03 }, { sector: 'finance', pct: 0.05 }] as MarketShock[] },
+    });
+  },
+  'premise.long-boom.pop': (w, rng, src) => (rng.bool(0.65) ? A.economicShock(w, rng, null, 'crash', src.id) : null),
+  'premise.age-of-unrest.protests': (w, rng, src) => {
+    const c = Object.values(w.countries).sort((x, y) => y.unrest - x.unrest)[0];
+    if (!c) return null;
+    const city = A.capitalOf(w, c);
+    return createEvent(w, {
+      category: 'social', type: 'protest.mass', severity: 3, causedBy: src.id,
+      title: `Hundreds of thousands march in ${city?.name ?? c.name}`,
+      description: `The largest demonstration in a generation filled the streets of ${city?.name ?? c.name} demanding ${rng.pick(['jobs and dignity', "the government's resignation", 'an end to corruption', 'bread, peace and honest elections'])}. Similar marches are planned across ${c.name}.`,
+      location: { cityId: city?.id, countryId: c.id }, actors: [ref('country', c.id)],
+      effects: [fx('country', c.id, 'unrest', 8), fx('country', c.id, 'stability', -4), fx('country', c.id, 'approval', -5)], tags: ['protest', c.code],
+    });
+  },
+  'premise.after-the-plague.scare': (w, rng, src) => {
+    const c = rng.pick(Object.values(w.countries));
+    return A.epidemic(w, rng, c, src.id, false, false);
+  },
+  'premise.machine-dawn.shock': (w, rng, src) => {
+    const c = Object.values(w.countries).sort((x, y) => y.technology - x.technology)[0];
+    if (!c) return null;
+    const city = A.capitalOf(w, c);
+    return createEvent(w, {
+      category: 'economic', type: 'automation.shock', severity: 4, causedBy: src.id,
+      title: `Machines replace ${rng.int(8, 20)}% of ${c.adjective} jobs in a single year`,
+      description: `A wave of autonomous systems swept through ${c.name}'s ${rng.pick(['logistics', 'legal', 'manufacturing', 'financial'])} sector. ${city?.name ?? 'The capital'} saw its first "useless class" marches. Economists are split on whether this is the end of work or the beginning of leisure.`,
+      location: { cityId: city?.id, countryId: c.id }, actors: [ref('country', c.id)],
+      effects: [fx('country', c.id, 'unemployment', 5), fx('country', c.id, 'polarization', 8), fx('country', c.id, 'gdpGrowth', 1), fx('country', c.id, 'happiness', -4)], tags: ['automation', 'jobs', c.code], historic: true,
+      data: { shocks: [{ sector: 'technology', pct: 0.1 }, { sector: 'manufacturing', pct: -0.06 }] as MarketShock[] },
+    });
+  },
+  'premise.fractured-map.talks': (w, rng, src) => {
+    const a = Object.values(w.countries).find((x) => x.atWarWith.length);
+    const b = a ? w.countries[a.atWarWith[0]] : undefined;
+    if (!a || !b) return null;
+    const host = rng.pick(Object.values(w.countries).filter((x) => !x.atWarWith.length && x.id !== a.id && x.id !== b.id));
+    if (rng.bool(0.5)) schedule(w, 'premise.fractured-map.ceasefire', src.id, rng.int(10, 40), { a: a.id, b: b.id });
+    return createEvent(w, {
+      category: 'diplomatic', type: 'summit', severity: 3, causedBy: src.id,
+      title: `${host?.name ?? 'Neutral'} hosts peace talks between ${a.name} and ${b.name}`,
+      description: `Delegations from ${a.name} and ${b.name} sat at the same table for the first time since the borders were redrawn. ${rng.pick(['Neither side smiled for the cameras.', 'Talks ran late into the night.', 'A ceasefire is on the table; recognition is not.'])}`,
+      location: host ? { countryId: host.id } : {}, actors: [ref('country', a.id), ref('country', b.id), ...(host ? [ref('country', host.id)] : [])],
+      effects: [fx('country', a.id, 'stability', 1), fx('country', b.id, 'stability', 1)], tags: ['diplomacy', 'talks'],
+    });
+  },
+  'premise.fractured-map.ceasefire': (w, rng, src, payload) => {
+    const a = c$(w, payload.a as ID), b = c$(w, payload.b as ID);
+    if (!a || !b || !a.atWarWith.includes(b.id)) return null;
+    return A.endWar(w, rng, a, b, src.id, false, 'stalemate');
+  },
+  'premise.gilded-age.scandal': (w, rng, src) => {
+    const tycoon = Object.values(w.people).filter((p) => p.alive && (p.profession === 'entrepreneur' || p.profession === 'executive')).sort((x, y) => y.wealth - x.wealth)[0];
+    if (!tycoon) return null;
+    return A.scandal(w, rng, tycoon, src.id, false, rng.pick(['buying a senate seat', 'a private island of untaxed billions', 'bribing regulators on three continents']));
+  },
+  'premise.quiet-century.omen': (w, rng, src) => {
+    const c = rng.pick(Object.values(w.countries));
+    return A.resourceDiscovery(w, rng, c, rng.pick(['lithium', 'rare earths', 'oil', 'gold']), src.id);
+  },
   // ---- Relationship-driven chains ----
   'scandal.rival-pounce': (w, rng, src) => {
     const p = src.actors.find((a) => a.kind === 'person'); const person = p ? w.people[p.id] : undefined;

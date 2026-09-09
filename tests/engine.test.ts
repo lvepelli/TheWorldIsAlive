@@ -68,6 +68,23 @@ describe('simulation', () => {
       expect(src?.actors.some((x) => x.id === victim.id)).toBe(true);
     }
   }, 30000);
+  it('every premise opens with its own arc', () => {
+    const seen = new Map<string, { seed: string; fired: boolean }>();
+    for (let i = 0; i < 60 && seen.size < 8; i++) {
+      const seed = `premise-${i}`;
+      const w = generateWorld({ seed });
+      const id = w.meta.premise!.id;
+      if (seen.has(id)) continue;
+      const opening = w.events.find((e) => e.type === 'premise.opening')!;
+      expect(opening).toBeTruthy();
+      const rng = RNG.fromState(w.rngState);
+      for (let d = 0; d < 210; d++) tickDay(w, rng);
+      const fired = w.events.some((e) => e.causedBy === opening.id);
+      seen.set(id, { seed, fired });
+    }
+    expect(seen.size).toBe(8);
+    for (const [id, v] of seen) expect(v.fired, `${id} (${v.seed})`).toBe(true);
+  }, 60000);
   it('first 5 days are interesting', () => {
     const w = generateWorld({ seed: 'delta' });
     const rng = RNG.fromState(w.rngState);
